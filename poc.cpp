@@ -3,13 +3,14 @@
 #pragma leco add_shader "poc.frag"
 
 import casein;
-import rng;
+import dotz;
 import sith;
 import vee;
 import voo;
 
 struct vtx {
-  float x, y;
+  dotz::vec2 anchor;
+  dotz::vec2 delta;
 };
 
 class thread : public voo::casein_thread {
@@ -19,7 +20,7 @@ public:
 
     vee::pipeline_layout pl = vee::create_pipeline_layout();
 
-    voo::h2l_buffer vs{dq, 3 * sizeof(vtx)};
+    voo::h2l_buffer vs{dq, 6 * sizeof(vtx)};
 
     // TODO: fix validation issues while resizing
     while (!interrupted()) {
@@ -27,9 +28,15 @@ public:
 
       {
         voo::mapmem m{vs.host_memory()};
-        static_cast<vtx *>(*m)[0] = {rng::randf(), rng::randf()};
-        static_cast<vtx *>(*m)[1] = {rng::randf(), rng::randf()};
-        static_cast<vtx *>(*m)[2] = {rng::randf(), rng::randf()};
+        auto *v = static_cast<vtx *>(*m);
+
+        v[0] = {{-0.5f, -0.3f}, {-1.f, -1.f}};
+        v[1] = {{-0.5f, -0.3f}, {0.f, -1.f}};
+        v[2] = {{-0.5f, -0.3f}, {-1.f, 1.f}};
+
+        v[3] = v[2];
+        v[4] = v[1];
+        v[5] = {{-0.5f, -0.3f}, {1.f, 1.f}};
       }
 
       auto gp = vee::create_graphics_pipeline({
@@ -44,6 +51,7 @@ public:
           },
           .attributes{
               vee::vertex_attribute_vec2(0, 0),
+              vee::vertex_attribute_vec2(0, sizeof(dotz::vec2)),
           },
       });
 
@@ -54,7 +62,7 @@ public:
           auto scb = sw.cmd_render_pass(pcb);
           vee::cmd_bind_gr_pipeline(*scb, *gp);
           vee::cmd_bind_vertex_buffers(*scb, 0, vs.local_buffer());
-          vee::cmd_draw(*scb, 3);
+          vee::cmd_draw(*scb, 6);
         });
       });
     }
