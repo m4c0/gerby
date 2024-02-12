@@ -29,6 +29,59 @@ struct upc {
   float aspect;
 };
 
+class vertices : voo::update_thread {
+  voo::h2l_buffer m_vs;
+
+  void build_cmd_buf(vee::command_buffer cb) override {
+    voo::cmd_buf_one_time_submit pcb{cb};
+    m_vs.setup_copy(*pcb);
+  }
+
+  void load_buffer() {
+    voo::mapmem m{m_vs.host_memory()};
+
+    auto *v = static_cast<vtx *>(*m);
+
+    // TODO: use a triangle strip
+
+    v[0] = {{-1.f, -1.f}, 0};
+    v[1] = {{-1.f, 1.f}, 0};
+    v[2] = {{0.f, -1.f}, 0};
+
+    v[3] = v[2];
+    v[4] = v[1];
+    v[5] = {{0.f, 1.f}, 0};
+
+    v[6] = v[2];
+    v[7] = v[5];
+    v[8] = {{0.f, -1.f}, 1};
+
+    v[9] = v[8];
+    v[10] = v[5];
+    v[11] = {{0.f, 1.f}, 1};
+
+    v[12] = v[8];
+    v[13] = v[11];
+    v[14] = {{1.f, 1.f}, 1};
+
+    v[15] = v[8];
+    v[16] = v[14];
+    v[17] = {{1.f, -1.f}, 1};
+  }
+
+public:
+  explicit vertices(voo::device_and_queue *dq)
+      : update_thread{dq}
+      , m_vs{*dq, v_count * sizeof(vtx)} {
+    load_buffer();
+    run_once();
+  }
+
+  [[nodiscard]] constexpr auto local_buffer() const noexcept {
+    return m_vs.local_buffer();
+  }
+};
+
 class thread : public voo::casein_thread {
 public:
   void run() override {
@@ -37,7 +90,7 @@ public:
     vee::pipeline_layout pl =
         vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
 
-    voo::h2l_buffer vs{dq, v_count * sizeof(vtx)};
+    vertices vs{&dq};
     voo::h2l_buffer is{dq, i_count * sizeof(inst)};
 
     // TODO: fix validation issues while resizing
@@ -47,48 +100,18 @@ public:
       {
         voo::mapmem m{is.host_memory()};
 
+        constexpr const float d10 = 0.01f;
+
         auto *i = static_cast<inst *>(*m);
-        i[0] = {{0.0f, 0.0f}, {5.0f, 0.0f}, 0.01f};
-        i[1] = {{5.0f, 0.0f}, {5.0f, 5.0f}, 0.01f};
-        i[2] = {{5.0f, 5.0f}, {0.0f, 5.0f}, 0.01f};
-        i[3] = {{0.0f, 5.0f}, {0.0f, 0.0f}, 0.01f};
+        i[0] = {{0.0f, 0.0f}, {5.0f, 0.0f}, d10};
+        i[1] = {{5.0f, 0.0f}, {5.0f, 5.0f}, d10};
+        i[2] = {{5.0f, 5.0f}, {0.0f, 5.0f}, d10};
+        i[3] = {{0.0f, 5.0f}, {0.0f, 0.0f}, d10};
 
-        i[4] = {{6.0f, 0.0f}, {11.f, 0.0f}, 0.01f};
-        i[5] = {{11.f, 0.0f}, {11.f, 5.0f}, 0.01f};
-        i[6] = {{11.f, 5.0f}, {6.0f, 5.0f}, 0.01f};
-        i[7] = {{6.0f, 5.0f}, {6.0f, 0.0f}, 0.01f};
-      }
-
-      {
-        voo::mapmem m{vs.host_memory()};
-
-        auto *v = static_cast<vtx *>(*m);
-
-        // TODO: use a triangle strip
-
-        v[0] = {{-1.f, -1.f}, 0};
-        v[1] = {{-1.f, 1.f}, 0};
-        v[2] = {{0.f, -1.f}, 0};
-
-        v[3] = v[2];
-        v[4] = v[1];
-        v[5] = {{0.f, 1.f}, 0};
-
-        v[6] = v[2];
-        v[7] = v[5];
-        v[8] = {{0.f, -1.f}, 1};
-
-        v[9] = v[8];
-        v[10] = v[5];
-        v[11] = {{0.f, 1.f}, 1};
-
-        v[12] = v[8];
-        v[13] = v[11];
-        v[14] = {{1.f, 1.f}, 1};
-
-        v[15] = v[8];
-        v[16] = v[14];
-        v[17] = {{1.f, -1.f}, 1};
+        i[4] = {{6.0f, 0.0f}, {11.f, 0.0f}, d10};
+        i[5] = {{11.f, 0.0f}, {11.f, 5.0f}, d10};
+        i[6] = {{11.f, 5.0f}, {6.0f, 5.0f}, d10};
+        i[7] = {{6.0f, 5.0f}, {6.0f, 0.0f}, d10};
       }
 
       auto gp = vee::create_graphics_pipeline({
@@ -120,7 +143,6 @@ public:
         };
 
         sw.queue_one_time_submit(dq, [&](auto pcb) {
-          vs.setup_copy(*pcb);
           is.setup_copy(*pcb);
 
           auto scb = sw.cmd_render_pass(pcb);
