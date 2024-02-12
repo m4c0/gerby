@@ -159,7 +159,7 @@ public:
       {
         auto p = is.pen();
 
-        p.aperture(0.1);
+        p.aperture(0.1); // D10C,0.1
         p.move(0, 2.5);
         p.draw(0, 0);
         p.draw(2.5, 0);
@@ -169,12 +169,33 @@ public:
         p.move_x(25);
         p.draw_y(10);
 
-        p.aperture(0.6);
+        p.aperture(0.6); // D11C,0.6
         p.flash(10, 10);
         p.flash_x(20);
         p.flash_x(25);
         p.flash_y(15);
         p.flash_x(20);
+
+        // p.aperture(0.6, 0.6); // D12R,0.6x0.6
+        p.flash(10, 15);
+
+        // p.aperture(0.4, 1.0); // D13R,0.4x1.00
+        p.flash(30, 15);
+
+        // p.aperture(1.0, 0.4); // D14R,1.00X0.4
+        p.flash_y(12.5);
+
+        // p.aperture(0.4, 1.0); // D15O0.4X1.00
+        p.flash_y(10);
+
+        p.aperture(0.1); // D10C,0.1
+        p.move(37.5, 10);
+        // p.arc(37.5, 10, 25.0, 0);
+
+        p.aperture(1);
+        // p.aperture(1, 3); // D16P,1.00X3 "triangle"
+        p.flash(34, 10);
+        p.flash(35, 9);
 
         i_count = p.count();
       }
