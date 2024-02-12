@@ -15,7 +15,7 @@ layout(location = 4) in float diam;
 layout(location = 0) out vec2 f_delta;
 
 void main() {
-  vec2 ab = normalize(b - a);
+  vec2 ab = b == a ? vec2(1, 0) : normalize(b - a);
   float cth = ab.x;
   float sth = -ab.y;
 
