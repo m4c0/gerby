@@ -12,10 +12,13 @@ layout(location = 3) in float w;
 layout(location = 0) out vec2 f_delta;
 
 void main() {
-  float th = 3.14159265358979323 * -0.25f;
+  vec2 ab = b - a;
+  float cth = ab.x;
+  float sth = -ab.y;
+
   mat2 rot = mat2(
-    cos(th), -sin(th),
-    sin(th), cos(th)
+    cth, -sth,
+    sth, cth
   );
 
   vec2 d = delta;
