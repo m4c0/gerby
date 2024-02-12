@@ -197,6 +197,22 @@ public:
         p.flash(34, 10);
         p.flash(35, 9);
 
+        // TODO: add support for regions
+        // Most probably, take note of the count here and draw lines over two
+        // calls and regions as a different pipeline?
+
+        // TODO: "clear" polarity
+
+        p.aperture(0.1); // D10
+        p.move(15, 28.75);
+        p.draw_x(20);
+
+        p.aperture(0.6); // D11
+        p.flash(15, 28.75);
+        p.flash_x(20);
+
+        // TODO: "thermal" macro
+
         i_count = p.count();
       }
       is.run_once();
