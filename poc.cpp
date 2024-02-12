@@ -148,9 +148,6 @@ class lines {
   instances m_is;
   unsigned m_i_count{};
 
-protected:
-  virtual unsigned load(pen &p) = 0;
-
 public:
   explicit lines(voo::device_and_queue *dq)
       : m_gp{vee::create_graphics_pipeline({
@@ -180,9 +177,10 @@ public:
       , m_vs{dq}
       , m_is{dq} {}
 
-  void update() {
+  void update(void (*load)(pen &)) {
     auto p = m_is.pen();
-    m_i_count = load(p);
+    load(p);
+    m_i_count = p.count();
     m_is.run_once();
   }
 
@@ -195,13 +193,7 @@ public:
   }
 };
 
-class example_lines : public lines {
-protected:
-  using lines::lines;
-
-  unsigned load(pen &p) override;
-};
-unsigned example_lines::load(pen &p) {
+void example_lines_1(pen &p) {
   p.aperture(0.1); // D10C,0.1
   p.move(0, 2.5);
   p.draw(0, 0);
@@ -221,7 +213,6 @@ unsigned example_lines::load(pen &p) {
 
   // we simulate rectangles/obround with a small segment
 
-  // TODO: rectangle aperture
   p.aperture(0.6, 0.6, false); // D12R,0.6x0.6
   p.flash(10, 15);
 
@@ -242,13 +233,15 @@ unsigned example_lines::load(pen &p) {
   // p.aperture(1, 3); // D16P,1.00X3 "triangle"
   p.flash(34, 10);
   p.flash(35, 9);
+}
 
-  // TODO: add support for regions
-  // Most probably, take note of the count here and draw lines over two
-  // calls and regions as a different pipeline?
+// TODO: add support for regions
+// Most probably, take note of the count here and draw lines over two
+// calls and regions as a different pipeline?
 
-  // TODO: "clear" polarity
+// TODO: "clear" polarity
 
+void example_lines_2(pen &p) {
   p.aperture(0.1); // D10
   p.move(15, 28.75);
   p.draw_x(20);
@@ -256,10 +249,6 @@ unsigned example_lines::load(pen &p) {
   p.aperture(0.6); // D11
   p.flash(15, 28.75);
   p.flash_x(20);
-
-  // TODO: "thermal" macro
-
-  return p.count();
 }
 
 class thread : public voo::casein_thread {
@@ -267,8 +256,11 @@ public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
 
-    example_lines ls{&dq};
-    ls.update();
+    lines ls_1{&dq};
+    ls_1.update(example_lines_1);
+
+    lines ls_2{&dq};
+    ls_2.update(example_lines_2);
 
     // TODO: fix validation issues while resizing
     while (!interrupted()) {
@@ -286,7 +278,8 @@ public:
               .command_buffer = *pcb,
               .clear_color = {},
           });
-          ls.cmd_draw(*scb, &pc);
+          ls_1.cmd_draw(*scb, &pc);
+          ls_2.cmd_draw(*scb, &pc);
         });
       });
     }
