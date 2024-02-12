@@ -34,6 +34,7 @@ void main() {
   p -= pc.center;
   p /= pc.scale;
   p.x /= pc.aspect;
+  p.y *= -1;
 
   f_delta = delta;
   gl_Position = vec4(p, 0, 1);
