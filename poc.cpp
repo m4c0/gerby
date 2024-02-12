@@ -45,6 +45,8 @@ public:
 
         auto *v = static_cast<vtx *>(*m);
 
+        // TODO: use a triangle strip
+
         v[0] = {p0, {-1.f, -1.f}};
         v[1] = {p0, {-1.f, 1.f}};
         v[2] = {p0, {0.f, -1.f}};
@@ -56,6 +58,18 @@ public:
         v[6] = v[2];
         v[7] = v[5];
         v[8] = {p1, {0.f, -1.f}};
+
+        v[9] = v[8];
+        v[10] = v[5];
+        v[11] = {p1, {0.f, 1.f}};
+
+        v[12] = v[8];
+        v[13] = v[11];
+        v[14] = {p1, {1.f, 1.f}};
+
+        v[15] = v[8];
+        v[16] = v[14];
+        v[17] = {p1, {1.f, -1.f}};
       }
 
       auto gp = vee::create_graphics_pipeline({
