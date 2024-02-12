@@ -86,6 +86,7 @@ class pen {
   inst *m_buf;
   dotz::vec2 m_p{};
   float m_d{};
+  float m_round{1};
   dotz::vec2 m_smear{};
   unsigned m_count{};
 
@@ -99,8 +100,9 @@ public:
   constexpr void aperture(float d) {
     m_d = d;
     m_smear = {};
+    m_round = 1.0;
   }
-  constexpr void aperture(float w, float h) {
+  constexpr void aperture(float w, float h, bool round) {
     if (w > h) {
       m_d = h;
       m_smear = {w - h, 0.0};
@@ -109,11 +111,12 @@ public:
       m_smear = {0.0, h - w};
     }
     m_smear = m_smear / 2.0f;
+    m_round = round;
   }
 
   void draw(float x, float y) {
     dotz::vec2 np{x, y};
-    m_buf[m_count++] = {m_p, np, m_d, 1.0};
+    m_buf[m_count++] = {m_p, np, m_d, m_round};
     m_p = {x, y};
   }
   void draw_x(float x) { draw(x, m_p.y); }
@@ -121,7 +124,7 @@ public:
 
   void flash(float x, float y) {
     m_p = {x, y};
-    m_buf[m_count++] = {m_p - m_smear, m_p + m_smear, m_d, 1.0};
+    m_buf[m_count++] = {m_p - m_smear, m_p + m_smear, m_d, m_round};
   }
   void flash_x(float x) { flash(x, m_p.y); }
   void flash_y(float y) { flash(m_p.x, y); }
@@ -194,17 +197,16 @@ public:
         // we simulate rectangles/obround with a small segment
 
         // TODO: rectangle aperture
-        p.aperture(0.6); // D12R,0.6x0.6
+        p.aperture(0.6, 0.6, false); // D12R,0.6x0.6
         p.flash(10, 15);
 
-        p.aperture(0.4, 1.0); // D13R,0.4x1.00
+        p.aperture(0.4, 1.0, false); // D13R,0.4x1.00
         p.flash(30, 15);
 
-        p.aperture(1.0, 0.4); // D14R,1.00X0.4
+        p.aperture(1.0, 0.4, false); // D14R,1.00X0.4
         p.flash_y(12.5);
 
-        // TODO: "oblong" aperture?
-        p.aperture(0.4, 1.0); // D15O0.4X1.00
+        p.aperture(0.4, 1.0, true); // D15O0.4X1.00
         p.flash_y(10);
 
         p.aperture(0.1); // D10C,0.1
