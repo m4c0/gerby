@@ -15,7 +15,8 @@ struct vtx {
 struct inst {
   dotz::vec2 a;
   dotz::vec2 b;
-  float r;
+  float diam;
+  float rnd;
 };
 constexpr const auto q_count = 3;
 constexpr const auto t_count = 2 * q_count;
@@ -112,7 +113,7 @@ public:
 
   void draw(float x, float y) {
     dotz::vec2 np{x, y};
-    m_buf[m_count++] = {m_p, np, m_d};
+    m_buf[m_count++] = {m_p, np, m_d, 1.0};
     m_p = {x, y};
   }
   void draw_x(float x) { draw(x, m_p.y); }
@@ -120,7 +121,7 @@ public:
 
   void flash(float x, float y) {
     m_p = {x, y};
-    m_buf[m_count++] = {m_p - m_smear, m_p + m_smear, m_d};
+    m_buf[m_count++] = {m_p - m_smear, m_p + m_smear, m_d, 1.0};
   }
   void flash_x(float x) { flash(x, m_p.y); }
   void flash_y(float y) { flash(m_p.x, y); }
@@ -254,6 +255,8 @@ public:
               vee::vertex_attribute_vec2(1, sizeof(dotz::vec2)),
               vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
               vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2)),
+              vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2) +
+                                                 sizeof(float)),
           },
       });
 

@@ -11,6 +11,7 @@ layout(location = 1) in vec2 a;
 layout(location = 2) in vec2 b;
 layout(location = 3) in float w;
 layout(location = 4) in float diam;
+layout(location = 5) in float rnd;
 
 layout(location = 0) out vec2 f_delta;
 
@@ -36,6 +37,6 @@ void main() {
   p.x /= pc.aspect;
   p.y *= -1;
 
-  f_delta = delta;
+  f_delta = mix(vec2(0.0f), delta, rnd);
   gl_Position = vec4(p, 0, 1);
 }
