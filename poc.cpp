@@ -21,8 +21,6 @@ constexpr const auto q_count = 3;
 constexpr const auto t_count = 2 * q_count;
 constexpr const auto v_count = 3 * t_count;
 
-constexpr const auto i_count = 8;
-
 struct upc {
   dotz::vec2 center;
   float scale;
@@ -87,21 +85,31 @@ class pen {
   inst *m_buf;
   dotz::vec2 m_p{};
   float m_d{};
+  unsigned m_count{};
 
 public:
   explicit pen(vee::device_memory::type mem)
       : m_map{mem}
       , m_buf{static_cast<inst *>(*m_map)} {}
 
+  [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
+
   constexpr void aperture(float d) { m_d = d; }
 
   void draw(float x, float y) {
     dotz::vec2 np{x, y};
-    *m_buf++ = {m_p, np, m_d};
+    m_buf[m_count++] = {m_p, np, m_d};
     m_p = {x, y};
   }
   void draw_x(float x) { draw(x, m_p.y); }
   void draw_y(float y) { draw(m_p.x, y); }
+
+  void flash(float x, float y) {
+    m_p = {x, y};
+    m_buf[m_count++] = {m_p, m_p, m_d};
+  }
+  void flash_x(float x) { flash(x, m_p.y); }
+  void flash_y(float y) { flash(m_p.x, y); }
 
   void move(float x, float y) { m_p = {x, y}; }
   void move_x(float x) { move(x, m_p.y); }
@@ -147,21 +155,28 @@ public:
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 
+      unsigned i_count{};
       {
         auto p = is.pen();
-        p.aperture(0.01);
 
-        p.move(0, 0);
-        p.draw(5, 0);
-        p.draw_y(5);
-        p.draw_x(0);
-        p.draw_y(0);
+        p.aperture(0.1);
+        p.move(0, 2.5);
+        p.draw(0, 0);
+        p.draw(2.5, 0);
+        p.move(10, 10);
+        p.draw_x(15);
+        p.draw(20, 15);
+        p.move_x(25);
+        p.draw_y(10);
 
-        p.move_x(6);
-        p.draw_x(11);
-        p.draw_y(5);
-        p.draw_x(6);
-        p.draw_y(0);
+        p.aperture(0.6);
+        p.flash(10, 10);
+        p.flash_x(20);
+        p.flash_x(25);
+        p.flash_y(15);
+        p.flash_x(20);
+
+        i_count = p.count();
       }
       is.run_once();
 
@@ -189,8 +204,8 @@ public:
 
       extent_loop(dq, sw, [&] {
         upc pc{
-            .center = {5.5f, 2.5f},
-            .scale = 4.0f,
+            .center = {25.f / 2.f, 15.f / 1.f},
+            .scale = 20.f,
             .aspect = sw.aspect(),
         };
 
