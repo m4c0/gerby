@@ -23,13 +23,17 @@ struct v_buf_t {
 };
 constexpr const auto v_count = sizeof(v_buf_t) / sizeof(vtx);
 
-class thread : public voo::casein_thread {
+struct upc {
+  float aspect;
+};
 
+class thread : public voo::casein_thread {
 public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
 
-    vee::pipeline_layout pl = vee::create_pipeline_layout();
+    vee::pipeline_layout pl =
+        vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
 
     voo::h2l_buffer vs{dq, sizeof(v_buf_t)};
 
@@ -89,11 +93,14 @@ public:
       });
 
       extent_loop(dq, sw, [&] {
+        upc pc{.aspect = sw.aspect()};
+
         sw.queue_one_time_submit(dq, [&](auto pcb) {
           vs.setup_copy(*pcb);
 
           auto scb = sw.cmd_render_pass(pcb);
           vee::cmd_bind_gr_pipeline(*scb, *gp);
+          vee::cmd_push_vertex_constants(*scb, *pl, &pc);
           vee::cmd_bind_vertex_buffers(*scb, 0, vs.local_buffer());
           vee::cmd_draw(*scb, v_count);
         });
