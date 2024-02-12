@@ -1,6 +1,8 @@
 #version 450
 
 layout(push_constant) uniform upc {
+  vec2 center;
+  float scale;
   float aspect;
 } pc;
 
@@ -28,6 +30,8 @@ void main() {
 
   vec2 p = mix(a, b, w);
   p += d;
+  p -= pc.center;
+  p /= pc.scale;
   p.x /= pc.aspect;
 
   f_delta = delta;

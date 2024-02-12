@@ -24,6 +24,8 @@ constexpr const auto v_count = 3 * t_count;
 constexpr const auto i_count = 8;
 
 struct upc {
+  dotz::vec2 center;
+  float scale;
   float aspect;
 };
 
@@ -111,7 +113,11 @@ public:
       });
 
       extent_loop(dq, sw, [&] {
-        upc pc{.aspect = sw.aspect()};
+        upc pc{
+            .center = {5.5f, 2.5f},
+            .scale = 4.0f,
+            .aspect = sw.aspect(),
+        };
 
         sw.queue_one_time_submit(dq, [&](auto pcb) {
           vs.setup_copy(*pcb);
