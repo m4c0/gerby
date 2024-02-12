@@ -329,7 +329,21 @@ unsigned example_region_1(rvtx *v) {
   return 7;
 }
 
-// TODO: "clear" polarity
+unsigned example_region_2(rvtx *v) {
+  v[0] = {{10.0f, 25.0f}};
+  v[1] = {{10.0f, 30.0f}};
+  v[2] = {{12.5f, 32.5f}};
+
+  v[3] = v[0];
+  v[4] = {{30.0f, 32.5f}};
+
+  v[5] = v[0];
+  v[6] = {{30.0f, 25.0f}};
+
+  v[7] = v[0];
+  v[8] = {{10.0f, 25.0f}};
+  return 9;
+}
 
 void example_lines_2(pen &p) {
   p.aperture(0.1); // D10
@@ -351,6 +365,9 @@ public:
 
     region rg_1{&dq};
     rg_1.update(example_region_1);
+
+    region rg_2{&dq};
+    rg_2.update(example_region_2);
 
     lines ls_2{&dq};
     ls_2.update(example_lines_2);
@@ -374,6 +391,11 @@ public:
           });
           ls_1.cmd_draw(*scb, &pc);
           rg_1.cmd_draw(*scb, &pc);
+
+          pc.colour = {0, 0, 0, 0};
+          rg_2.cmd_draw(*scb, &pc);
+
+          pc.colour = {1, 0, 0, 0};
           ls_2.cmd_draw(*scb, &pc);
         });
       });
