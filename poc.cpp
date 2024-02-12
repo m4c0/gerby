@@ -15,6 +15,7 @@ struct vtx {
 struct inst {
   dotz::vec2 a;
   dotz::vec2 b;
+  float r;
 };
 constexpr const auto q_count = 3;
 constexpr const auto t_count = 2 * q_count;
@@ -45,9 +46,9 @@ public:
         voo::mapmem m{is.host_memory()};
 
         auto *i = static_cast<inst *>(*m);
-        i[0] = {{-0.5f, -0.3f}, {+0.6f, +0.2f}};
-        i[1] = {{-0.8f, -0.8f}, {-0.8f, +0.8f}};
-        i[2] = {{-0.7f, -0.7f}, {+0.7f, -0.7f}};
+        i[0] = {{-0.5f, -0.3f}, {+0.6f, +0.2f}, 0.1f};
+        i[1] = {{-0.8f, -0.8f}, {-0.8f, +0.8f}, 0.01f};
+        i[2] = {{-0.7f, -0.7f}, {+0.7f, -0.7f}, 0.01f};
       }
 
       {
@@ -99,6 +100,7 @@ public:
               vee::vertex_attribute_vec2(1, 0),
               vee::vertex_attribute_vec2(1, sizeof(dotz::vec2)),
               vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+              vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2)),
           },
       });
 
