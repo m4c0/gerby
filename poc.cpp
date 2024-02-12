@@ -26,6 +26,7 @@ struct rvtx {
 };
 
 struct upc {
+  dotz::vec4 colour;
   dotz::vec2 center;
   float scale;
   float aspect;
@@ -360,6 +361,7 @@ public:
 
       extent_loop(dq, sw, [&] {
         upc pc{
+            .colour = {1, 0, 0, 0},
             .center = {37.5f / 2.f, 37.5f / 2.f},
             .scale = 20.f,
             .aspect = sw.aspect(),
