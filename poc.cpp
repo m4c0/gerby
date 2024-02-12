@@ -139,9 +139,69 @@ public:
   using update_thread::run_once;
 };
 
-[[nodiscard]] static auto draw_example(instances *is) {
-  auto p = is->pen();
+class lines {
+  vee::pipeline_layout m_pl =
+      vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
+  vee::gr_pipeline m_gp;
 
+  vertices m_vs;
+  instances m_is;
+  unsigned m_i_count{};
+
+protected:
+  virtual unsigned load(pen &p) = 0;
+
+public:
+  explicit lines(voo::device_and_queue *dq)
+      : m_gp{vee::create_graphics_pipeline({
+            .pipeline_layout = *m_pl,
+            .render_pass = dq->render_pass(),
+            .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+            .back_face_cull = false,
+            .depth_test = false,
+            .shaders{
+                voo::shader("poc.vert.spv").pipeline_vert_stage(),
+                voo::shader("poc.frag.spv").pipeline_frag_stage(),
+            },
+            .bindings{
+                vee::vertex_input_bind(sizeof(vtx)),
+                vee::vertex_input_bind_per_instance(sizeof(inst)),
+            },
+            .attributes{
+                vee::vertex_attribute_vec2(0, 0),
+                vee::vertex_attribute_vec2(1, 0),
+                vee::vertex_attribute_vec2(1, sizeof(dotz::vec2)),
+                vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+                vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2)),
+                vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2) +
+                                                   sizeof(float)),
+            },
+        })}
+      , m_vs{dq}
+      , m_is{dq} {}
+
+  void update() {
+    auto p = m_is.pen();
+    m_i_count = load(p);
+    m_is.run_once();
+  }
+
+  void cmd_draw(vee::command_buffer cb, upc *pc) {
+    vee::cmd_bind_gr_pipeline(cb, *m_gp);
+    vee::cmd_push_vertex_constants(cb, *m_pl, pc);
+    vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
+    vee::cmd_bind_vertex_buffers(cb, 1, m_is.local_buffer());
+    vee::cmd_draw(cb, v_count, m_i_count);
+  }
+};
+
+class example_lines : public lines {
+protected:
+  using lines::lines;
+
+  unsigned load(pen &p) override;
+};
+unsigned example_lines::load(pen &p) {
   p.aperture(0.1); // D10C,0.1
   p.move(0, 2.5);
   p.draw(0, 0);
@@ -207,43 +267,12 @@ public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
 
-    vee::pipeline_layout pl =
-        vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
-
-    vertices vs{&dq};
-    instances is{&dq};
+    example_lines ls{&dq};
+    ls.update();
 
     // TODO: fix validation issues while resizing
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
-
-      unsigned i_count = draw_example(&is);
-      is.run_once();
-
-      auto gp = vee::create_graphics_pipeline({
-          .pipeline_layout = *pl,
-          .render_pass = dq.render_pass(),
-          .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-          .back_face_cull = false,
-          .depth_test = false,
-          .shaders{
-              voo::shader("poc.vert.spv").pipeline_vert_stage(),
-              voo::shader("poc.frag.spv").pipeline_frag_stage(),
-          },
-          .bindings{
-              vee::vertex_input_bind(sizeof(vtx)),
-              vee::vertex_input_bind_per_instance(sizeof(inst)),
-          },
-          .attributes{
-              vee::vertex_attribute_vec2(0, 0),
-              vee::vertex_attribute_vec2(1, 0),
-              vee::vertex_attribute_vec2(1, sizeof(dotz::vec2)),
-              vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
-              vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2)),
-              vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2) +
-                                                 sizeof(float)),
-          },
-      });
 
       extent_loop(dq, sw, [&] {
         upc pc{
@@ -257,11 +286,7 @@ public:
               .command_buffer = *pcb,
               .clear_color = {},
           });
-          vee::cmd_bind_gr_pipeline(*scb, *gp);
-          vee::cmd_push_vertex_constants(*scb, *pl, &pc);
-          vee::cmd_bind_vertex_buffers(*scb, 0, vs.local_buffer());
-          vee::cmd_bind_vertex_buffers(*scb, 1, is.local_buffer());
-          vee::cmd_draw(*scb, v_count, i_count);
+          ls.cmd_draw(*scb, &pc);
         });
       });
     }
