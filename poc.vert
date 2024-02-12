@@ -10,7 +10,18 @@ layout(location = 1) in vec2 delta;
 layout(location = 0) out vec2 f_delta;
 
 void main() {
-  vec2 p = anchor + delta * 0.1f;
+  float th = 3.14159265358979323 * -0.25f;
+  mat2 rot = mat2(
+    cos(th), -sin(th),
+    sin(th), cos(th)
+  );
+
+  vec2 d = delta;
+  d = rot * d;
+  d *= 0.1f;
+
+  vec2 p = anchor;
+  p += d;
   p.x /= pc.aspect;
 
   f_delta = delta;
