@@ -21,7 +21,7 @@ constexpr const auto q_count = 3;
 constexpr const auto t_count = 2 * q_count;
 constexpr const auto v_count = 3 * t_count;
 
-constexpr const auto i_count = 3;
+constexpr const auto i_count = 8;
 
 struct upc {
   float aspect;
@@ -46,9 +46,15 @@ public:
         voo::mapmem m{is.host_memory()};
 
         auto *i = static_cast<inst *>(*m);
-        i[0] = {{-0.5f, -0.3f}, {+0.6f, +0.2f}, 0.1f};
-        i[1] = {{-0.8f, -0.8f}, {-0.8f, +0.8f}, 0.01f};
-        i[2] = {{-0.7f, -0.7f}, {+0.7f, -0.7f}, 0.01f};
+        i[0] = {{0.0f, 0.0f}, {5.0f, 0.0f}, 0.01f};
+        i[1] = {{5.0f, 0.0f}, {5.0f, 5.0f}, 0.01f};
+        i[2] = {{5.0f, 5.0f}, {0.0f, 5.0f}, 0.01f};
+        i[3] = {{0.0f, 5.0f}, {0.0f, 0.0f}, 0.01f};
+
+        i[4] = {{6.0f, 0.0f}, {11.f, 0.0f}, 0.01f};
+        i[5] = {{11.f, 0.0f}, {11.f, 5.0f}, 0.01f};
+        i[6] = {{11.f, 5.0f}, {6.0f, 5.0f}, 0.01f};
+        i[7] = {{6.0f, 5.0f}, {6.0f, 0.0f}, 0.01f};
       }
 
       {
