@@ -195,7 +195,10 @@ public:
         };
 
         sw.queue_one_time_submit(dq, [&](auto pcb) {
-          auto scb = sw.cmd_render_pass(pcb);
+          auto scb = sw.cmd_render_pass({
+              .command_buffer = *pcb,
+              .clear_color = {},
+          });
           vee::cmd_bind_gr_pipeline(*scb, *gp);
           vee::cmd_push_vertex_constants(*scb, *pl, &pc);
           vee::cmd_bind_vertex_buffers(*scb, 0, vs.local_buffer());
