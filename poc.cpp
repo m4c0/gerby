@@ -12,16 +12,9 @@ struct vtx {
   dotz::vec2 anchor;
   dotz::vec2 delta;
 };
-struct tri {
-  vtx vs[3];
-};
-struct quad {
-  tri ts[2];
-};
-struct v_buf_t {
-  quad qs[3];
-};
-constexpr const auto v_count = sizeof(v_buf_t) / sizeof(vtx);
+constexpr const auto q_count = 3;
+constexpr const auto t_count = 2 * q_count;
+constexpr const auto v_count = 3 * t_count;
 
 struct upc {
   float aspect;
@@ -35,7 +28,7 @@ public:
     vee::pipeline_layout pl =
         vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
 
-    voo::h2l_buffer vs{dq, sizeof(v_buf_t)};
+    voo::h2l_buffer vs{dq, v_count * sizeof(vtx)};
 
     // TODO: fix validation issues while resizing
     while (!interrupted()) {
