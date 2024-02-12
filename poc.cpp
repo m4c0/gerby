@@ -20,7 +20,7 @@ constexpr const auto q_count = 3;
 constexpr const auto t_count = 2 * q_count;
 constexpr const auto v_count = 3 * t_count;
 
-constexpr const auto i_count = 1;
+constexpr const auto i_count = 3;
 
 struct upc {
   float aspect;
@@ -46,6 +46,8 @@ public:
 
         auto *i = static_cast<inst *>(*m);
         i[0] = {{-0.5f, -0.3f}, {+0.6f, +0.2f}};
+        i[1] = {{-0.8f, -0.8f}, {-0.8f, +0.8f}};
+        i[2] = {{-0.7f, -0.7f}, {+0.7f, -0.7f}};
       }
 
       {
