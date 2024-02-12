@@ -82,6 +82,56 @@ public:
   }
 };
 
+class pen {
+  voo::mapmem m_map;
+  inst *m_buf;
+  dotz::vec2 m_p{};
+  float m_d{};
+
+public:
+  explicit pen(vee::device_memory::type mem)
+      : m_map{mem}
+      , m_buf{static_cast<inst *>(*m_map)} {}
+
+  constexpr void aperture(float d) { m_d = d; }
+
+  void draw(float x, float y) {
+    dotz::vec2 np{x, y};
+    *m_buf++ = {m_p, np, m_d};
+    m_p = {x, y};
+  }
+  void draw_x(float x) { draw(x, m_p.y); }
+  void draw_y(float y) { draw(m_p.x, y); }
+
+  void move(float x, float y) { m_p = {x, y}; }
+  void move_x(float x) { move(x, m_p.y); }
+  void move_y(float y) { move(m_p.x, y); }
+};
+
+class instances : voo::update_thread {
+  static constexpr const auto max_insts = 10240;
+
+  voo::h2l_buffer m_is;
+
+  void build_cmd_buf(vee::command_buffer cb) override {
+    voo::cmd_buf_one_time_submit pcb{cb};
+    m_is.setup_copy(*pcb);
+  }
+
+public:
+  explicit instances(voo::device_and_queue *dq)
+      : update_thread{dq}
+      , m_is{*dq, max_insts * sizeof(vtx)} {}
+
+  [[nodiscard]] constexpr auto local_buffer() const noexcept {
+    return m_is.local_buffer();
+  }
+
+  [[nodiscard]] auto pen() noexcept { return ::pen{m_is.host_memory()}; }
+
+  using update_thread::run_once;
+};
+
 class thread : public voo::casein_thread {
 public:
   void run() override {
@@ -91,28 +141,29 @@ public:
         vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
 
     vertices vs{&dq};
-    voo::h2l_buffer is{dq, i_count * sizeof(inst)};
+    instances is{&dq};
 
     // TODO: fix validation issues while resizing
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 
       {
-        voo::mapmem m{is.host_memory()};
+        auto p = is.pen();
+        p.aperture(0.01);
 
-        constexpr const float d10 = 0.01f;
+        p.move(0, 0);
+        p.draw(5, 0);
+        p.draw_y(5);
+        p.draw_x(0);
+        p.draw_y(0);
 
-        auto *i = static_cast<inst *>(*m);
-        i[0] = {{0.0f, 0.0f}, {5.0f, 0.0f}, d10};
-        i[1] = {{5.0f, 0.0f}, {5.0f, 5.0f}, d10};
-        i[2] = {{5.0f, 5.0f}, {0.0f, 5.0f}, d10};
-        i[3] = {{0.0f, 5.0f}, {0.0f, 0.0f}, d10};
-
-        i[4] = {{6.0f, 0.0f}, {11.f, 0.0f}, d10};
-        i[5] = {{11.f, 0.0f}, {11.f, 5.0f}, d10};
-        i[6] = {{11.f, 5.0f}, {6.0f, 5.0f}, d10};
-        i[7] = {{6.0f, 5.0f}, {6.0f, 0.0f}, d10};
+        p.move_x(6);
+        p.draw_x(11);
+        p.draw_y(5);
+        p.draw_x(6);
+        p.draw_y(0);
       }
+      is.run_once();
 
       auto gp = vee::create_graphics_pipeline({
           .pipeline_layout = *pl,
@@ -143,8 +194,6 @@ public:
         };
 
         sw.queue_one_time_submit(dq, [&](auto pcb) {
-          is.setup_copy(*pcb);
-
           auto scb = sw.cmd_render_pass(pcb);
           vee::cmd_bind_gr_pipeline(*scb, *gp);
           vee::cmd_push_vertex_constants(*scb, *pl, &pc);
