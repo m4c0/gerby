@@ -85,6 +85,7 @@ public:
       auto gp = vee::create_graphics_pipeline({
           .pipeline_layout = *pl,
           .render_pass = dq.render_pass(),
+          .depth_test = false,
           .shaders{
               voo::shader("poc.vert.spv").pipeline_vert_stage(),
               voo::shader("poc.frag.spv").pipeline_frag_stage(),
