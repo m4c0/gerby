@@ -9,8 +9,10 @@ import vee;
 import voo;
 
 struct vtx {
-  dotz::vec2 anchor;
   dotz::vec2 delta;
+  dotz::vec2 a;
+  dotz::vec2 b;
+  float w;
 };
 constexpr const auto q_count = 3;
 constexpr const auto t_count = 2 * q_count;
@@ -44,29 +46,29 @@ public:
 
         // TODO: use a triangle strip
 
-        v[0] = {p0, {-1.f, -1.f}};
-        v[1] = {p0, {-1.f, 1.f}};
-        v[2] = {p0, {0.f, -1.f}};
+        v[0] = {{-1.f, -1.f}, p0, p1, 0};
+        v[1] = {{-1.f, 1.f}, p0, p1, 0};
+        v[2] = {{0.f, -1.f}, p0, p1, 0};
 
         v[3] = v[2];
         v[4] = v[1];
-        v[5] = {p0, {0.f, 1.f}};
+        v[5] = {{0.f, 1.f}, p0, p1, 0};
 
         v[6] = v[2];
         v[7] = v[5];
-        v[8] = {p1, {0.f, -1.f}};
+        v[8] = {{0.f, -1.f}, p0, p1, 1};
 
         v[9] = v[8];
         v[10] = v[5];
-        v[11] = {p1, {0.f, 1.f}};
+        v[11] = {{0.f, 1.f}, p0, p1, 1};
 
         v[12] = v[8];
         v[13] = v[11];
-        v[14] = {p1, {1.f, 1.f}};
+        v[14] = {{1.f, 1.f}, p0, p1, 1};
 
         v[15] = v[8];
         v[16] = v[14];
-        v[17] = {p1, {1.f, -1.f}};
+        v[17] = {{1.f, -1.f}, p0, p1, 1};
       }
 
       auto gp = vee::create_graphics_pipeline({
@@ -82,6 +84,8 @@ public:
           .attributes{
               vee::vertex_attribute_vec2(0, 0),
               vee::vertex_attribute_vec2(0, sizeof(dotz::vec2)),
+              vee::vertex_attribute_vec2(0, 2 * sizeof(dotz::vec2)),
+              vee::vertex_attribute_float(0, 3 * sizeof(dotz::vec2)),
           },
       });
 

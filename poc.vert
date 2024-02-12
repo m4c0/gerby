@@ -4,8 +4,10 @@ layout(push_constant) uniform upc {
   float aspect;
 } pc;
 
-layout(location = 0) in vec2 anchor;
-layout(location = 1) in vec2 delta;
+layout(location = 0) in vec2 delta;
+layout(location = 1) in vec2 a;
+layout(location = 2) in vec2 b;
+layout(location = 3) in float w;
 
 layout(location = 0) out vec2 f_delta;
 
@@ -20,7 +22,7 @@ void main() {
   d = rot * d;
   d *= 0.1f;
 
-  vec2 p = anchor;
+  vec2 p = mix(a, b, w);
   p += d;
   p.x /= pc.aspect;
 
