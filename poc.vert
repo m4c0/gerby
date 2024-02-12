@@ -24,6 +24,7 @@ void main() {
     sth, cth
   );
 
+  // TODO: check if this "stretches" in diagonals
   vec2 d = delta;
   d = rot * d;
   d *= 0.1f * diam;
