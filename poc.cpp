@@ -18,9 +18,7 @@ struct inst {
   float diam;
   float rnd;
 };
-constexpr const auto q_count = 3;
-constexpr const auto t_count = 2 * q_count;
-constexpr const auto v_count = 3 * t_count;
+constexpr const auto v_count = 8;
 
 struct upc {
   dotz::vec2 center;
@@ -41,31 +39,14 @@ class vertices : voo::update_thread {
 
     auto *v = static_cast<vtx *>(*m);
 
-    // TODO: use a triangle strip
-
     v[0] = {{-1.f, -1.f}, 0};
     v[1] = {{-1.f, 1.f}, 0};
     v[2] = {{0.f, -1.f}, 0};
-
-    v[3] = v[2];
-    v[4] = v[1];
-    v[5] = {{0.f, 1.f}, 0};
-
-    v[6] = v[2];
-    v[7] = v[5];
-    v[8] = {{0.f, -1.f}, 1};
-
-    v[9] = v[8];
-    v[10] = v[5];
-    v[11] = {{0.f, 1.f}, 1};
-
-    v[12] = v[8];
-    v[13] = v[11];
-    v[14] = {{1.f, 1.f}, 1};
-
-    v[15] = v[8];
-    v[16] = v[14];
-    v[17] = {{1.f, -1.f}, 1};
+    v[3] = {{0.f, 1.f}, 0};
+    v[4] = {{0.f, -1.f}, 1};
+    v[5] = {{0.f, 1.f}, 1};
+    v[6] = {{1.f, -1.f}, 1};
+    v[7] = {{1.f, 1.f}, 1};
   }
 
 public:
@@ -241,6 +222,7 @@ public:
       auto gp = vee::create_graphics_pipeline({
           .pipeline_layout = *pl,
           .render_pass = dq.render_pass(),
+          .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
           .back_face_cull = false,
           .depth_test = false,
           .shaders{
