@@ -27,7 +27,7 @@ void main() {
   // TODO: check if this "stretches" in diagonals
   vec2 d = delta;
   d = rot * d;
-  d *= 0.1f * diam;
+  d *= 0.5f * diam;
 
   vec2 p = mix(a, b, w);
   p += d;
