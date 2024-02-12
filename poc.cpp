@@ -185,8 +185,11 @@ public:
         // p.aperture(1.0, 0.4); // D14R,1.00X0.4
         p.flash_y(12.5);
 
-        // p.aperture(0.4, 1.0); // D15O0.4X1.00
-        p.flash_y(10);
+        // D15O0.4X1.00 - we simulate it with a small segment
+        p.aperture(0.4);
+        p.move_y(10 - 0.3);
+        p.draw_y(10 + 0.3);
+        p.move_y(10);
 
         p.aperture(0.1); // D10C,0.1
         p.move(37.5, 10);
