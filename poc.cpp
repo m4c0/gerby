@@ -20,6 +20,11 @@ struct inst {
 };
 constexpr const auto v_count = 8;
 
+struct rvtx {
+  dotz::vec2 pos;
+  dotz::vec2 pad{};
+};
+
 struct upc {
   dotz::vec2 center;
   float scale;
@@ -139,6 +144,31 @@ public:
   using update_thread::run_once;
 };
 
+class rvertices : voo::update_thread {
+  static constexpr const auto max_vtx = 10240;
+
+  voo::h2l_buffer m_is;
+
+  void build_cmd_buf(vee::command_buffer cb) override {
+    voo::cmd_buf_one_time_submit pcb{cb};
+    m_is.setup_copy(*pcb);
+  }
+
+public:
+  explicit rvertices(voo::device_and_queue *dq)
+      : update_thread{dq}
+      , m_is{*dq, max_vtx * sizeof(rvtx)} {}
+
+  [[nodiscard]] constexpr auto local_buffer() const noexcept {
+    return m_is.local_buffer();
+  }
+  [[nodiscard]] constexpr auto host_memory() const noexcept {
+    return m_is.host_memory();
+  }
+
+  using update_thread::run_once;
+};
+
 class lines {
   vee::pipeline_layout m_pl =
       vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
@@ -193,6 +223,56 @@ public:
   }
 };
 
+class region {
+  vee::pipeline_layout m_pl =
+      vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
+  vee::gr_pipeline m_gp;
+
+  rvertices m_vs;
+  unsigned m_count{};
+
+public:
+  explicit region(voo::device_and_queue *dq)
+      : m_gp{vee::create_graphics_pipeline({
+            .pipeline_layout = *m_pl,
+            .render_pass = dq->render_pass(),
+            .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+            .back_face_cull = false,
+            .depth_test = false,
+            .shaders{
+                voo::shader("poc.vert.spv").pipeline_vert_stage(),
+                voo::shader("poc.frag.spv").pipeline_frag_stage(),
+            },
+            .bindings{
+                vee::vertex_input_bind(sizeof(rvtx)),
+            },
+            .attributes{
+                vee::vertex_attribute_vec2(0, sizeof(dotz::vec2)),
+                vee::vertex_attribute_vec2(0, 0),
+                vee::vertex_attribute_vec2(0, 0),
+                vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+                vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+                vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+            },
+        })}
+      , m_vs{dq} {}
+
+  void update(unsigned (*load)(rvtx *)) {
+    {
+      voo::mapmem m{m_vs.host_memory()};
+      m_count = load(static_cast<rvtx *>(*m));
+    }
+    m_vs.run_once();
+  }
+
+  void cmd_draw(vee::command_buffer cb, upc *pc) {
+    vee::cmd_bind_gr_pipeline(cb, *m_gp);
+    vee::cmd_push_vertex_constants(cb, *m_pl, pc);
+    vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
+    vee::cmd_draw(cb, m_count);
+  }
+};
+
 void example_lines_1(pen &p) {
   p.aperture(0.1); // D10C,0.1
   p.move(0, 2.5);
@@ -235,9 +315,18 @@ void example_lines_1(pen &p) {
   p.flash(35, 9);
 }
 
-// TODO: add support for regions
-// Most probably, take note of the count here and draw lines over two
-// calls and regions as a different pipeline?
+unsigned example_region_1(rvtx *v) {
+  v[0] = {{5, 20}};
+  v[1] = {{5.f, 37.5f}};
+  v[2] = {{37.5f, 37.5f}};
+
+  v[3] = v[0];
+  v[4] = {{37.5f, 20.f}};
+
+  v[5] = v[0];
+  v[6] = {{5, 20}};
+  return 7;
+}
 
 // TODO: "clear" polarity
 
@@ -259,6 +348,9 @@ public:
     lines ls_1{&dq};
     ls_1.update(example_lines_1);
 
+    region rg_1{&dq};
+    rg_1.update(example_region_1);
+
     lines ls_2{&dq};
     ls_2.update(example_lines_2);
 
@@ -268,7 +360,7 @@ public:
 
       extent_loop(dq, sw, [&] {
         upc pc{
-            .center = {25.f / 2.f, 15.f / 1.f},
+            .center = {37.5f / 2.f, 37.5f / 2.f},
             .scale = 20.f,
             .aspect = sw.aspect(),
         };
@@ -279,6 +371,7 @@ public:
               .clear_color = {},
           });
           ls_1.cmd_draw(*scb, &pc);
+          rg_1.cmd_draw(*scb, &pc);
           ls_2.cmd_draw(*scb, &pc);
         });
       });
