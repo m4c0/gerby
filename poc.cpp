@@ -4,6 +4,7 @@
 
 import casein;
 import dotz;
+import hai;
 import sith;
 import vee;
 import voo;
@@ -34,6 +35,8 @@ struct upc {
 
 class layer {
 public:
+  virtual ~layer() = default;
+
   virtual void cmd_draw(vee::command_buffer cb, upc *pc) = 0;
 };
 
@@ -259,10 +262,10 @@ public:
     vee::cmd_draw(cb, v_count, m_i_count);
   }
 
-  static lines create(voo::device_and_queue *dq, void (*load)(pen &)) {
-    lines res{dq};
-    res.update(load);
-    return res;
+  static auto create(voo::device_and_queue *dq, void (*load)(pen &)) {
+    auto *res = new lines{dq};
+    res->update(load);
+    return hai::uptr<layer>{res};
   }
 };
 
@@ -316,10 +319,10 @@ public:
     vee::cmd_draw(cb, m_count);
   }
 
-  static region create(voo::device_and_queue *dq, void (*load)(fanner &)) {
-    region res{dq};
-    res.update(load);
-    return res;
+  static auto create(voo::device_and_queue *dq, void (*load)(fanner &)) {
+    auto res = new region{dq};
+    res->update(load);
+    return hai::uptr<layer>{res};
   }
 };
 
@@ -393,14 +396,17 @@ void example_lines_2(pen &p) {
 }
 
 class thread : public voo::casein_thread {
+  static constexpr const auto max_layers = 16;
+
 public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
 
-    auto ls_1 = lines::create(&dq, example_lines_1);
-    auto rg_1 = region::create(&dq, example_region_1);
-    auto rg_2 = region::create(&dq, example_region_2);
-    auto ls_2 = lines::create(&dq, example_lines_2);
+    hai::varray<hai::uptr<layer>> layers{max_layers};
+    layers.push_back(lines::create(&dq, example_lines_1));
+    layers.push_back(region::create(&dq, example_region_1));
+    layers.push_back(region::create(&dq, example_region_2));
+    layers.push_back(lines::create(&dq, example_lines_2));
 
     // TODO: fix validation issues while resizing
     while (!interrupted()) {
