@@ -32,6 +32,11 @@ struct upc {
   float aspect;
 };
 
+class layer {
+public:
+  virtual void cmd_draw(vee::command_buffer cb, upc *pc) = 0;
+};
+
 class vertices : voo::update_thread {
   voo::h2l_buffer m_vs;
 
@@ -199,7 +204,7 @@ public:
   using update_thread::run_once;
 };
 
-class lines {
+class lines : public layer {
   vee::pipeline_layout m_pl =
       vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
   vee::gr_pipeline m_gp;
@@ -246,7 +251,7 @@ public:
       , m_vs{dq}
       , m_is{dq} {}
 
-  void cmd_draw(vee::command_buffer cb, upc *pc) {
+  void cmd_draw(vee::command_buffer cb, upc *pc) override {
     vee::cmd_bind_gr_pipeline(cb, *m_gp);
     vee::cmd_push_vertex_constants(cb, *m_pl, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
@@ -261,7 +266,7 @@ public:
   }
 };
 
-class region {
+class region : public layer {
   vee::pipeline_layout m_pl =
       vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
   vee::gr_pipeline m_gp;
@@ -304,7 +309,7 @@ public:
         })}
       , m_vs{dq} {}
 
-  void cmd_draw(vee::command_buffer cb, upc *pc) {
+  void cmd_draw(vee::command_buffer cb, upc *pc) override {
     vee::cmd_bind_gr_pipeline(cb, *m_gp);
     vee::cmd_push_vertex_constants(cb, *m_pl, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
