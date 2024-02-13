@@ -410,23 +410,27 @@ void example_lines_2(pen &p) {
   p.flash_x(20);
 }
 
+auto build_example(voo::device_and_queue *dq) {
+  constexpr const auto max_layers = 16;
+
+  constexpr const dotz::vec4 red{1, 0, 0, 0};
+  constexpr const dotz::vec4 black{0, 0, 0, 0};
+
+  hai::varray<hai::uptr<layer>> layers{max_layers};
+  layers.push_back(lines::create(dq, example_lines_1, red));
+  layers.push_back(region::create(dq, example_region_1, red));
+  layers.push_back(region::create(dq, example_region_2, black));
+  layers.push_back(lines::create(dq, example_lines_2, red));
+  return layers;
+}
+
 class thread : public voo::casein_thread {
-  static constexpr const auto max_layers = 16;
-
-  static constexpr const dotz::vec4 red{1, 0, 0, 0};
-  static constexpr const dotz::vec4 black{0, 0, 0, 0};
-
 public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
 
-    hai::varray<hai::uptr<layer>> layers{max_layers};
-    layers.push_back(lines::create(&dq, example_lines_1, red));
-    layers.push_back(region::create(&dq, example_region_1, red));
-    layers.push_back(region::create(&dq, example_region_2, black));
-    layers.push_back(lines::create(&dq, example_lines_2, red));
+    auto layers = build_example(&dq);
 
-    // TODO: fix validation issues while resizing
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 
