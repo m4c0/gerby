@@ -145,6 +145,34 @@ public:
   using update_thread::run_once;
 };
 
+class fanner {
+  voo::mapmem m_m;
+  rvtx *m_v;
+  unsigned m_count{};
+
+  dotz::vec2 m_fan_ref{};
+
+public:
+  explicit fanner(vee::device_memory::type m)
+      : m_m{m}
+      , m_v{static_cast<rvtx *>(*m_m)} {}
+
+  [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
+
+  void move(float x, float y) {
+    m_fan_ref = {x, y};
+    m_v[m_count++] = {m_fan_ref};
+    m_v[m_count++] = {m_fan_ref};
+  }
+
+  void draw(float x, float y) {
+    m_v[m_count++] = {m_fan_ref};
+    m_v[m_count++] = {{x, y}};
+  }
+  void draw_x(float x) { draw(x, m_v[m_count - 1].pos.y); }
+  void draw_y(float y) { draw(m_v[m_count - 1].pos.x, y); }
+};
+
 class rvertices : voo::update_thread {
   static constexpr const auto max_vtx = 10240;
 
@@ -163,8 +191,9 @@ public:
   [[nodiscard]] constexpr auto local_buffer() const noexcept {
     return m_is.local_buffer();
   }
-  [[nodiscard]] constexpr auto host_memory() const noexcept {
-    return m_is.host_memory();
+
+  [[nodiscard]] auto fanner() const noexcept {
+    return ::fanner{m_is.host_memory()};
   }
 
   using update_thread::run_once;
@@ -209,9 +238,11 @@ public:
       , m_is{dq} {}
 
   void update(void (*load)(pen &)) {
-    auto p = m_is.pen();
-    load(p);
-    m_i_count = p.count();
+    {
+      auto p = m_is.pen();
+      load(p);
+      m_i_count = p.count();
+    }
     m_is.run_once();
   }
 
@@ -258,10 +289,11 @@ public:
         })}
       , m_vs{dq} {}
 
-  void update(unsigned (*load)(rvtx *)) {
+  void update(void (*load)(fanner &)) {
     {
-      voo::mapmem m{m_vs.host_memory()};
-      m_count = load(static_cast<rvtx *>(*m));
+      auto p = m_vs.fanner();
+      load(p);
+      m_count = p.count();
     }
     m_vs.run_once();
   }
@@ -316,33 +348,21 @@ void example_lines_1(pen &p) {
   p.flash(35, 9);
 }
 
-unsigned example_region_1(rvtx *v) {
-  v[0] = {{5, 20}};
-  v[1] = {{5.f, 37.5f}};
-  v[2] = {{37.5f, 37.5f}};
-
-  v[3] = v[0];
-  v[4] = {{37.5f, 20.f}};
-
-  v[5] = v[0];
-  v[6] = {{5, 20}};
-  return 7;
+void example_region_1(fanner &f) {
+  f.move(5, 20);
+  f.draw_y(37.5);
+  f.draw_x(37.5);
+  f.draw_y(20.0);
+  f.draw_x(5);
 }
 
-unsigned example_region_2(rvtx *v) {
-  v[0] = {{10.0f, 25.0f}};
-  v[1] = {{10.0f, 30.0f}};
-  v[2] = {{12.5f, 32.5f}};
-
-  v[3] = v[0];
-  v[4] = {{30.0f, 32.5f}};
-
-  v[5] = v[0];
-  v[6] = {{30.0f, 25.0f}};
-
-  v[7] = v[0];
-  v[8] = {{10.0f, 25.0f}};
-  return 9;
+void example_region_2(fanner &f) {
+  f.move(10, 25);
+  f.draw_y(30);
+  f.draw(12.5, 32.5); // X12500000Y32500000I2500000J0D01*
+  f.draw_x(30);
+  f.draw(30, 25); // X30000000Y25000000I0J-3750000D01*
+  f.draw_x(10);
 }
 
 void example_lines_2(pen &p) {
