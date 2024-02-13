@@ -34,7 +34,14 @@ struct upc {
 };
 
 class layer {
+  dotz::vec4 m_colour;
+
+protected:
+  [[nodiscard]] constexpr auto colour() const noexcept { return m_colour; }
+
 public:
+  explicit layer(dotz::vec4 c) : m_colour{c} {}
+
   virtual ~layer() = default;
 
   virtual void cmd_draw(vee::command_buffer cb, upc *pc) = 0;
@@ -226,8 +233,9 @@ class lines : public layer {
   }
 
 public:
-  explicit lines(voo::device_and_queue *dq)
-      : m_gp{vee::create_graphics_pipeline({
+  explicit lines(voo::device_and_queue *dq, dotz::vec4 colour)
+      : layer{colour}
+      , m_gp{vee::create_graphics_pipeline({
             .pipeline_layout = *m_pl,
             .render_pass = dq->render_pass(),
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
@@ -255,6 +263,8 @@ public:
       , m_is{dq} {}
 
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
+    pc->colour = colour();
+
     vee::cmd_bind_gr_pipeline(cb, *m_gp);
     vee::cmd_push_vertex_constants(cb, *m_pl, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
@@ -262,8 +272,9 @@ public:
     vee::cmd_draw(cb, v_count, m_i_count);
   }
 
-  static auto create(voo::device_and_queue *dq, void (*load)(pen &)) {
-    auto *res = new lines{dq};
+  static auto create(voo::device_and_queue *dq, void (*load)(pen &),
+                     dotz::vec4 colour) {
+    auto *res = new lines{dq, colour};
     res->update(load);
     return hai::uptr<layer>{res};
   }
@@ -287,8 +298,9 @@ class region : public layer {
   }
 
 public:
-  explicit region(voo::device_and_queue *dq)
-      : m_gp{vee::create_graphics_pipeline({
+  explicit region(voo::device_and_queue *dq, dotz::vec4 colour)
+      : layer{colour}
+      , m_gp{vee::create_graphics_pipeline({
             .pipeline_layout = *m_pl,
             .render_pass = dq->render_pass(),
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
@@ -313,14 +325,17 @@ public:
       , m_vs{dq} {}
 
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
+    pc->colour = colour();
+
     vee::cmd_bind_gr_pipeline(cb, *m_gp);
     vee::cmd_push_vertex_constants(cb, *m_pl, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
     vee::cmd_draw(cb, m_count);
   }
 
-  static auto create(voo::device_and_queue *dq, void (*load)(fanner &)) {
-    auto res = new region{dq};
+  static auto create(voo::device_and_queue *dq, void (*load)(fanner &),
+                     dotz::vec4 colour) {
+    auto res = new region{dq, colour};
     res->update(load);
     return hai::uptr<layer>{res};
   }
@@ -398,15 +413,18 @@ void example_lines_2(pen &p) {
 class thread : public voo::casein_thread {
   static constexpr const auto max_layers = 16;
 
+  static constexpr const dotz::vec4 red{1, 0, 0, 0};
+  static constexpr const dotz::vec4 black{0, 0, 0, 0};
+
 public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
 
     hai::varray<hai::uptr<layer>> layers{max_layers};
-    layers.push_back(lines::create(&dq, example_lines_1));
-    layers.push_back(region::create(&dq, example_region_1));
-    layers.push_back(region::create(&dq, example_region_2));
-    layers.push_back(lines::create(&dq, example_lines_2));
+    layers.push_back(lines::create(&dq, example_lines_1, red));
+    layers.push_back(region::create(&dq, example_region_1, red));
+    layers.push_back(region::create(&dq, example_region_2, black));
+    layers.push_back(lines::create(&dq, example_lines_2, red));
 
     // TODO: fix validation issues while resizing
     while (!interrupted()) {
@@ -414,7 +432,6 @@ public:
 
       extent_loop(dq, sw, [&] {
         upc pc{
-            .colour = {1, 0, 0, 0},
             .center = {37.5f / 2.f, 37.5f / 2.f},
             .scale = 20.f,
             .aspect = sw.aspect(),
@@ -425,14 +442,9 @@ public:
               .command_buffer = *pcb,
               .clear_color = {},
           });
-          ls_1.cmd_draw(*scb, &pc);
-          rg_1.cmd_draw(*scb, &pc);
-
-          pc.colour = {0, 0, 0, 0};
-          rg_2.cmd_draw(*scb, &pc);
-
-          pc.colour = {1, 0, 0, 0};
-          ls_2.cmd_draw(*scb, &pc);
+          for (auto &l : layers) {
+            l->cmd_draw(*scb, &pc);
+          }
         });
       });
     }
