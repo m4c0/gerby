@@ -208,6 +208,15 @@ class lines {
   instances m_is;
   unsigned m_i_count{};
 
+  void update(void (*load)(pen &)) {
+    {
+      auto p = m_is.pen();
+      load(p);
+      m_i_count = p.count();
+    }
+    m_is.run_once();
+  }
+
 public:
   explicit lines(voo::device_and_queue *dq)
       : m_gp{vee::create_graphics_pipeline({
@@ -237,21 +246,18 @@ public:
       , m_vs{dq}
       , m_is{dq} {}
 
-  void update(void (*load)(pen &)) {
-    {
-      auto p = m_is.pen();
-      load(p);
-      m_i_count = p.count();
-    }
-    m_is.run_once();
-  }
-
   void cmd_draw(vee::command_buffer cb, upc *pc) {
     vee::cmd_bind_gr_pipeline(cb, *m_gp);
     vee::cmd_push_vertex_constants(cb, *m_pl, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
     vee::cmd_bind_vertex_buffers(cb, 1, m_is.local_buffer());
     vee::cmd_draw(cb, v_count, m_i_count);
+  }
+
+  static lines create(voo::device_and_queue *dq, void (*load)(pen &)) {
+    lines res{dq};
+    res.update(load);
+    return res;
   }
 };
 
@@ -262,6 +268,15 @@ class region {
 
   rvertices m_vs;
   unsigned m_count{};
+
+  void update(void (*load)(fanner &)) {
+    {
+      auto p = m_vs.fanner();
+      load(p);
+      m_count = p.count();
+    }
+    m_vs.run_once();
+  }
 
 public:
   explicit region(voo::device_and_queue *dq)
@@ -289,20 +304,17 @@ public:
         })}
       , m_vs{dq} {}
 
-  void update(void (*load)(fanner &)) {
-    {
-      auto p = m_vs.fanner();
-      load(p);
-      m_count = p.count();
-    }
-    m_vs.run_once();
-  }
-
   void cmd_draw(vee::command_buffer cb, upc *pc) {
     vee::cmd_bind_gr_pipeline(cb, *m_gp);
     vee::cmd_push_vertex_constants(cb, *m_pl, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
     vee::cmd_draw(cb, m_count);
+  }
+
+  static region create(voo::device_and_queue *dq, void (*load)(fanner &)) {
+    region res{dq};
+    res.update(load);
+    return res;
   }
 };
 
@@ -380,17 +392,10 @@ public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
 
-    lines ls_1{&dq};
-    ls_1.update(example_lines_1);
-
-    region rg_1{&dq};
-    rg_1.update(example_region_1);
-
-    region rg_2{&dq};
-    rg_2.update(example_region_2);
-
-    lines ls_2{&dq};
-    ls_2.update(example_lines_2);
+    auto ls_1 = lines::create(&dq, example_lines_1);
+    auto rg_1 = region::create(&dq, example_region_1);
+    auto rg_2 = region::create(&dq, example_region_2);
+    auto ls_2 = lines::create(&dq, example_lines_2);
 
     // TODO: fix validation issues while resizing
     while (!interrupted()) {
