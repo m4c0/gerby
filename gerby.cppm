@@ -96,10 +96,10 @@ public:
   }
 
   [[nodiscard]] dotz::vec2 center() const noexcept {
-    return (m_max - m_min) / 2.0;
+    return (m_max + m_min) / 2.0;
   }
   [[nodiscard]] float scale() const noexcept {
-    auto c = center();
+    auto c = (m_max - m_min) / 2.0;
     auto m = c.x > c.y ? c.x : c.y;
     return m * 1.20;
   }
