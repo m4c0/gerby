@@ -85,6 +85,26 @@ public:
   }
 };
 
+class minmax {
+  dotz::vec2 m_min{};
+  dotz::vec2 m_max{};
+
+public:
+  void enclose(dotz::vec2 p) {
+    m_min = dotz::min(p, m_min);
+    m_max = dotz::max(p, m_max);
+  }
+
+  [[nodiscard]] dotz::vec2 center() const noexcept {
+    return (m_max - m_min) / 2.0;
+  }
+  [[nodiscard]] float scale() const noexcept {
+    auto c = center();
+    auto m = c.x > c.y ? c.x : c.y;
+    return m * 1.20;
+  }
+};
+
 export class pen {
   voo::mapmem m_map;
   inst *m_buf;
@@ -93,11 +113,13 @@ export class pen {
   float m_round{1};
   dotz::vec2 m_smear{};
   unsigned m_count{};
+  minmax *m_minmax;
 
 public:
-  explicit pen(vee::device_memory::type mem)
+  explicit pen(vee::device_memory::type mem, minmax *mm)
       : m_map{mem}
-      , m_buf{static_cast<inst *>(*m_map)} {}
+      , m_buf{static_cast<inst *>(*m_map)}
+      , m_minmax{mm} {}
 
   [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
 
@@ -120,6 +142,8 @@ public:
 
   void draw(float x, float y) {
     dotz::vec2 np{x, y};
+    m_minmax->enclose(m_p);
+    m_minmax->enclose(np);
     m_buf[m_count++] = {m_p, np, m_d, m_round};
     m_p = {x, y};
   }
@@ -157,7 +181,9 @@ public:
     return m_is.local_buffer();
   }
 
-  [[nodiscard]] auto pen() noexcept { return gerby::pen{m_is.host_memory()}; }
+  [[nodiscard]] auto pen(minmax *mm) noexcept {
+    return gerby::pen{m_is.host_memory(), mm};
+  }
 
   using update_thread::run_once;
 };
@@ -166,13 +192,14 @@ export class fanner {
   voo::mapmem m_m;
   rvtx *m_v;
   unsigned m_count{};
-
+  minmax *m_minmax{};
   dotz::vec2 m_fan_ref{};
 
 public:
-  explicit fanner(vee::device_memory::type m)
+  explicit fanner(vee::device_memory::type m, minmax *mm)
       : m_m{m}
-      , m_v{static_cast<rvtx *>(*m_m)} {}
+      , m_v{static_cast<rvtx *>(*m_m)}
+      , m_minmax{mm} {}
 
   [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
 
@@ -185,6 +212,7 @@ public:
   void draw(float x, float y) {
     m_v[m_count++] = {m_fan_ref};
     m_v[m_count++] = {{x, y}};
+    m_minmax->enclose({x, y});
   }
   void draw_x(float x) { draw(x, m_v[m_count - 1].pos.y); }
   void draw_y(float y) { draw(m_v[m_count - 1].pos.x, y); }
@@ -209,8 +237,8 @@ public:
     return m_is.local_buffer();
   }
 
-  [[nodiscard]] auto fanner() const noexcept {
-    return gerby::fanner{m_is.host_memory()};
+  [[nodiscard]] auto fanner(minmax *mm) const noexcept {
+    return gerby::fanner{m_is.host_memory(), mm};
   }
 
   using update_thread::run_once;
@@ -225,9 +253,9 @@ class lines : public layer {
   instances m_is;
   unsigned m_i_count{};
 
-  void update(void (*load)(pen &)) {
+  void update(void (*load)(pen &), minmax *mm) {
     {
-      auto p = m_is.pen();
+      auto p = m_is.pen(mm);
       load(p);
       m_i_count = p.count();
     }
@@ -275,9 +303,9 @@ public:
   }
 
   static auto create(voo::device_and_queue *dq, void (*load)(pen &),
-                     dotz::vec4 colour) {
+                     dotz::vec4 colour, minmax *mm) {
     auto *res = new lines{dq, colour};
-    res->update(load);
+    res->update(load, mm);
     return hai::uptr<layer>{res};
   }
 };
@@ -290,9 +318,9 @@ class region : public layer {
   rvertices m_vs;
   unsigned m_count{};
 
-  void update(void (*load)(fanner &)) {
+  void update(void (*load)(fanner &), minmax *mm) {
     {
-      auto p = m_vs.fanner();
+      auto p = m_vs.fanner(mm);
       load(p);
       m_count = p.count();
     }
@@ -336,9 +364,9 @@ public:
   }
 
   static auto create(voo::device_and_queue *dq, void (*load)(fanner &),
-                     dotz::vec4 colour) {
+                     dotz::vec4 colour, minmax *mm) {
     auto res = new region{dq, colour};
-    res->update(load);
+    res->update(load, mm);
     return hai::uptr<layer>{res};
   }
 };
@@ -348,18 +376,20 @@ export class builder {
 
   voo::device_and_queue *m_dq;
   hai::varray<hai::uptr<gerby::layer>> m_layers{max_layers};
+  minmax m_mm{};
 
 public:
   explicit builder(voo::device_and_queue *dq) : m_dq{dq} {}
 
   void add_lines(auto fn, dotz::vec4 colour) {
-    m_layers.push_back(lines::create(m_dq, fn, colour));
+    m_layers.push_back(lines::create(m_dq, fn, colour, &m_mm));
   }
   void add_region(auto fn, dotz::vec4 colour) {
-    m_layers.push_back(region::create(m_dq, fn, colour));
+    m_layers.push_back(region::create(m_dq, fn, colour, &m_mm));
   }
 
   [[nodiscard]] constexpr auto &layers() noexcept { return m_layers; }
+  [[nodiscard]] constexpr auto &minmax() noexcept { return m_mm; }
 };
 
 export class thread : public voo::casein_thread {
@@ -374,14 +404,15 @@ public:
     builder b{&dq};
     m_lb(&b);
 
+    auto mm = b.minmax();
+
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq, sw, [&] {
         upc pc{
-            // TODO: adjust based on min/max pos
-            .center = {37.5f / 2.f, 37.5f / 2.f},
-            .scale = 20.f,
+            .center = mm.center(),
+            .scale = mm.scale(),
             .aspect = sw.aspect(),
         };
 
