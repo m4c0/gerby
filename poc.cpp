@@ -103,12 +103,12 @@ public:
 template <>
 [[nodiscard]] constexpr distance<true>::operator distance<false>()
     const noexcept {
-  return distance<false>{m_val * 2.54};
+  return distance<false>{m_val * 25.4};
 }
 template <>
 [[nodiscard]] constexpr distance<false>::operator distance<true>()
     const noexcept {
-  return distance<true>{m_val / 2.54};
+  return distance<true>{m_val / 25.4};
 }
 
 constexpr auto operator""_in(long double d) { return distance<true>{d}; }
