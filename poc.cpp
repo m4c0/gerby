@@ -75,17 +75,91 @@ void example_lines_2(gerby::pen &p) {
   p.flash_x(20);
 }
 
-void build_example(gerby::builder *b) {
-  constexpr const dotz::vec4 red{1, 0, 0, 0};
-  constexpr const dotz::vec4 black{0, 0, 0, 0};
+constexpr const dotz::vec4 red{1, 0, 0, 0};
+constexpr const dotz::vec4 black{0, 0, 0, 0};
 
+void build_example(gerby::builder *b) {
   b->add_lines(example_lines_1, red);
   b->add_region(example_region_1, red);
   b->add_region(example_region_2, black);
   b->add_lines(example_lines_2, red);
 }
+auto &example_thread() {
+  static gerby::thread t{build_example};
+  return t;
+}
+
+template <bool Inches> class distance {
+  long double m_val;
+
+public:
+  explicit constexpr distance(long double d) noexcept : m_val{d} {}
+
+  [[nodiscard]] constexpr auto value() const noexcept { return m_val; }
+
+  [[nodiscard]] explicit constexpr operator distance<!Inches>() const noexcept;
+};
+
+template <>
+[[nodiscard]] constexpr distance<true>::operator distance<false>()
+    const noexcept {
+  return distance<false>{m_val * 2.54};
+}
+template <>
+[[nodiscard]] constexpr distance<false>::operator distance<true>()
+    const noexcept {
+  return distance<true>{m_val / 2.54};
+}
+
+constexpr auto operator""_in(long double d) { return distance<true>{d}; }
+constexpr auto operator""_mm(long double d) { return distance<false>{d}; }
+template <bool I>
+constexpr auto operator+(const distance<I> &a, const distance<I> &b) {
+  return distance<I>{a.value() + b.value()};
+}
+template <bool I>
+constexpr auto operator+(const distance<I> &a, const distance<!I> &b) {
+  return a + static_cast<distance<I>>(b);
+}
+template <bool I>
+constexpr auto operator*(const distance<I> &a, long double n) {
+  return distance<I>{a.value() * n};
+}
+
+// https://www.ti.com/lit/ds/symlink/lm555.pdf
+// https://www.pcb-3d.com/tutorials/how-to-calculate-pth-hole-and-pad-diameter-sizes-according-to-ipc-7251-ipc-2222-and-ipc-2221-standards/
+constexpr const auto pdip_pin_allowance = 0.1_mm;
+constexpr const auto pdip_pin_diam_max = 0.021_in;
+constexpr const auto pdip_pin_hole = pdip_pin_diam_max + 0.2_mm;
+constexpr const auto pdip_pin_pad = pdip_pin_hole + pdip_pin_allowance + 0.5_mm;
+constexpr const auto pdip_width = 0.3_in;
+auto &pcb_example() {
+  static gerby::thread t{[](auto b) {
+    b->add_lines(
+        [](auto &p) {
+          p.aperture(pdip_pin_pad.value());
+          for (auto i = 0; i < 4; i++) {
+            auto x = 0.1_in * i;
+            p.flash(x.value(), 0);
+            p.flash(x.value(), pdip_width.value());
+          }
+        },
+        red);
+    b->add_lines(
+        [](auto &p) {
+          p.aperture(pdip_pin_hole.value());
+          for (auto i = 0; i < 4; i++) {
+            auto x = 0.1_in * i;
+            p.flash(x.value(), 0);
+            p.flash(x.value(), pdip_width.value());
+          }
+        },
+        black);
+  }};
+  return t;
+}
 
 extern "C" void casein_handle(const casein::event &e) {
-  static gerby::thread t{build_example};
-  t.handle(e);
+  // example_thread().handle(e);
+  pcb_example().handle(e);
 }
