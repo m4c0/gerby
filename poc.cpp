@@ -75,18 +75,14 @@ void example_lines_2(gerby::pen &p) {
   p.flash_x(20);
 }
 
-auto build_example(voo::device_and_queue *dq) {
-  constexpr const auto max_layers = 16;
-
+void build_example(gerby::builder *b) {
   constexpr const dotz::vec4 red{1, 0, 0, 0};
   constexpr const dotz::vec4 black{0, 0, 0, 0};
 
-  hai::varray<hai::uptr<gerby::layer>> layers{max_layers};
-  layers.push_back(gerby::lines::create(dq, example_lines_1, red));
-  layers.push_back(gerby::region::create(dq, example_region_1, red));
-  layers.push_back(gerby::region::create(dq, example_region_2, black));
-  layers.push_back(gerby::lines::create(dq, example_lines_2, red));
-  return layers;
+  b->add_lines(example_lines_1, red);
+  b->add_region(example_region_1, red);
+  b->add_region(example_region_2, black);
+  b->add_lines(example_lines_2, red);
 }
 
 extern "C" void casein_handle(const casein::event &e) {

@@ -35,7 +35,7 @@ struct upc {
   float aspect;
 };
 
-export class layer {
+class layer {
   dotz::vec4 m_colour;
 
 protected:
@@ -216,7 +216,7 @@ public:
   using update_thread::run_once;
 };
 
-export class lines : public layer {
+class lines : public layer {
   vee::pipeline_layout m_pl =
       vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
   vee::gr_pipeline m_gp;
@@ -282,7 +282,7 @@ public:
   }
 };
 
-export class region : public layer {
+class region : public layer {
   vee::pipeline_layout m_pl =
       vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
   vee::gr_pipeline m_gp;
@@ -343,8 +343,27 @@ public:
   }
 };
 
+export class builder {
+  static constexpr const auto max_layers = 1024;
+
+  voo::device_and_queue *m_dq;
+  hai::varray<hai::uptr<gerby::layer>> m_layers{max_layers};
+
+public:
+  explicit builder(voo::device_and_queue *dq) : m_dq{dq} {}
+
+  void add_lines(auto fn, dotz::vec4 colour) {
+    m_layers.push_back(lines::create(m_dq, fn, colour));
+  }
+  void add_region(auto fn, dotz::vec4 colour) {
+    m_layers.push_back(region::create(m_dq, fn, colour));
+  }
+
+  [[nodiscard]] constexpr auto &layers() noexcept { return m_layers; }
+};
+
 export class thread : public voo::casein_thread {
-  hai::varray<hai::uptr<gerby::layer>> (*m_lb)(voo::device_and_queue *dq);
+  void (*m_lb)(builder *);
 
 public:
   explicit constexpr thread(decltype(m_lb) l) : m_lb{l} {}
@@ -352,7 +371,8 @@ public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
 
-    auto layers = m_lb(&dq);
+    builder b{&dq};
+    m_lb(&b);
 
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
@@ -370,7 +390,7 @@ public:
               .command_buffer = *pcb,
               .clear_color = {},
           });
-          for (auto &l : layers) {
+          for (auto &l : b.layers()) {
             l->cmd_draw(*scb, &pc);
           }
         });
