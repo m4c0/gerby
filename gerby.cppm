@@ -152,6 +152,7 @@ public:
 
   void flash(float x, float y) {
     m_p = {x, y};
+    m_minmax->enclose(m_p);
     m_buf[m_count++] = {m_p - m_smear, m_p + m_smear, m_d, m_round};
   }
   void flash_x(float x) { flash(x, m_p.y); }
