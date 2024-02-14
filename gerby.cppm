@@ -86,8 +86,8 @@ public:
 };
 
 class minmax {
-  dotz::vec2 m_min{};
-  dotz::vec2 m_max{};
+  dotz::vec2 m_min{1e20f, 1e20f};
+  dotz::vec2 m_max{-1e20f, -1e20f};
 
 public:
   void enclose(dotz::vec2 p) {
