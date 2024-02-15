@@ -4,10 +4,6 @@ import casein;
 import dotz;
 import gerby;
 
-constexpr const dotz::vec4 red{1, 0, 0, 0};
-constexpr const dotz::vec4 black{0, 0, 0, 0};
-constexpr const dotz::vec4 white{1, 1, 1, 0};
-
 template <bool Inches> class distance {
   long double m_val;
 
@@ -104,6 +100,8 @@ void pdip_doc(auto &p, auto cx, auto cy, auto w, auto h) {
 };
 
 extern "C" void casein_handle(const casein::event &e) {
+  using namespace gerby::palette;
+
   static gerby::thread t{[](auto b) {
     b->add_lines([](auto &p) { pdip_copper(p); }, red);
     b->add_lines([](auto &p) { pdip_hole(p); }, black);

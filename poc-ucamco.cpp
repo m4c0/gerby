@@ -1,7 +1,6 @@
 #pragma leco app
 
 import casein;
-import dotz;
 import gerby;
 
 void example_lines_1(gerby::pen &p) {
@@ -73,10 +72,9 @@ void example_lines_2(gerby::pen &p) {
   p.flash_x(20);
 }
 
-constexpr const dotz::vec4 red{1, 0, 0, 0};
-constexpr const dotz::vec4 black{0, 0, 0, 0};
-
 void build_example(gerby::builder *b) {
+  using namespace gerby::palette;
+
   b->add_lines(example_lines_1, red);
   b->add_region(example_region_1, red);
   b->add_region(example_region_2, black);
