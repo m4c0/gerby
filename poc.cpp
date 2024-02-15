@@ -5,6 +5,21 @@ import gerby;
 
 using namespace gerby::literals;
 
+void rect(auto &p, float cx, float cy, float w, float h) {
+  auto l = cx - w * 0.5;
+  auto b = cy - h * 0.5;
+  auto r = cx + w * 0.5;
+  auto t = cy + h * 0.5;
+
+  p.aperture(0.01);
+
+  p.move(l, t);
+  p.draw_y(b);
+  p.draw_x(r);
+  p.draw_y(t);
+  p.draw_x(l);
+}
+
 class pdip {
   // https://www.ti.com/lit/ds/symlink/lm555.pdf
   // https://www.pcb-3d.com/tutorials/how-to-calculate-pth-hole-and-pad-diameter-sizes-according-to-ipc-7251-ipc-2222-and-ipc-2221-standards/
@@ -31,7 +46,6 @@ class pdip {
 
   void five(auto &p, float cx, float cy) const {
     constexpr const auto f = 0.03;
-    p.aperture(0.01);
     p.move(cx + f, cy);
     p.draw_x(cx);
     p.draw_y(cy - f);
@@ -54,6 +68,8 @@ public:
     pads(p);
   }
   void doc(auto &p) const {
+    p.aperture(0.01);
+
     float w = draw_w.value();
     float h = (pin_dist * m_rows).value();
 
@@ -61,19 +77,10 @@ public:
     float cx = (draw_cx + m_cx).value();
     float cy = (draw_cy + m_cy).value();
 
+    rect(p, cx, cy, w, h);
+
     auto l = cx - w * 0.5;
-    auto b = cy - h * 0.5;
-    auto r = cx + w * 0.5;
     auto t = cy + h * 0.5;
-
-    p.aperture(0.01);
-
-    p.move(l, t);
-    p.draw_y(b);
-    p.draw_x(r);
-    p.draw_y(t);
-    p.draw_x(l);
-
     p.move_y(t - 0.05);
     p.draw(l + 0.05, t);
 
@@ -85,49 +92,68 @@ public:
 
 class resistor {
   // https://eepower.com/resistor-guide/resistor-standards-and-codes/resistor-sizes-and-packages/#
-  static constexpr const auto lead_diam = 0.8_mm;
-  static constexpr const auto body_len = 3.0_mm;
+  static constexpr const auto lead_diam = 0.6_mm + 0.1_mm;
+  static constexpr const auto body_diam = 2.5_mm;
+  static constexpr const auto body_len = 7.5_mm;
+  static constexpr const auto body_half_len = body_len * 0.5;
+
+  float m_x;
+  float m_y;
 
   void pads(auto &p) const {
-    p.flash(0, 0);
-    p.flash_y(body_len.value());
+    p.flash(m_x, m_y);
+    p.flash_y(m_y - body_len.value());
   }
 
 public:
+  constexpr resistor(float x, float y) : m_x{x}, m_y{y} {}
+
   void copper(auto &p) const {
-    p.aperture((lead_diam + 0.1_mm).value());
+    p.aperture((lead_diam + 0.5_mm).value());
     pads(p);
   }
   void holes(auto &p) const {
     p.aperture(lead_diam.value());
     pads(p);
   }
-  void doc(auto &p) const {}
+  void doc(auto &p) const {
+    p.aperture(0.01);
+    rect(p, m_x, m_y - body_half_len.value(), body_diam.value(),
+         body_len.value() * 0.75);
+  }
 };
 
 extern "C" void casein_handle(const casein::event &e) {
   using namespace gerby::palette;
 
   static constexpr const auto ic555 = pdip{8};
-  static constexpr const auto res = resistor{};
+  static constexpr const auto r1 = resistor{(0.5_in).value(), 0};
+  static constexpr const auto r2 = resistor{(0.7_in).value(), 0};
+  static constexpr const auto r3 = resistor{(0.9_in).value(), 0};
 
   static gerby::thread t{[](auto b) {
     b->add_lines(
         [](auto &p) {
           ic555.copper(p);
-          res.copper(p);
+          r1.copper(p);
+          r2.copper(p);
+          r3.copper(p);
         },
         red);
     b->add_lines(
         [](auto &p) {
           ic555.holes(p);
-          res.holes(p);
+          r1.holes(p);
+          r2.holes(p);
+          r3.holes(p);
         },
         black);
     b->add_lines(
         [](auto &p) {
           ic555.doc(p);
-          res.doc(p);
+          r1.doc(p);
+          r2.doc(p);
+          r3.doc(p);
         },
         white);
   }};
