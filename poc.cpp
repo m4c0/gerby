@@ -29,6 +29,18 @@ class pdip {
     }
   };
 
+  void five(auto &p, float cx, float cy) const {
+    constexpr const auto f = 0.03;
+    p.aperture(0.01);
+    p.move(cx + f, cy);
+    p.draw_x(cx);
+    p.draw_y(cy - f);
+    p.draw_x(cx + f * 0.5);
+    p.draw(cx + f, cy - f * 1.5);
+    p.draw(cx + f * 0.5, cy - f * 2.0);
+    p.draw_x(cx);
+  }
+
 public:
   explicit constexpr pdip(unsigned pins) : m_rows{pins / 2} {}
 
@@ -63,6 +75,10 @@ public:
 
     p.move_y(t - 0.05);
     p.draw(l + 0.05, t);
+
+    five(p, 0.1, 0.0);
+    five(p, 0.15, 0.0);
+    five(p, 0.2, 0.0);
   };
 };
 
