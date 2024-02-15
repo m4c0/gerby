@@ -7,7 +7,7 @@ template <bool Inches> class distance {
 public:
   explicit constexpr distance(long double d) noexcept : m_val{d} {}
 
-  [[nodiscard]] constexpr auto value() const noexcept { return m_val; }
+  [[nodiscard]] constexpr auto value() const noexcept;
 
   [[nodiscard]] constexpr auto operator-() const noexcept {
     return distance<Inches>{-m_val};
@@ -15,6 +15,15 @@ public:
 
   [[nodiscard]] explicit constexpr operator distance<!Inches>() const noexcept;
 };
+
+template <>
+[[nodiscard]] constexpr auto distance<true>::value() const noexcept {
+  return m_val;
+}
+template <>
+[[nodiscard]] constexpr auto distance<false>::value() const noexcept {
+  return m_val / 25.4;
+}
 
 template <>
 [[nodiscard]] constexpr distance<true>::operator distance<false>()
