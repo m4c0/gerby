@@ -3,6 +3,7 @@
 
 export module gerby;
 export import :palette;
+export import :distance;
 
 import casein;
 import dotz;
