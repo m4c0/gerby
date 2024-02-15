@@ -1,68 +1,76 @@
 #pragma leco app
 
 import casein;
-import dotz;
 import gerby;
 
 using namespace gerby::literals;
 
-// https://www.ti.com/lit/ds/symlink/lm555.pdf
-// https://www.pcb-3d.com/tutorials/how-to-calculate-pth-hole-and-pad-diameter-sizes-according-to-ipc-7251-ipc-2222-and-ipc-2221-standards/
-constexpr const auto pdip_pin_allowance = 0.1_mm;
-constexpr const auto pdip_pin_diam_max = 0.021_in;
-constexpr const auto pdip_pin_dist = 0.1_in;
-constexpr const auto pdip_pin_hole = pdip_pin_diam_max + 0.2_mm;
-constexpr const auto pdip_pin_pad = pdip_pin_hole + pdip_pin_allowance + 0.5_mm;
-constexpr const auto pdip_width = 0.3_in;
-constexpr const auto pdip_draw_w = 0.24_in;
-constexpr const auto pdip_draw_cx = pdip_width * 0.5;
-constexpr const auto pdip_draw_h = 0.4_in;
-constexpr const auto pdip_draw_cy = -pdip_pin_dist * 1.5;
+class pdip {
+  // https://www.ti.com/lit/ds/symlink/lm555.pdf
+  // https://www.pcb-3d.com/tutorials/how-to-calculate-pth-hole-and-pad-diameter-sizes-according-to-ipc-7251-ipc-2222-and-ipc-2221-standards/
+  static constexpr const auto pin_allowance = 0.1_mm;
+  static constexpr const auto pin_diam_max = 0.021_in;
+  static constexpr const auto pin_dist = 0.1_in;
+  static constexpr const auto pin_hole = pin_diam_max + 0.2_mm;
+  static constexpr const auto pin_pad = pin_hole + pin_allowance + 0.5_mm;
+  static constexpr const auto width = 0.3_in;
+  static constexpr const auto draw_w = 0.24_in;
+  static constexpr const auto draw_cx = width * 0.5;
+  static constexpr const auto draw_cy = -pin_dist * 1.5;
 
-void pdip_pads(auto &p) {
-  for (auto i = 0; i < 4; i++) {
-    auto n = pdip_pin_dist * -i;
-    p.flash(0, n.value());
-    p.flash(pdip_width.value(), n.value());
+  float m_cx;
+  float m_cy;
+
+  void pads(auto &p) const {
+    for (auto i = 0; i < 4; i++) {
+      auto n = pin_dist * -i;
+      p.flash(0, n.value());
+      p.flash(width.value(), n.value());
+    }
+  };
+
+public:
+  void holes(auto &p) const {
+    p.aperture(pin_hole.value());
+    pads(p);
   }
-};
-void pdip_hole(auto &p) {
-  p.aperture(pdip_pin_hole.value());
-  pdip_pads(p);
-}
-void pdip_copper(auto &p) {
-  p.aperture(pdip_pin_pad.value());
-  pdip_pads(p);
-}
-void pdip_doc(auto &p, auto cx, auto cy, auto w, auto h) {
-  auto l = (cx - w * 0.5).value();
-  auto b = (cy - h * 0.5).value();
-  auto r = (cx + w * 0.5).value();
-  auto t = (cy + h * 0.5).value();
+  void copper(auto &p) const {
+    p.aperture(pin_pad.value());
+    pads(p);
+  }
+  void doc(auto &p) const {
+    float w = draw_w.value();
+    float h = (pin_dist * 4).value();
 
-  p.aperture(0.01);
+    float cx = (draw_cx + m_cx).value();
+    float cy = (draw_cy + m_cy).value();
 
-  p.move(l, t);
-  p.draw_y(b);
-  p.draw_x(r);
-  p.draw_y(t);
-  p.draw_x(l);
+    auto l = cx - w * 0.5;
+    auto b = cy - h * 0.5;
+    auto r = cx + w * 0.5;
+    auto t = cy + h * 0.5;
 
-  p.move_y(t - 0.05);
-  p.draw(l + 0.05, t);
+    p.aperture(0.01);
+
+    p.move(l, t);
+    p.draw_y(b);
+    p.draw_x(r);
+    p.draw_y(t);
+    p.draw_x(l);
+
+    p.move_y(t - 0.05);
+    p.draw(l + 0.05, t);
+  };
 };
 
 extern "C" void casein_handle(const casein::event &e) {
   using namespace gerby::palette;
 
+  static constexpr const auto ic555 = pdip{};
   static gerby::thread t{[](auto b) {
-    b->add_lines([](auto &p) { pdip_copper(p); }, red);
-    b->add_lines([](auto &p) { pdip_hole(p); }, black);
-    b->add_lines(
-        [](auto &p) {
-          pdip_doc(p, pdip_draw_cx, pdip_draw_cy, pdip_draw_w, pdip_draw_h);
-        },
-        white);
+    b->add_lines([](auto &p) { ic555.copper(p); }, red);
+    b->add_lines([](auto &p) { ic555.holes(p); }, black);
+    b->add_lines([](auto &p) { ic555.doc(p); }, white);
   }};
   t.handle(e);
 }
