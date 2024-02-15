@@ -35,9 +35,10 @@ class pdip {
     p.move(cx + f, cy);
     p.draw_x(cx);
     p.draw_y(cy - f);
-    p.draw_x(cx + f * 0.5);
-    p.draw(cx + f, cy - f * 1.5);
-    p.draw(cx + f * 0.5, cy - f * 2.0);
+    p.draw_x(cx + f * 0.75);
+    p.draw(cx + f, cy - f * 1.25);
+    p.draw_y(cy - f * 1.75);
+    p.draw(cx + f * 0.75, cy - f * 2.0);
     p.draw_x(cx);
   }
 
