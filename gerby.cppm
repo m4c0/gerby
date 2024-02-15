@@ -2,6 +2,7 @@
 #pragma leco add_shader "gerby.frag"
 
 export module gerby;
+export import :palette;
 
 import casein;
 import dotz;
@@ -9,12 +10,6 @@ import hai;
 import sith;
 import vee;
 import voo;
-
-export namespace gerby::palette {
-constexpr const dotz::vec4 black{0, 0, 0, 0};
-constexpr const dotz::vec4 red{1, 0, 0, 0};
-constexpr const dotz::vec4 white{1, 1, 1, 0};
-} // namespace gerby::palette
 
 namespace gerby {
 struct vtx {
