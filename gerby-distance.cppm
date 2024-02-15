@@ -7,6 +7,7 @@ template <bool Inches> class distance {
 public:
   explicit constexpr distance(long double d) noexcept : m_val{d} {}
 
+  [[nodiscard]] constexpr auto raw_value() const noexcept { return m_val; }
   [[nodiscard]] constexpr auto value() const noexcept;
 
   [[nodiscard]] constexpr auto operator-() const noexcept {
@@ -38,7 +39,7 @@ template <>
 
 template <bool I>
 constexpr auto operator+(const distance<I> &a, const distance<I> &b) {
-  return distance<I>{a.value() + b.value()};
+  return distance<I>{a.raw_value() + b.raw_value()};
 }
 template <bool I>
 constexpr auto operator+(const distance<I> &a, const distance<!I> &b) {
@@ -47,7 +48,7 @@ constexpr auto operator+(const distance<I> &a, const distance<!I> &b) {
 
 template <bool I>
 constexpr auto operator-(const distance<I> &a, const distance<I> &b) {
-  return distance<I>{a.value() - b.value()};
+  return distance<I>{a.raw_value() - b.raw_value()};
 }
 template <bool I>
 constexpr auto operator-(const distance<I> &a, const distance<!I> &b) {
@@ -56,15 +57,15 @@ constexpr auto operator-(const distance<I> &a, const distance<!I> &b) {
 
 template <bool I>
 constexpr auto operator+(const distance<I> &a, long double n) {
-  return distance<I>{a.value() + n};
+  return distance<I>{a.raw_value() + n};
 }
 template <bool I>
 constexpr auto operator-(const distance<I> &a, long double n) {
-  return distance<I>{a.value() - n};
+  return distance<I>{a.raw_value() - n};
 }
 template <bool I>
 constexpr auto operator*(const distance<I> &a, long double n) {
-  return distance<I>{a.value() * n};
+  return distance<I>{a.raw_value() * n};
 }
 } // namespace gerby
 
