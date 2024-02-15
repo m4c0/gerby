@@ -16,13 +16,13 @@ class pdip {
   static constexpr const auto width = 0.3_in;
   static constexpr const auto draw_w = 0.24_in;
   static constexpr const auto draw_cx = width * 0.5;
-  static constexpr const auto draw_cy = -pin_dist * 1.5;
 
-  float m_cx;
-  float m_cy;
+  float m_cx{};
+  float m_cy{};
+  unsigned m_rows;
 
   void pads(auto &p) const {
-    for (auto i = 0; i < 4; i++) {
+    for (auto i = 0; i < m_rows; i++) {
       auto n = pin_dist * -i;
       p.flash(0, n.value());
       p.flash(width.value(), n.value());
@@ -30,6 +30,8 @@ class pdip {
   };
 
 public:
+  explicit constexpr pdip(unsigned pins) : m_rows{pins / 2} {}
+
   void holes(auto &p) const {
     p.aperture(pin_hole.value());
     pads(p);
@@ -40,8 +42,9 @@ public:
   }
   void doc(auto &p) const {
     float w = draw_w.value();
-    float h = (pin_dist * 4).value();
+    float h = (pin_dist * m_rows).value();
 
+    auto draw_cy = -pin_dist * (m_rows / 2.0 - 0.5);
     float cx = (draw_cx + m_cx).value();
     float cy = (draw_cy + m_cy).value();
 
@@ -66,7 +69,7 @@ public:
 extern "C" void casein_handle(const casein::event &e) {
   using namespace gerby::palette;
 
-  static constexpr const auto ic555 = pdip{};
+  static constexpr const auto ic555 = pdip{8};
   static gerby::thread t{[](auto b) {
     b->add_lines([](auto &p) { ic555.copper(p); }, red);
     b->add_lines([](auto &p) { ic555.holes(p); }, black);
