@@ -152,18 +152,29 @@ constexpr const auto pdip_draw_cx = pdip_width * 0.5;
 constexpr const auto pdip_draw_h = 0.4_in;
 constexpr const auto pdip_draw_cy = -pdip_pin_dist * 1.5;
 
-constexpr const auto pdip = [](auto &p) {
+void pdip_pads(auto &p) {
   for (auto i = 0; i < 4; i++) {
     auto n = pdip_pin_dist * -i;
     p.flash(0, n.value());
     p.flash(pdip_width.value(), n.value());
   }
 };
-constexpr const auto dip = [](auto &p, auto cx, auto cy, auto w, auto h) {
+void pdip_hole(auto &p) {
+  p.aperture(pdip_pin_hole.value());
+  pdip_pads(p);
+}
+void pdip_copper(auto &p) {
+  p.aperture(pdip_pin_pad.value());
+  pdip_pads(p);
+}
+void pdip_doc(auto &p, auto cx, auto cy, auto w, auto h) {
   auto l = (cx - w * 0.5).value();
   auto b = (cy - h * 0.5).value();
   auto r = (cx + w * 0.5).value();
   auto t = (cy + h * 0.5).value();
+
+  p.aperture(0.01);
+
   p.move(l, t);
   p.draw_y(b);
   p.draw_x(r);
@@ -175,22 +186,11 @@ constexpr const auto dip = [](auto &p, auto cx, auto cy, auto w, auto h) {
 };
 auto &pcb_example() {
   static gerby::thread t{[](auto b) {
+    b->add_lines([](auto &p) { pdip_copper(p); }, red);
+    b->add_lines([](auto &p) { pdip_hole(p); }, black);
     b->add_lines(
         [](auto &p) {
-          p.aperture(pdip_pin_pad.value());
-          pdip(p);
-        },
-        red);
-    b->add_lines(
-        [](auto &p) {
-          p.aperture(pdip_pin_hole.value());
-          pdip(p);
-        },
-        black);
-    b->add_lines(
-        [](auto &p) {
-          p.aperture(0.01);
-          dip(p, pdip_draw_cx, pdip_draw_cy, pdip_draw_w, pdip_draw_h);
+          pdip_doc(p, pdip_draw_cx, pdip_draw_cy, pdip_draw_w, pdip_draw_h);
         },
         white);
   }};
