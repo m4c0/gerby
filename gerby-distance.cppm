@@ -35,6 +35,7 @@ template <bool I>
 constexpr auto operator+(const distance<I> &a, const distance<!I> &b) {
   return a + static_cast<distance<I>>(b);
 }
+
 template <bool I>
 constexpr auto operator-(const distance<I> &a, const distance<I> &b) {
   return distance<I>{a.value() - b.value()};
@@ -42,6 +43,15 @@ constexpr auto operator-(const distance<I> &a, const distance<I> &b) {
 template <bool I>
 constexpr auto operator-(const distance<I> &a, const distance<!I> &b) {
   return a - static_cast<distance<I>>(b);
+}
+
+template <bool I>
+constexpr auto operator+(const distance<I> &a, long double n) {
+  return distance<I>{a.value() + n};
+}
+template <bool I>
+constexpr auto operator-(const distance<I> &a, long double n) {
+  return distance<I>{a.value() - n};
 }
 template <bool I>
 constexpr auto operator*(const distance<I> &a, long double n) {
