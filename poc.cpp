@@ -83,14 +83,53 @@ public:
   };
 };
 
+class resistor {
+  // https://eepower.com/resistor-guide/resistor-standards-and-codes/resistor-sizes-and-packages/#
+  static constexpr const auto lead_diam = 0.8_mm;
+  static constexpr const auto body_len = 3.0_mm;
+
+  void pads(auto &p) const {
+    p.flash(0, 0);
+    p.flash_y(body_len.value());
+  }
+
+public:
+  void copper(auto &p) const {
+    p.aperture((lead_diam + 0.1_mm).value());
+    pads(p);
+  }
+  void holes(auto &p) const {
+    p.aperture(lead_diam.value());
+    pads(p);
+  }
+  void doc(auto &p) const {}
+};
+
 extern "C" void casein_handle(const casein::event &e) {
   using namespace gerby::palette;
 
   static constexpr const auto ic555 = pdip{8};
+  static constexpr const auto res = resistor{};
+
   static gerby::thread t{[](auto b) {
-    b->add_lines([](auto &p) { ic555.copper(p); }, red);
-    b->add_lines([](auto &p) { ic555.holes(p); }, black);
-    b->add_lines([](auto &p) { ic555.doc(p); }, white);
+    b->add_lines(
+        [](auto &p) {
+          ic555.copper(p);
+          res.copper(p);
+        },
+        red);
+    b->add_lines(
+        [](auto &p) {
+          ic555.holes(p);
+          res.holes(p);
+        },
+        black);
+    b->add_lines(
+        [](auto &p) {
+          ic555.doc(p);
+          res.doc(p);
+        },
+        white);
   }};
   t.handle(e);
 }
