@@ -92,9 +92,9 @@ public:
 
 class resistor {
   // https://eepower.com/resistor-guide/resistor-standards-and-codes/resistor-sizes-and-packages/#
-  static constexpr const auto lead_diam = 0.6_mm + 0.1_mm;
+  static constexpr const auto lead_diam = 0.6_mm + 0.2_mm;
   static constexpr const auto body_diam = 2.5_mm;
-  static constexpr const auto body_len = 7.5_mm;
+  static constexpr const auto body_len = 8.5_mm;
   static constexpr const auto body_half_len = body_len * 0.5;
 
   float m_x;
