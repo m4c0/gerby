@@ -69,6 +69,13 @@ public:
     return static_cast<float>(value());
   }
 
+  [[nodiscard]] constexpr auto abs() const noexcept {
+    return distance<DT>{m_val > 0 ? m_val : -m_val};
+  }
+  [[nodiscard]] constexpr float sign() const noexcept {
+    return m_val > 0 ? 1 : -1;
+  }
+
   template <distance_type O>
   constexpr auto operator+(const distance<O> &o) const noexcept {
     return distance<DT>{m_val + convert(O, DT, o.raw_value())};
@@ -76,6 +83,11 @@ public:
   template <distance_type O>
   constexpr auto operator-(const distance<O> &o) const noexcept {
     return distance<DT>{m_val - convert(O, DT, o.raw_value())};
+  }
+
+  template <distance_type O>
+  constexpr auto operator>(const distance<O> &o) const noexcept {
+    return m_val > convert(O, DT, o.raw_value());
   }
 
   constexpr auto operator*(long double n) const noexcept {

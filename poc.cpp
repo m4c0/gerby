@@ -116,6 +116,48 @@ public:
   }
 };
 
+class turtle {
+  gerby::pen *m_pen;
+
+  gerby::d::inch m_x{};
+  gerby::d::inch m_y{};
+
+public:
+  explicit constexpr turtle(gerby::pen *p) : m_pen{p} {}
+
+  void move(const compo &c, unsigned pin) {
+    m_x = c.pin_x(pin);
+    m_y = c.pin_y(pin);
+    m_pen->move(m_x, m_y);
+  }
+
+  void draw(const compo &c, unsigned pin) {
+    auto nx = c.pin_x(pin);
+    auto ny = c.pin_y(pin);
+
+    auto dx = nx - m_x;
+    auto dy = ny - m_y;
+    if (dx.abs() > dy.abs()) {
+      m_pen->draw(m_x + dy.abs() * dx.sign(), ny);
+    } else {
+      m_pen->draw(nx, m_y + dx.abs() * dy.sign());
+    }
+
+    m_x = nx;
+    m_y = ny;
+    m_pen->draw(m_x, m_y);
+  }
+  void draw(gerby::d::inch dx, gerby::d::inch dy) {
+    m_x = m_x + dx;
+    m_y = m_y + dy;
+    m_pen->draw(m_x, m_y);
+  }
+  void draw_x(gerby::d::inch dx) {
+    m_x = m_x + dx;
+    m_pen->draw_x(m_x);
+  }
+};
+
 extern "C" void casein_handle(const casein::event &e) {
   using namespace gerby::palette;
 
@@ -136,16 +178,11 @@ extern "C" void casein_handle(const casein::event &e) {
     b->add_lines(
         [](auto &p) {
           p.aperture(15.0_mil);
-          {
-            auto sx = ne555.pin_x(1);
-            auto sy = ne555.pin_y(1);
-            auto ex = ne555.pin_x(5);
-            auto ey = ne555.pin_y(5);
-            p.move(sx, ne555.pin_y(1));
-            p.draw_x(sx + 2.0_mm);
-            p.draw(sx + 2.0_mm + sy - ey, ey);
-            p.draw_x(ex);
-          }
+
+          turtle t{&p};
+          t.move(ne555, 1);
+          t.draw_x(2.0_mm);
+          t.draw(ne555, 5);
 
           r1.copper(p);
           r2.copper(p);
