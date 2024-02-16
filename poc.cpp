@@ -196,6 +196,12 @@ extern "C" void casein_handle(const casein::event &e) {
           t.draw_x(-3.0_mm);
           t.draw(ne555, 4);
 
+          t.move(ne555, 8);
+          t.draw(r1, 1);
+
+          t.move(r1, 2);
+          t.draw(ne555, 7);
+
           r1.copper(p);
           r2.copper(p);
           r3.copper(p);
