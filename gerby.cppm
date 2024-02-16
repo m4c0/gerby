@@ -127,12 +127,10 @@ public:
 
   [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
 
-  constexpr void aperture(float d) {
-    m_d = d;
-    m_smear = {};
-    m_round = 1.0;
-  }
-  constexpr void aperture(float w, float h, bool round) {
+  constexpr void aperture(d::inch d) { aperture(d, d, true); }
+  constexpr void aperture(d::inch iw, d::inch ih, bool round) {
+    auto w = iw.as_float();
+    auto h = ih.as_float();
     if (w > h) {
       m_d = h;
       m_smear = {w - h, 0.0};
@@ -144,27 +142,27 @@ public:
     m_round = round;
   }
 
-  void draw(float x, float y) {
-    dotz::vec2 np{x, y};
+  void draw(d::inch x, d::inch y) {
+    dotz::vec2 np{x.as_float(), y.as_float()};
     m_minmax->enclose(m_p);
     m_minmax->enclose(np);
     m_buf[m_count++] = {m_p, np, m_d, m_round};
-    m_p = {x, y};
+    m_p = np;
   }
-  void draw_x(float x) { draw(x, m_p.y); }
-  void draw_y(float y) { draw(m_p.x, y); }
+  void draw_x(d::inch x) { draw(x, m_p.y); }
+  void draw_y(d::inch y) { draw(m_p.x, y); }
 
-  void flash(float x, float y) {
-    m_p = {x, y};
+  void flash(d::inch x, d::inch y) {
+    m_p = {x.as_float(), y.as_float()};
     m_minmax->enclose(m_p);
     m_buf[m_count++] = {m_p - m_smear, m_p + m_smear, m_d, m_round};
   }
-  void flash_x(float x) { flash(x, m_p.y); }
-  void flash_y(float y) { flash(m_p.x, y); }
+  void flash_x(d::inch x) { flash(x, m_p.y); }
+  void flash_y(d::inch y) { flash(m_p.x, y); }
 
-  void move(float x, float y) { m_p = {x, y}; }
-  void move_x(float x) { move(x, m_p.y); }
-  void move_y(float y) { move(m_p.x, y); }
+  void move(d::inch x, d::inch y) { m_p = {x.as_float(), y.as_float()}; }
+  void move_x(d::inch x) { move(x, m_p.y); }
+  void move_y(d::inch y) { move(m_p.x, y); }
 };
 
 class instances : voo::update_thread {
