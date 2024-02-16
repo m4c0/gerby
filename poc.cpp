@@ -61,6 +61,9 @@ class r0805 : public compo {
     p.flash_x(x() + d - b);
   }
 
+protected:
+  auto center_x() const { return x() + (d - b) * 0.5f; }
+
 public:
   using compo::compo;
 
@@ -71,9 +74,11 @@ public:
   using r0805::r0805;
 
   void doc(gerby::pen &p) const override {
-    p.aperture(0.6_in);
-    p.move(x() + 0.5_mm, y());
-    p.draw_y(y() - 0.5_mm);
+    p.aperture(10.0_mil);
+    p.move(center_x() - 6.0_mil, y() - 8.0_mil);
+    p.draw_y(y() + 8.0_mil);
+    p.draw(center_x() + 6.0_mil, y());
+    p.draw(center_x() - 6.0_mil, y() - 8.0_mil);
   }
 };
 
@@ -96,7 +101,7 @@ public:
 
   void copper(gerby::pen &p) const override { pads(p); }
   void doc(gerby::pen &p) const override {
-    p.aperture(0.5_mm, 1.0_mm, false);
+    p.aperture(10.0_mil, 30.0_mil, true);
     p.flash(x() + pw, y());
   }
 };
