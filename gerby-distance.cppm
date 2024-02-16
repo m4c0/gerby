@@ -1,77 +1,96 @@
 export module gerby:distance;
 
 export namespace gerby {
-template <bool Inches> class distance {
+enum distance_type { inch, mm, mil };
+
+constexpr long double convert(distance_type from, distance_type to,
+                              long double v) {
+  static constexpr const auto inch2mm = 25.4;
+  static constexpr const auto inch2mil = 1000.0;
+  static constexpr const auto mil2mm = 0.0254;
+
+  switch (from) {
+  case inch:
+    switch (to) {
+    case inch:
+      return v;
+    case mm:
+      return v * inch2mm;
+    case mil:
+      return v * inch2mil;
+    }
+  case mm:
+    switch (to) {
+    case inch:
+      return v / inch2mm;
+    case mm:
+      return v;
+    case mil:
+      return v / mil2mm;
+    }
+  case mil:
+    switch (to) {
+    case inch:
+      return v / inch2mil;
+    case mm:
+      return v * mil2mm;
+    case mil:
+      return v;
+    }
+  }
+}
+
+template <distance_type DT> class distance {
   long double m_val;
 
 public:
   constexpr distance() noexcept = default;
   constexpr distance(long double d) noexcept : m_val{d} {}
-  constexpr distance(distance<Inches> &&o) noexcept = default;
-  constexpr distance(const distance<Inches> &o) noexcept = default;
-  constexpr distance(const distance<!Inches> &o) noexcept;
+  constexpr distance(distance<DT> &&o) noexcept = default;
+  constexpr distance(const distance<DT> &o) noexcept = default;
+  template <distance_type DT2>
+    requires requires { DT != DT2; }
+  constexpr distance(const distance<DT2> &o) noexcept
+      : m_val{convert(DT2, DT, o.raw_value())} {}
 
   [[nodiscard]] constexpr auto raw_value() const noexcept { return m_val; }
-  [[nodiscard]] constexpr auto value() const noexcept;
+  [[nodiscard]] constexpr auto value() const noexcept {
+    return convert(DT, inch, m_val);
+  }
 
   [[nodiscard]] constexpr auto operator-() const noexcept {
-    return distance<Inches>{-m_val};
+    return distance<DT>{-m_val};
   }
 
   [[nodiscard]] constexpr float as_float() const noexcept {
     return static_cast<float>(value());
   }
+
+  template <distance_type O>
+  constexpr auto operator+(const distance<O> &o) const noexcept {
+    return distance<DT>{m_val + convert(O, DT, o.raw_value())};
+  }
+  template <distance_type O>
+  constexpr auto operator-(const distance<O> &o) const noexcept {
+    return distance<DT>{m_val - convert(O, DT, o.raw_value())};
+  }
+
+  constexpr auto operator*(long double n) const noexcept {
+    return distance<DT>{m_val * n};
+  }
 };
-
-template <>
-constexpr distance<true>::distance(const distance<false> &o) noexcept
-    : distance{o.raw_value() / 25.4} {}
-
-template <>
-constexpr distance<false>::distance(const distance<true> &o) noexcept
-    : distance{o.raw_value() * 25.4} {}
-
-template <>
-[[nodiscard]] constexpr auto distance<true>::value() const noexcept {
-  return m_val;
-}
-template <>
-[[nodiscard]] constexpr auto distance<false>::value() const noexcept {
-  return m_val / 25.4;
-}
-
-template <bool I>
-constexpr auto operator+(const distance<I> &a, const distance<I> &b) {
-  return distance<I>{a.raw_value() + b.raw_value()};
-}
-template <bool I>
-constexpr auto operator+(const distance<I> &a, const distance<!I> &b) {
-  return a + static_cast<distance<I>>(b);
-}
-
-template <bool I>
-constexpr auto operator-(const distance<I> &a, const distance<I> &b) {
-  return distance<I>{a.raw_value() - b.raw_value()};
-}
-template <bool I>
-constexpr auto operator-(const distance<I> &a, const distance<!I> &b) {
-  return a - static_cast<distance<I>>(b);
-}
-
-template <bool I>
-constexpr auto operator*(const distance<I> &a, long double n) {
-  return distance<I>{a.raw_value() * n};
-}
 } // namespace gerby
 
 export namespace gerby::d {
-using inch = gerby::distance<true>;
-using mm = gerby::distance<false>;
+using inch = gerby::distance<gerby::inch>;
+using mm = gerby::distance<gerby::mm>;
+using mil = gerby::distance<gerby::mil>;
 }; // namespace gerby::d
 
 export namespace gerby::literals {
-constexpr auto operator""_in(long double d) { return distance<true>{d}; }
-constexpr auto operator""_mm(long double d) { return distance<false>{d}; }
+constexpr auto operator""_in(long double d) { return distance<inch>{d}; }
+constexpr auto operator""_mm(long double d) { return distance<mm>{d}; }
+constexpr auto operator""_mil(long double d) { return distance<mil>{d}; }
 } // namespace gerby::literals
 
 namespace {
