@@ -2,8 +2,8 @@
 #pragma leco add_shader "gerby.frag"
 
 export module gerby;
-export import :palette;
 export import :distance;
+export import :palette;
 
 import casein;
 import dotz;
@@ -17,12 +17,14 @@ struct vtx {
   dotz::vec2 delta;
   float w;
 };
+static_assert(sizeof(vtx) == 3 * sizeof(float));
 struct inst {
   dotz::vec2 a;
   dotz::vec2 b;
   float diam;
   float rnd;
 };
+static_assert(sizeof(inst) == 6 * sizeof(float));
 constexpr const auto v_count = 8;
 
 struct rvtx {
