@@ -206,8 +206,8 @@ extern "C" void casein_handle(const casein::event &e) {
   // https://datasheet.lcsc.com/lcsc/2304140030_FH--Guangdong-Fenghua-Advanced-Tech-0805B471K500NT_C1743.pdf
   // https://datasheet.lcsc.com/lcsc/1806151129_Hubei-KENTO-Elec-KT-0805Y_C2296.pdf
   // https://www.ti.com/lit/ds/symlink/lm555.pdf
-  static constexpr const r0805 r1{10.0_mm, 0.0_mm, CW270};
-  static constexpr const r0805 r2{10.0_mm, 2.0_mm};
+  static constexpr const r0805 r1{8.0_mm, 0.0_mm, CW270};
+  static constexpr const r0805 r2{4.0_mm, 2.0_mm, CW180};
   static constexpr const r0805 r3{10.0_mm, 4.0_mm};
   static constexpr const r0805 c1{10.0_mm, 6.0_mm};
   static constexpr const r0805 c2{10.0_mm, 8.0_mm};
@@ -225,12 +225,12 @@ extern "C" void casein_handle(const casein::event &e) {
           t.draw_x(2.0_mm);
           t.draw(ne555, 6);
 
-          t.move(ne555, 8);
+          t.move(r1, 1);
           t.draw_x(1.0_mm);
           t.draw(1.0_mm, -1.0_mm);
           t.draw_y(-3.0_mm);
           t.draw(-1.0_mm, -1.0_mm);
-          t.draw_x(-3.0_mm);
+          t.draw_x(-6.0_mm);
           t.draw(ne555, 4);
 
           t.move(ne555, 8);
@@ -238,6 +238,13 @@ extern "C" void casein_handle(const casein::event &e) {
 
           t.move(r1, 2);
           t.draw(ne555, 7);
+
+          t.move(ne555, 7);
+          t.draw_x(-0.6_mm);
+          t.draw(r2, 1);
+
+          t.move(r2, 2);
+          t.draw(ne555, 2);
 
           r1.copper(p);
           r2.copper(p);
