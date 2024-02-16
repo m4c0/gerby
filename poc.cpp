@@ -19,6 +19,9 @@ protected:
     }
   }
 
+  virtual gerby::d::inch pin_rel_x(unsigned) const = 0;
+  virtual gerby::d::inch pin_rel_y(unsigned) const = 0;
+
 public:
   constexpr compo(gerby::d::inch x, gerby::d::inch y) : m_x{x}, m_y{y} {}
 
@@ -26,8 +29,8 @@ public:
   virtual void doc(gerby::pen &) const {};
   virtual void hole(gerby::pen &) const {};
 
-  virtual gerby::d::inch pin_x(unsigned) const = 0;
-  virtual gerby::d::inch pin_y(unsigned) const = 0;
+  gerby::d::inch pin_x(unsigned i) const { return x() + pin_rel_x(i); }
+  gerby::d::inch pin_y(unsigned i) const { return y() + pin_rel_y(i); }
 };
 
 class pad : public compo {
@@ -36,6 +39,9 @@ class pad : public compo {
   static constexpr const auto copper_d = hole_d + 0.6_mm;
 
   unsigned m_count;
+
+  gerby::d::inch pin_rel_x(unsigned i) const override { return 0; }
+  gerby::d::inch pin_rel_y(unsigned i) const override { return -0.1_in * i; }
 
 public:
   constexpr pad(gerby::d::inch x, gerby::d::inch y, unsigned n)
@@ -50,9 +56,6 @@ public:
     p.aperture(hole_d);
     flash_pins(p, m_count);
   }
-
-  gerby::d::inch pin_x(unsigned i) const override { return x(); }
-  gerby::d::inch pin_y(unsigned i) const override { return y() - 0.1_in * i; }
 };
 
 class r0805 : public compo {
@@ -64,6 +67,9 @@ class r0805 : public compo {
 protected:
   auto center_x() const { return x() + (d - b) * 0.5f; }
 
+  gerby::d::inch pin_rel_x(unsigned i) const override { return (d - b) * i; }
+  gerby::d::inch pin_rel_y(unsigned i) const override { return 0; }
+
 public:
   using compo::compo;
 
@@ -71,10 +77,8 @@ public:
     p.aperture(b, c, false);
     flash_pins(p, 2);
   }
-
-  gerby::d::inch pin_x(unsigned i) const override { return x() + (d - b) * i; }
-  gerby::d::inch pin_y(unsigned i) const override { return y(); }
 };
+
 class led : public r0805 {
 public:
   using r0805::r0805;
@@ -94,6 +98,15 @@ class soic_8 : public compo {
   static constexpr const auto dx = 5.40_mm;
   static constexpr const auto dy = 1.27_mm;
 
+  gerby::d::inch pin_rel_x(unsigned i) const override { return dx * (i / 4); }
+  gerby::d::inch pin_rel_y(unsigned i) const override {
+    if (i < 4) {
+      return -dy * i;
+    } else {
+      return -dy * (7 - i);
+    }
+  }
+
 public:
   using compo::compo;
 
@@ -104,15 +117,6 @@ public:
   void doc(gerby::pen &p) const override {
     p.aperture(10.0_mil, 30.0_mil, true);
     p.flash(x() + pw, y());
-  }
-
-  gerby::d::inch pin_x(unsigned i) const override { return x() + dx * (i / 4); }
-  gerby::d::inch pin_y(unsigned i) const override {
-    if (i < 4) {
-      return y() - dy * i;
-    } else {
-      return y() - dy * (7 - i);
-    }
   }
 };
 
