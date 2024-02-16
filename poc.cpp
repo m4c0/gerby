@@ -129,12 +129,24 @@ extern "C" void casein_handle(const casein::event &e) {
   static constexpr const r0805 c1{7.0_mm, 1.0_mm};
   static constexpr const r0805 c2{7.0_mm, 3.0_mm};
   static constexpr const led l1{7.0_mm, 6.0_mm};
-  static constexpr const soic_8 ne555{-10.0_mm, 0};
+  static constexpr const soic_8 ne555{-10.0_mm, -5.0_mm};
   static constexpr const pad bat{-10.0_mm, 5.0_mm, 2};
 
   static gerby::thread t{[](auto b) {
     b->add_lines(
         [](auto &p) {
+          p.aperture(15.0_mil);
+          {
+            auto sx = ne555.pin_x(1);
+            auto sy = ne555.pin_y(1);
+            auto ex = ne555.pin_x(5);
+            auto ey = ne555.pin_y(5);
+            p.move(sx, ne555.pin_y(1));
+            p.draw_x(sx + 2.0_mm);
+            p.draw(sx + 2.0_mm + sy - ey, ey);
+            p.draw_x(ex);
+          }
+
           r1.copper(p);
           r2.copper(p);
           r3.copper(p);
