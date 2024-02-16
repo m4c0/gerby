@@ -13,12 +13,21 @@ protected:
   [[nodiscard]] constexpr auto x() const noexcept { return m_x; }
   [[nodiscard]] constexpr auto y() const noexcept { return m_y; }
 
+  void flash_pins(auto &p, unsigned max) const {
+    for (auto i = 0; i < max; i++) {
+      p.flash(pin_x(i), pin_y(i));
+    }
+  }
+
 public:
   constexpr compo(gerby::d::inch x, gerby::d::inch y) : m_x{x}, m_y{y} {}
 
   virtual void copper(gerby::pen &) const = 0;
   virtual void doc(gerby::pen &) const {};
   virtual void hole(gerby::pen &) const {};
+
+  virtual gerby::d::inch pin_x(unsigned) const = 0;
+  virtual gerby::d::inch pin_y(unsigned) const = 0;
 };
 
 class pad : public compo {
@@ -28,12 +37,6 @@ class pad : public compo {
 
   unsigned m_count;
 
-  void pads(auto &p) const {
-    for (auto i = 0; i < m_count; i++) {
-      p.flash(x(), y() - 0.1_in * i);
-    }
-  }
-
 public:
   constexpr pad(gerby::d::inch x, gerby::d::inch y, unsigned n)
       : compo{x, y}
@@ -41,12 +44,15 @@ public:
 
   void copper(gerby::pen &p) const override {
     p.aperture(copper_d);
-    pads(p);
+    flash_pins(p, m_count);
   }
   void hole(gerby::pen &p) const override {
     p.aperture(hole_d);
-    pads(p);
+    flash_pins(p, m_count);
   }
+
+  gerby::d::inch pin_x(unsigned i) const override { return x(); }
+  gerby::d::inch pin_y(unsigned i) const override { return y() - 0.1_in * i; }
 };
 
 class r0805 : public compo {
@@ -55,19 +61,19 @@ class r0805 : public compo {
   static constexpr const auto c = 1.3_mm;
   static constexpr const auto d = 3.0_mm;
 
-  void pads(auto &p) const {
-    p.aperture(b, c, false);
-    p.flash(x(), y());
-    p.flash_x(x() + d - b);
-  }
-
 protected:
   auto center_x() const { return x() + (d - b) * 0.5f; }
 
 public:
   using compo::compo;
 
-  void copper(gerby::pen &p) const override { pads(p); }
+  void copper(gerby::pen &p) const override {
+    p.aperture(b, c, false);
+    flash_pins(p, 2);
+  }
+
+  gerby::d::inch pin_x(unsigned i) const override { return x() + (d - b) * i; }
+  gerby::d::inch pin_y(unsigned i) const override { return y(); }
 };
 class led : public r0805 {
 public:
@@ -88,21 +94,25 @@ class soic_8 : public compo {
   static constexpr const auto dx = 5.40_mm;
   static constexpr const auto dy = 1.27_mm;
 
-  void pads(auto &p) const {
-    p.aperture(pw, ph, false);
-    for (auto i = 0; i < 4; i++) {
-      p.flash(x(), y() - dy * i);
-      p.flash_x(x() + dx);
-    }
-  }
-
 public:
   using compo::compo;
 
-  void copper(gerby::pen &p) const override { pads(p); }
+  void copper(gerby::pen &p) const override {
+    p.aperture(pw, ph, false);
+    flash_pins(p, 8);
+  }
   void doc(gerby::pen &p) const override {
     p.aperture(10.0_mil, 30.0_mil, true);
     p.flash(x() + pw, y());
+  }
+
+  gerby::d::inch pin_x(unsigned i) const override { return x() + dx * (i / 4); }
+  gerby::d::inch pin_y(unsigned i) const override {
+    if (i < 4) {
+      return y() - dy * i;
+    } else {
+      return y() - dy * (7 - i);
+    }
   }
 };
 
