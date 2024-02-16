@@ -17,6 +17,7 @@ public:
   constexpr compo(gerby::d::inch x, gerby::d::inch y) : m_x{x}, m_y{y} {}
 
   virtual void copper(gerby::pen &) const = 0;
+  virtual void doc(gerby::pen &) const {};
   virtual void hole(gerby::pen &) const {};
 };
 
@@ -65,6 +66,16 @@ public:
 
   void copper(gerby::pen &p) const override { pads(p); }
 };
+class led : public r0805 {
+public:
+  using r0805::r0805;
+
+  void doc(gerby::pen &p) const override {
+    p.aperture(0.6_in);
+    p.move(x() + 0.5_mm, y());
+    p.draw_y(y() - 0.5_mm);
+  }
+};
 
 class soic_8 : public compo {
   static constexpr const auto pw = 1.55_mm;
@@ -84,6 +95,10 @@ public:
   using compo::compo;
 
   void copper(gerby::pen &p) const override { pads(p); }
+  void doc(gerby::pen &p) const override {
+    p.aperture(0.5_mm, 1.0_mm, false);
+    p.flash(x() + pw, y());
+  }
 };
 
 extern "C" void casein_handle(const casein::event &e) {
@@ -98,7 +113,7 @@ extern "C" void casein_handle(const casein::event &e) {
   static constexpr const r0805 r3{0, 4.0_mm};
   static constexpr const r0805 c1{7.0_mm, 1.0_mm};
   static constexpr const r0805 c2{7.0_mm, 3.0_mm};
-  static constexpr const r0805 l1{7.0_mm, 6.0_mm};
+  static constexpr const led l1{7.0_mm, 6.0_mm};
   static constexpr const soic_8 ne555{-10.0_mm, 0};
   static constexpr const pad bat{-10.0_mm, 5.0_mm, 2};
 
@@ -116,6 +131,12 @@ extern "C" void casein_handle(const casein::event &e) {
         },
         red);
     b->add_lines([](auto &p) { bat.hole(p); }, black);
+    b->add_lines(
+        [](auto &p) {
+          ne555.doc(p);
+          l1.doc(p);
+        },
+        white);
   }};
   t.handle(e);
 }
