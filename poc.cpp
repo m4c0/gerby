@@ -5,13 +5,17 @@ import gerby;
 
 using namespace gerby::literals;
 
+enum rotation { NONE, CW90, CW180, CW270 };
+
 class compo {
   gerby::d::inch m_x;
   gerby::d::inch m_y;
+  rotation m_rot{};
 
 protected:
   [[nodiscard]] constexpr auto x() const noexcept { return m_x; }
   [[nodiscard]] constexpr auto y() const noexcept { return m_y; }
+  [[nodiscard]] constexpr auto rot() const noexcept { return m_rot; }
 
   void flash_pins(auto &p, unsigned max) const {
     for (auto i = 0; i < max; i++) {
@@ -23,14 +27,39 @@ protected:
   virtual gerby::d::inch pin_rel_y(unsigned) const = 0;
 
 public:
-  constexpr compo(gerby::d::inch x, gerby::d::inch y) : m_x{x}, m_y{y} {}
+  constexpr compo(gerby::d::inch x, gerby::d::inch y, rotation r = NONE)
+      : m_x{x}
+      , m_y{y}
+      , m_rot{r} {}
 
   virtual void copper(gerby::pen &) const = 0;
   virtual void doc(gerby::pen &) const {};
   virtual void hole(gerby::pen &) const {};
 
-  gerby::d::inch pin_x(unsigned i) const { return x() + pin_rel_x(i); }
-  gerby::d::inch pin_y(unsigned i) const { return y() + pin_rel_y(i); }
+  gerby::d::inch pin_x(unsigned i) const {
+    switch (m_rot) {
+    case NONE:
+      return x() + pin_rel_x(i);
+    case CW90:
+      return y() + pin_rel_y(i);
+    case CW180:
+      return x() - pin_rel_x(i);
+    case CW270:
+      return y() - pin_rel_y(i);
+    }
+  }
+  gerby::d::inch pin_y(unsigned i) const {
+    switch (m_rot) {
+    case NONE:
+      return y() + pin_rel_y(i);
+    case CW90:
+      return x() + pin_rel_x(i);
+    case CW180:
+      return y() - pin_rel_y(i);
+    case CW270:
+      return x() - pin_rel_x(i);
+    }
+  }
 };
 
 class pad : public compo {
@@ -74,7 +103,11 @@ public:
   using compo::compo;
 
   void copper(gerby::pen &p) const override {
-    p.aperture(b, c, false);
+    if (rot() == CW90 || rot() == CW270) {
+      p.aperture(c, b, false);
+    } else {
+      p.aperture(b, c, false);
+    }
     flash_pins(p, 2);
   }
 };
@@ -173,7 +206,7 @@ extern "C" void casein_handle(const casein::event &e) {
   // https://datasheet.lcsc.com/lcsc/2304140030_FH--Guangdong-Fenghua-Advanced-Tech-0805B471K500NT_C1743.pdf
   // https://datasheet.lcsc.com/lcsc/1806151129_Hubei-KENTO-Elec-KT-0805Y_C2296.pdf
   // https://www.ti.com/lit/ds/symlink/lm555.pdf
-  static constexpr const r0805 r1{0, 0};
+  static constexpr const r0805 r1{0, 0, CW270};
   static constexpr const r0805 r2{0, 2.0_mm};
   static constexpr const r0805 r3{0, 4.0_mm};
   static constexpr const r0805 c1{7.0_mm, 1.0_mm};
