@@ -53,6 +53,9 @@ public:
   constexpr distance(const distance<DT2> &o) noexcept
       : m_val{convert(DT2, DT, o.raw_value())} {}
 
+  constexpr distance &operator=(distance<DT> &&o) noexcept = default;
+  constexpr distance &operator=(const distance<DT> &o) noexcept = default;
+
   [[nodiscard]] constexpr auto raw_value() const noexcept { return m_val; }
   [[nodiscard]] constexpr auto value() const noexcept {
     return convert(DT, inch, m_val);
