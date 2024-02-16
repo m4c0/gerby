@@ -41,11 +41,11 @@ public:
     case NONE:
       return x() + pin_rel_x(i);
     case CW90:
-      return y() + pin_rel_y(i);
+      return x() + pin_rel_y(i);
     case CW180:
       return x() - pin_rel_x(i);
     case CW270:
-      return y() - pin_rel_y(i);
+      return x() - pin_rel_y(i);
     }
   }
   gerby::d::inch pin_y(unsigned i) const {
@@ -53,11 +53,11 @@ public:
     case NONE:
       return y() + pin_rel_y(i);
     case CW90:
-      return x() + pin_rel_x(i);
+      return y() + pin_rel_x(i);
     case CW180:
       return y() - pin_rel_y(i);
     case CW270:
-      return x() - pin_rel_x(i);
+      return y() - pin_rel_x(i);
     }
   }
 };
