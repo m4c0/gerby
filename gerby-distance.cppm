@@ -5,13 +5,18 @@ template <bool Inches> class distance {
   long double m_val;
 
 public:
-  explicit constexpr distance(long double d) noexcept : m_val{d} {}
+  constexpr distance() noexcept = default;
+  constexpr distance(long double d) noexcept : m_val{d} {}
 
   [[nodiscard]] constexpr auto raw_value() const noexcept { return m_val; }
   [[nodiscard]] constexpr auto value() const noexcept;
 
   [[nodiscard]] constexpr auto operator-() const noexcept {
     return distance<Inches>{-m_val};
+  }
+
+  [[nodiscard]] constexpr float as_float() const noexcept {
+    return static_cast<float>(value());
   }
 
   [[nodiscard]] explicit constexpr operator distance<!Inches>() const noexcept;
@@ -68,6 +73,11 @@ constexpr auto operator*(const distance<I> &a, long double n) {
   return distance<I>{a.raw_value() * n};
 }
 } // namespace gerby
+
+export namespace gerby::d {
+using inch = gerby::distance<true>;
+using mm = gerby::distance<false>;
+}; // namespace gerby::d
 
 export namespace gerby::literals {
 constexpr auto operator""_in(long double d) { return distance<true>{d}; }
