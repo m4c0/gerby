@@ -6,6 +6,8 @@ import gerby;
 using namespace gerby::literals;
 
 // https://datasheet.lcsc.com/lcsc/2205311800_UNI-ROYAL-Uniroyal-Elec-0805W8F1001T5E_C17513.pdf
+// https://datasheet.lcsc.com/lcsc/2304140030_FH--Guangdong-Fenghua-Advanced-Tech-0805B471K500NT_C1743.pdf
+
 class r0805 {
   static constexpr const auto a = (1.0_mm).value();
   static constexpr const auto b = (1.0_mm).value();
@@ -33,6 +35,8 @@ extern "C" void casein_handle(const casein::event &e) {
   static constexpr const r0805 r1{0, 0};
   static constexpr const r0805 r2{0, (2.0_mm).value()};
   static constexpr const r0805 r3{0, (4.0_mm).value()};
+  static constexpr const r0805 c1{(5.0_mm).value(), 0};
+  static constexpr const r0805 c2{(5.0_mm).value(), 0};
 
   static gerby::thread t{[](auto b) {
     b->add_lines(
@@ -40,6 +44,8 @@ extern "C" void casein_handle(const casein::event &e) {
           r1.copper(p);
           r2.copper(p);
           r3.copper(p);
+          c1.copper(p);
+          c2.copper(p);
         },
         red);
   }};
