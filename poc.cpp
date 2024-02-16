@@ -126,14 +126,14 @@ public:
   explicit constexpr turtle(gerby::pen *p) : m_pen{p} {}
 
   void move(const compo &c, unsigned pin) {
-    m_x = c.pin_x(pin);
-    m_y = c.pin_y(pin);
+    m_x = c.pin_x(pin - 1);
+    m_y = c.pin_y(pin - 1);
     m_pen->move(m_x, m_y);
   }
 
   void draw(const compo &c, unsigned pin) {
-    auto nx = c.pin_x(pin);
-    auto ny = c.pin_y(pin);
+    auto nx = c.pin_x(pin - 1);
+    auto ny = c.pin_y(pin - 1);
 
     auto dx = nx - m_x;
     auto dy = ny - m_y;
@@ -155,6 +155,10 @@ public:
   void draw_x(gerby::d::inch dx) {
     m_x = m_x + dx;
     m_pen->draw_x(m_x);
+  }
+  void draw_y(gerby::d::inch dy) {
+    m_y = m_y + dy;
+    m_pen->draw_y(m_y);
   }
 };
 
@@ -180,9 +184,17 @@ extern "C" void casein_handle(const casein::event &e) {
           p.aperture(15.0_mil);
 
           turtle t{&p};
-          t.move(ne555, 1);
+          t.move(ne555, 2);
           t.draw_x(2.0_mm);
-          t.draw(ne555, 5);
+          t.draw(ne555, 6);
+
+          t.move(ne555, 8);
+          t.draw_x(1.0_mm);
+          t.draw(1.0_mm, -1.0_mm);
+          t.draw_y(-3.0_mm);
+          t.draw(-1.0_mm, -1.0_mm);
+          t.draw_x(-3.0_mm);
+          t.draw(ne555, 4);
 
           r1.copper(p);
           r2.copper(p);
