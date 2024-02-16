@@ -32,8 +32,8 @@ class pdip {
   static constexpr const auto draw_w = 0.24_in;
   static constexpr const auto draw_cx = width * 0.5;
 
-  float m_cx{};
-  float m_cy{};
+  gerby::d::inch m_cx{};
+  gerby::d::inch m_cy{};
   unsigned m_rows;
 
   void pads(auto &p) const {
@@ -44,7 +44,7 @@ class pdip {
     }
   };
 
-  void five(auto &p, float cx, float cy) const {
+  void five(gerby::pen &p, float cx, float cy) const {
     constexpr const auto f = 0.03;
     p.move(cx + f, cy);
     p.draw_x(cx);
