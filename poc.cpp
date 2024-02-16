@@ -206,14 +206,14 @@ extern "C" void casein_handle(const casein::event &e) {
   // https://datasheet.lcsc.com/lcsc/2304140030_FH--Guangdong-Fenghua-Advanced-Tech-0805B471K500NT_C1743.pdf
   // https://datasheet.lcsc.com/lcsc/1806151129_Hubei-KENTO-Elec-KT-0805Y_C2296.pdf
   // https://www.ti.com/lit/ds/symlink/lm555.pdf
-  static constexpr const r0805 r1{0, 0, CW270};
-  static constexpr const r0805 r2{0, 2.0_mm};
-  static constexpr const r0805 r3{0, 4.0_mm};
-  static constexpr const r0805 c1{7.0_mm, 1.0_mm};
-  static constexpr const r0805 c2{7.0_mm, 3.0_mm};
-  static constexpr const led l1{7.0_mm, 6.0_mm};
-  static constexpr const soic_8 ne555{-10.0_mm, -5.0_mm};
-  static constexpr const pad bat{-10.0_mm, 5.0_mm, 2};
+  static constexpr const r0805 r1{10.0_mm, 0.0_mm, CW270};
+  static constexpr const r0805 r2{10.0_mm, 2.0_mm};
+  static constexpr const r0805 r3{10.0_mm, 4.0_mm};
+  static constexpr const r0805 c1{10.0_mm, 6.0_mm};
+  static constexpr const r0805 c2{10.0_mm, 8.0_mm};
+  static constexpr const led l1{10.0_mm, 10.0_mm};
+  static constexpr const pad bat{10.0_mm, 12.0_mm, 2};
+  static constexpr const soic_8 ne555{0.0_mm, 0.0_mm};
 
   static gerby::thread t{[](auto b) {
     b->add_lines(
