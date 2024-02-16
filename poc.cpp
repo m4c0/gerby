@@ -5,7 +5,7 @@ import gerby;
 
 using namespace gerby::literals;
 
-enum rotation { NONE, CW90, CW180, CW270 };
+enum rotation { CW0, CW90, CW180, CW270 };
 
 class compo {
   gerby::d::inch m_x;
@@ -27,7 +27,7 @@ protected:
   virtual gerby::d::inch pin_rel_y(unsigned) const = 0;
 
 public:
-  constexpr compo(gerby::d::inch x, gerby::d::inch y, rotation r = NONE)
+  constexpr compo(gerby::d::inch x, gerby::d::inch y, rotation r = CW0)
       : m_x{x}
       , m_y{y}
       , m_rot{r} {}
@@ -38,7 +38,7 @@ public:
 
   gerby::d::inch pin_x(unsigned i) const {
     switch (m_rot) {
-    case NONE:
+    case CW0:
       return x() + pin_rel_x(i);
     case CW90:
       return x() + pin_rel_y(i);
@@ -50,7 +50,7 @@ public:
   }
   gerby::d::inch pin_y(unsigned i) const {
     switch (m_rot) {
-    case NONE:
+    case CW0:
       return y() + pin_rel_y(i);
     case CW90:
       return y() + pin_rel_x(i);
@@ -73,8 +73,9 @@ class pad : public compo {
   gerby::d::inch pin_rel_y(unsigned i) const override { return -0.1_in * i; }
 
 public:
-  constexpr pad(gerby::d::inch x, gerby::d::inch y, unsigned n)
-      : compo{x, y}
+  constexpr pad(gerby::d::inch x, gerby::d::inch y, unsigned n,
+                rotation r = CW0)
+      : compo{x, y, r}
       , m_count{n} {}
 
   void copper(gerby::pen &p) const override {
@@ -208,11 +209,11 @@ extern "C" void casein_handle(const casein::event &e) {
   // https://www.ti.com/lit/ds/symlink/lm555.pdf
   static constexpr const r0805 r1{8.0_mm, 0.0_mm, CW270};
   static constexpr const r0805 r2{4.0_mm, 2.0_mm, CW180};
-  static constexpr const r0805 r3{10.0_mm, 4.0_mm};
-  static constexpr const r0805 c1{10.0_mm, 6.0_mm};
-  static constexpr const r0805 c2{10.0_mm, 8.0_mm};
-  static constexpr const led l1{10.0_mm, 10.0_mm};
-  static constexpr const pad bat{10.0_mm, 12.0_mm, 2};
+  static constexpr const r0805 r3{-2.5_mm, -3.0_mm, CW270};
+  static constexpr const r0805 c1{-2.5_mm, -1.2_mm, CW90};
+  static constexpr const r0805 c2{8.0_mm, -4.0_mm, CW270};
+  static constexpr const led l1{-5.0_mm, -5.3_mm, CW90};
+  static constexpr const pad bat{10.0_mm, 3.0_mm, 2, CW90};
   static constexpr const soic_8 ne555{0.0_mm, 0.0_mm};
 
   static gerby::thread t{[](auto b) {
@@ -244,7 +245,18 @@ extern "C" void casein_handle(const casein::event &e) {
           t.draw(r2, 1);
 
           t.move(r2, 2);
+          t.draw_y(-3.0_mm);
           t.draw(ne555, 2);
+          t.draw(c1, 1);
+
+          t.move(ne555, 5);
+          t.draw(c2, 1);
+
+          t.move(ne555, 3);
+          t.draw(r3, 1);
+
+          t.move(r3, 2);
+          t.draw(l1, 1);
 
           r1.copper(p);
           r2.copper(p);
