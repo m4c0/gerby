@@ -17,6 +17,35 @@ public:
   constexpr compo(gerby::d::inch x, gerby::d::inch y) : m_x{x}, m_y{y} {}
 
   virtual void copper(gerby::pen &) const = 0;
+  virtual void hole(gerby::pen &) const {};
+};
+
+class pad : public compo {
+  static constexpr const auto diam = 0.021_in;
+  static constexpr const auto hole_d = diam + 0.2_mm;
+  static constexpr const auto copper_d = hole_d + 0.6_mm;
+
+  unsigned m_count;
+
+  void pads(auto &p) const {
+    for (auto i = 0; i < m_count; i++) {
+      p.flash(x(), y() - 0.1_in * i);
+    }
+  }
+
+public:
+  constexpr pad(gerby::d::inch x, gerby::d::inch y, unsigned n)
+      : compo{x, y}
+      , m_count{n} {}
+
+  void copper(gerby::pen &p) const override {
+    p.aperture(copper_d);
+    pads(p);
+  }
+  void hole(gerby::pen &p) const override {
+    p.aperture(hole_d);
+    pads(p);
+  }
 };
 
 class r0805 : public compo {
@@ -71,6 +100,7 @@ extern "C" void casein_handle(const casein::event &e) {
   static constexpr const r0805 c2{7.0_mm, 3.0_mm};
   static constexpr const r0805 l1{7.0_mm, 6.0_mm};
   static constexpr const soic_8 ne555{-10.0_mm, 0};
+  static constexpr const pad bat{-10.0_mm, 5.0_mm, 2};
 
   static gerby::thread t{[](auto b) {
     b->add_lines(
@@ -82,8 +112,10 @@ extern "C" void casein_handle(const casein::event &e) {
           c2.copper(p);
           l1.copper(p);
           ne555.copper(p);
+          bat.copper(p);
         },
         red);
+    b->add_lines([](auto &p) { bat.hole(p); }, black);
   }};
   t.handle(e);
 }
