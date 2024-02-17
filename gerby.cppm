@@ -201,19 +201,19 @@ public:
 
   [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
 
-  void move(float x, float y) {
-    m_fan_ref = {x, y};
+  void move(d::inch x, d::inch y) {
+    m_fan_ref = {x.as_float(), y.as_float()};
     m_v[m_count++] = {m_fan_ref};
     m_v[m_count++] = {m_fan_ref};
   }
 
-  void draw(float x, float y) {
+  void draw(d::inch x, d::inch y) {
     m_v[m_count++] = {m_fan_ref};
-    m_v[m_count++] = {{x, y}};
-    m_minmax->enclose({x, y});
+    m_v[m_count++] = {{x.as_float(), y.as_float()}};
+    m_minmax->enclose({x.as_float(), y.as_float()});
   }
-  void draw_x(float x) { draw(x, m_v[m_count - 1].pos.y); }
-  void draw_y(float y) { draw(m_v[m_count - 1].pos.x, y); }
+  void draw_x(d::inch x) { draw(x, m_v[m_count - 1].pos.y); }
+  void draw_y(d::inch y) { draw(m_v[m_count - 1].pos.x, y); }
 };
 
 class rvertices : voo::update_thread {
