@@ -348,10 +348,17 @@ extern "C" void casein_handle(const casein::event &e) {
   };
 
   static gerby::thread t{[](auto b) {
-    b->add_region([](auto &f) { plane(f); }, red);
-    b->add_lines([](auto &p) { copper(p, 15.0_mil); }, black);
-    b->add_lines([](auto &p) { copper(p, 0.0); }, red);
-    b->add_lines([](auto &p) { bat.hole(p); }, black);
+    constexpr const auto mask_layer = 0;
+    if constexpr (mask_layer) {
+      b->add_region([](auto &f) { plane(f); }, green);
+      b->add_lines([](auto &p) { pads(p, 10.0_mil); }, black);
+    } else {
+      b->add_region([](auto &f) { plane(f); }, red);
+      b->add_lines([](auto &p) { copper(p, 15.0_mil); }, black);
+      b->add_lines([](auto &p) { copper(p, 0.0); }, red);
+      b->add_lines([](auto &p) { bat.hole(p); }, black);
+    }
+
     b->add_lines(
         [](auto &p) {
           ne555.doc(p);
