@@ -32,7 +32,7 @@ public:
       , m_y{y}
       , m_rot{r} {}
 
-  virtual void copper(gerby::pen &) const = 0;
+  virtual void copper(gerby::pen &, gerby::d::inch margin) const = 0;
   virtual void doc(gerby::pen &) const {};
   virtual void hole(gerby::pen &) const {};
 
@@ -80,8 +80,8 @@ public:
       : compo{x, y, r}
       , m_count{n} {}
 
-  void copper(gerby::pen &p) const override {
-    p.aperture(copper_d);
+  void copper(gerby::pen &p, gerby::d::inch m) const override {
+    p.aperture(copper_d + m);
     flash_pins(p, m_count);
   }
   void hole(gerby::pen &p) const override {
@@ -105,11 +105,11 @@ protected:
 public:
   using compo::compo;
 
-  void copper(gerby::pen &p) const override {
+  void copper(gerby::pen &p, gerby::d::inch m) const override {
     if (rot() == CW90 || rot() == CW270) {
-      p.aperture(c, b, false);
+      p.aperture(c + m, b + m, false);
     } else {
-      p.aperture(b, c, false);
+      p.aperture(b + m, c + m, false);
     }
     flash_pins(p, 2);
   }
@@ -161,8 +161,8 @@ class soic_8 : public compo {
 public:
   using compo::compo;
 
-  void copper(gerby::pen &p) const override {
-    p.aperture(pw, ph, false);
+  void copper(gerby::pen &p, gerby::d::inch m) const override {
+    p.aperture(pw + m, ph + m, false);
     flash_pins(p, 8);
   }
   void doc(gerby::pen &p) const override {
@@ -306,6 +306,21 @@ extern "C" void casein_handle(const casein::event &e) {
     t.move(r3, 2);
     t.draw(l1, 1);
   };
+  static constexpr const auto copper = [](auto &p, gerby::d::inch m) {
+    p.aperture(15.0_mil + m);
+
+    turtle t{&p};
+    nets(t);
+
+    r1.copper(p, m);
+    r2.copper(p, m);
+    r3.copper(p, m);
+    c1.copper(p, m);
+    c2.copper(p, m);
+    l1.copper(p, m);
+    ne555.copper(p, m);
+    bat.copper(p, m);
+  };
 
   static gerby::thread t{[](auto b) {
     b->add_region(
@@ -331,23 +346,8 @@ extern "C" void casein_handle(const casein::event &e) {
           f.draw_y(b);
         },
         red);
-    b->add_lines(
-        [](auto &p) {
-          p.aperture(15.0_mil);
-
-          turtle t{&p};
-          nets(t);
-
-          r1.copper(p);
-          r2.copper(p);
-          r3.copper(p);
-          c1.copper(p);
-          c2.copper(p);
-          l1.copper(p);
-          ne555.copper(p);
-          bat.copper(p);
-        },
-        red);
+    b->add_lines([](auto &p) { copper(p, 15.0_mil); }, black);
+    b->add_lines([](auto &p) { copper(p, 0.0); }, red);
     b->add_lines([](auto &p) { bat.hole(p); }, black);
     b->add_lines(
         [](auto &p) {
