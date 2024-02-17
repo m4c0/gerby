@@ -18,7 +18,7 @@ protected:
   [[nodiscard]] constexpr auto rot() const noexcept { return m_rot; }
 
   void flash_pins(auto &p, unsigned max) const {
-    for (auto i = 0; i < max; i++) {
+    for (auto i = 1; i <= max; i++) {
       p.flash(pin_x(i), pin_y(i));
     }
   }
@@ -70,7 +70,9 @@ class pad : public compo {
   unsigned m_count;
 
   gerby::d::inch pin_rel_x(unsigned i) const override { return 0; }
-  gerby::d::inch pin_rel_y(unsigned i) const override { return -0.1_in * i; }
+  gerby::d::inch pin_rel_y(unsigned i) const override {
+    return -0.1_in * (i - 1);
+  }
 
 public:
   constexpr pad(gerby::d::inch x, gerby::d::inch y, unsigned n,
@@ -95,9 +97,9 @@ class r0805 : public compo {
   static constexpr const auto d = 3.0_mm;
 
 protected:
-  auto center_x() const { return x() + (d - b) * 0.5f; }
-
-  gerby::d::inch pin_rel_x(unsigned i) const override { return (d - b) * i; }
+  gerby::d::inch pin_rel_x(unsigned i) const override {
+    return (d - b) * (i - 1);
+  }
   gerby::d::inch pin_rel_y(unsigned i) const override { return 0; }
 
 public:
@@ -132,12 +134,14 @@ class soic_8 : public compo {
   static constexpr const auto dx = 5.40_mm;
   static constexpr const auto dy = 1.27_mm;
 
-  gerby::d::inch pin_rel_x(unsigned i) const override { return dx * (i / 4); }
+  gerby::d::inch pin_rel_x(unsigned i) const override {
+    return dx * ((i - 1) / 4);
+  }
   gerby::d::inch pin_rel_y(unsigned i) const override {
-    if (i < 4) {
-      return -dy * i;
+    if (i < 5) {
+      return -dy * (i - 1);
     } else {
-      return -dy * (7 - i);
+      return -dy * (8 - i);
     }
   }
 
@@ -164,14 +168,14 @@ public:
   explicit constexpr turtle(gerby::cnc::pen *p) : m_pen{p} {}
 
   void move(const compo &c, unsigned pin) {
-    m_x = c.pin_x(pin - 1);
-    m_y = c.pin_y(pin - 1);
+    m_x = c.pin_x(pin);
+    m_y = c.pin_y(pin);
     m_pen->move(m_x, m_y);
   }
 
   void draw(const compo &c, unsigned pin) {
-    auto nx = c.pin_x(pin - 1);
-    auto ny = c.pin_y(pin - 1);
+    auto nx = c.pin_x(pin);
+    auto ny = c.pin_y(pin);
 
     auto dx = nx - m_x;
     auto dy = ny - m_y;
