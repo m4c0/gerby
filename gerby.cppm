@@ -2,6 +2,7 @@
 #pragma leco add_shader "gerby.frag"
 
 export module gerby;
+import :cnc;
 export import :distance;
 export import :palette;
 
@@ -110,12 +111,10 @@ public:
 };
 
 export class pen {
+  cnc::aperture m_aperture{};
   voo::mapmem m_map;
   inst *m_buf;
   dotz::vec2 m_p{};
-  float m_d{};
-  float m_round{1};
-  dotz::vec2 m_smear{};
   unsigned m_count{};
   minmax *m_minmax;
 
@@ -125,37 +124,31 @@ public:
       , m_buf{static_cast<inst *>(*m_map)}
       , m_minmax{mm} {}
 
+  constexpr void aperture(auto... args) { m_aperture = {args...}; }
+
   [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
 
-  constexpr void aperture(d::inch d) { aperture(d, d, true); }
-  constexpr void aperture(d::inch iw, d::inch ih, bool round) {
-    auto w = iw.as_float();
-    auto h = ih.as_float();
-    if (w > h) {
-      m_d = h;
-      m_smear = {w - h, 0.0};
-    } else {
-      m_d = w;
-      m_smear = {0.0, h - w};
-    }
-    m_smear = m_smear / 2.0f;
-    m_round = round;
-  }
-
   void draw(d::inch x, d::inch y) {
+    auto d = m_aperture.diameter();
+    auto r = m_aperture.roundness();
+
     dotz::vec2 np{x.as_float(), y.as_float()};
     m_minmax->enclose(m_p);
     m_minmax->enclose(np);
-    m_buf[m_count++] = {m_p, np, m_d, m_round};
+    m_buf[m_count++] = {m_p, np, d, r};
     m_p = np;
   }
   void draw_x(d::inch x) { draw(x, m_p.y); }
   void draw_y(d::inch y) { draw(m_p.x, y); }
 
   void flash(d::inch x, d::inch y) {
+    auto d = m_aperture.diameter();
+    auto r = m_aperture.roundness();
+    auto s = m_aperture.smear();
+
     m_p = {x.as_float(), y.as_float()};
     m_minmax->enclose(m_p);
-    m_buf[m_count++] = {m_p - m_smear, m_p + m_smear, m_d, m_round};
+    m_buf[m_count++] = {m_p - s, m_p + s, d, r};
   }
   void flash_x(d::inch x) { flash(x, m_p.y); }
   void flash_y(d::inch y) { flash(m_p.x, y); }
