@@ -306,12 +306,7 @@ extern "C" void casein_handle(const casein::event &e) {
     t.move(r3, 2);
     t.draw(l1, 1);
   };
-  static constexpr const auto copper = [](auto &p, gerby::d::inch m) {
-    p.aperture(15.0_mil + m);
-
-    turtle t{&p};
-    nets(t);
-
+  static constexpr const auto pads = [](auto &p, gerby::d::inch m) {
     r1.copper(p, m);
     r2.copper(p, m);
     r3.copper(p, m);
@@ -321,31 +316,39 @@ extern "C" void casein_handle(const casein::event &e) {
     ne555.copper(p, m);
     bat.copper(p, m);
   };
+  static constexpr const auto copper = [](auto &p, gerby::d::inch m) {
+    p.aperture(15.0_mil + m);
+
+    turtle t{&p};
+    nets(t);
+
+    pads(p, m);
+  };
+
+  static constexpr const auto plane = [](auto &f) {
+    minmax_pen mmp{};
+    turtle trt{&mmp};
+    nets(trt);
+
+    auto cx = mmp.center_x();
+    auto cy = mmp.center_y();
+
+    constexpr const auto w = 20.0_mm;
+    constexpr const auto h = 20.0_mm;
+
+    const auto l = cx - w * 0.5;
+    const auto r = l + w;
+    const auto b = cy - h * 0.5;
+    const auto t = b + h;
+    f.move(l, b);
+    f.draw_x(r);
+    f.draw_y(t);
+    f.draw_x(l);
+    f.draw_y(b);
+  };
 
   static gerby::thread t{[](auto b) {
-    b->add_region(
-        [](auto &f) {
-          minmax_pen mmp{};
-          turtle trt{&mmp};
-          nets(trt);
-
-          auto cx = mmp.center_x();
-          auto cy = mmp.center_y();
-
-          constexpr const auto w = 20.0_mm;
-          constexpr const auto h = 20.0_mm;
-
-          const auto l = cx - w * 0.5;
-          const auto r = l + w;
-          const auto b = cy - h * 0.5;
-          const auto t = b + h;
-          f.move(l, b);
-          f.draw_x(r);
-          f.draw_y(t);
-          f.draw_x(l);
-          f.draw_y(b);
-        },
-        red);
+    b->add_region([](auto &f) { plane(f); }, red);
     b->add_lines([](auto &p) { copper(p, 15.0_mil); }, black);
     b->add_lines([](auto &p) { copper(p, 0.0); }, red);
     b->add_lines([](auto &p) { bat.hole(p); }, black);
