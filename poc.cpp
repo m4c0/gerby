@@ -121,10 +121,23 @@ public:
 
   void doc(gerby::pen &p) const override {
     p.aperture(10.0_mil);
-    p.move(center_x() - 6.0_mil, y() - 8.0_mil);
-    p.draw_y(y() + 8.0_mil);
-    p.draw(center_x() + 6.0_mil, y());
-    p.draw(center_x() - 6.0_mil, y() - 8.0_mil);
+
+    auto cx = (pin_x(2) + pin_x(1)) * 0.5;
+    auto cy = (pin_y(2) + pin_y(1)) * 0.5;
+    auto dh = 6.0_mil * (pin_x(2) - pin_x(1)).sign();
+    auto dw = 8.0_mil * (pin_y(2) - pin_y(1)).sign();
+
+    if (rot() == CW0 || rot() == CW180) {
+      p.move(cx - dh, cy - dw);
+      p.draw_y(cy + dw);
+      p.draw(cx + dh, cy);
+      p.draw(cx - dh, cy - dw);
+    } else {
+      p.move(cx - dw, cy + dh);
+      p.draw_x(cx + dw);
+      p.draw(cx, cy - dh);
+      p.draw(cx - dw, cy + dh);
+    }
   }
 };
 
