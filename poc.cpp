@@ -216,6 +216,42 @@ public:
     m_pen->draw_y(m_y);
   }
 };
+class minmax_pen : public gerby::cnc::pen {
+  gerby::d::inch m_min_x{1e10f};
+  gerby::d::inch m_min_y{1e10f};
+  gerby::d::inch m_max_x{-1e10f};
+  gerby::d::inch m_max_y{-1e10f};
+
+  void update_x(gerby::d::inch x) {
+    m_min_x = m_min_x < x ? m_min_x : x;
+    m_max_x = m_max_x > x ? m_max_x : x;
+  }
+  void update_y(gerby::d::inch y) {
+    m_min_y = m_min_y < y ? m_min_y : y;
+    m_max_y = m_max_y > y ? m_max_y : y;
+  }
+
+public:
+  void draw(gerby::d::inch x, gerby::d::inch y) override {
+    update_x(x);
+    update_y(y);
+  }
+  void draw_x(gerby::d::inch x) override { update_x(x); }
+  void draw_y(gerby::d::inch y) override { update_y(y); }
+  void move(gerby::d::inch x, gerby::d::inch y) override {
+    update_x(x);
+    update_y(y);
+  }
+  void move_x(gerby::d::inch x) override { update_x(x); }
+  void move_y(gerby::d::inch y) override { update_y(y); }
+
+  [[nodiscard]] gerby::d::inch center_x() const noexcept {
+    return (m_max_x + m_min_x) * 0.5f;
+  }
+  [[nodiscard]] gerby::d::inch center_y() const noexcept {
+    return (m_max_y + m_min_y) * 0.5f;
+  }
+};
 
 extern "C" void casein_handle(const casein::event &e) {
   using namespace gerby::palette;
@@ -233,47 +269,74 @@ extern "C" void casein_handle(const casein::event &e) {
   static constexpr const pad bat{10.0_mm, 3.0_mm, 2, CW90};
   static constexpr const soic_8 ne555{0.0_mm, 0.0_mm};
 
+  static constexpr const auto nets = [](turtle &t) {
+    t.move(ne555, 2);
+    t.draw_x(2.0_mm);
+    t.draw(ne555, 6);
+
+    t.move(r1, 1);
+    t.draw_x(1.0_mm);
+    t.draw(1.0_mm, -1.0_mm);
+    t.draw_y(-3.0_mm);
+    t.draw(-1.0_mm, -1.0_mm);
+    t.draw_x(-6.0_mm);
+    t.draw(ne555, 4);
+
+    t.move(ne555, 8);
+    t.draw(r1, 1);
+
+    t.move(r1, 2);
+    t.draw(ne555, 7);
+
+    t.move(ne555, 7);
+    t.draw_x(-0.6_mm);
+    t.draw(r2, 1);
+
+    t.move(r2, 2);
+    t.draw_y(-3.0_mm);
+    t.draw(ne555, 2);
+    t.draw(c1, 1);
+
+    t.move(ne555, 5);
+    t.draw(c2, 1);
+
+    t.move(ne555, 3);
+    t.draw(r3, 1);
+
+    t.move(r3, 2);
+    t.draw(l1, 1);
+  };
+
   static gerby::thread t{[](auto b) {
+    b->add_region(
+        [](auto &f) {
+          minmax_pen mmp{};
+          turtle trt{&mmp};
+          nets(trt);
+
+          auto cx = mmp.center_x();
+          auto cy = mmp.center_y();
+
+          constexpr const auto w = 20.0_mm;
+          constexpr const auto h = 20.0_mm;
+
+          const auto l = cx - w * 0.5;
+          const auto r = l + w;
+          const auto b = cy - h * 0.5;
+          const auto t = b + h;
+          f.move(l, b);
+          f.draw_x(r);
+          f.draw_y(t);
+          f.draw_x(l);
+          f.draw_y(b);
+        },
+        red);
     b->add_lines(
         [](auto &p) {
           p.aperture(15.0_mil);
 
           turtle t{&p};
-          t.move(ne555, 2);
-          t.draw_x(2.0_mm);
-          t.draw(ne555, 6);
-
-          t.move(r1, 1);
-          t.draw_x(1.0_mm);
-          t.draw(1.0_mm, -1.0_mm);
-          t.draw_y(-3.0_mm);
-          t.draw(-1.0_mm, -1.0_mm);
-          t.draw_x(-6.0_mm);
-          t.draw(ne555, 4);
-
-          t.move(ne555, 8);
-          t.draw(r1, 1);
-
-          t.move(r1, 2);
-          t.draw(ne555, 7);
-
-          t.move(ne555, 7);
-          t.draw_x(-0.6_mm);
-          t.draw(r2, 1);
-
-          t.move(r2, 2);
-          t.draw_y(-3.0_mm);
-          t.draw(ne555, 2);
-          t.draw(c1, 1);
-
-          t.move(ne555, 5);
-          t.draw(c2, 1);
-
-          t.move(ne555, 3);
-          t.draw(r3, 1);
-
-          t.move(r3, 2);
-          t.draw(l1, 1);
+          nets(t);
 
           r1.copper(p);
           r2.copper(p);
