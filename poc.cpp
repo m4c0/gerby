@@ -155,13 +155,13 @@ public:
 };
 
 class turtle {
-  gerby::pen *m_pen;
+  gerby::cnc::pen *m_pen;
 
   gerby::d::inch m_x{};
   gerby::d::inch m_y{};
 
 public:
-  explicit constexpr turtle(gerby::pen *p) : m_pen{p} {}
+  explicit constexpr turtle(gerby::cnc::pen *p) : m_pen{p} {}
 
   void move(const compo &c, unsigned pin) {
     m_x = c.pin_x(pin - 1);

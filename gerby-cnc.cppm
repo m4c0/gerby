@@ -30,4 +30,15 @@ public:
   [[nodiscard]] constexpr auto roundness() const noexcept { return m_round; }
   [[nodiscard]] constexpr auto smear() const noexcept { return m_smear; }
 };
+
+export class pen {
+public:
+  virtual void move(d::inch x, d::inch y) = 0;
+  virtual void move_x(d::inch x) = 0;
+  virtual void move_y(d::inch y) = 0;
+
+  virtual void draw(d::inch x, d::inch y) = 0;
+  virtual void draw_x(d::inch x) = 0;
+  virtual void draw_y(d::inch y) = 0;
+};
 } // namespace gerby::cnc

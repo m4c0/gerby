@@ -2,7 +2,7 @@
 #pragma leco add_shader "gerby.frag"
 
 export module gerby;
-import :cnc;
+export import :cnc;
 export import :distance;
 export import :palette;
 
@@ -110,7 +110,7 @@ public:
   }
 };
 
-export class pen {
+export class pen : public cnc::pen {
   cnc::aperture m_aperture{};
   voo::mapmem m_map;
   inst *m_buf;
@@ -128,7 +128,7 @@ public:
 
   [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
 
-  void draw(d::inch x, d::inch y) {
+  void draw(d::inch x, d::inch y) override {
     auto d = m_aperture.diameter();
     auto r = m_aperture.roundness();
 
@@ -138,8 +138,8 @@ public:
     m_buf[m_count++] = {m_p, np, d, r};
     m_p = np;
   }
-  void draw_x(d::inch x) { draw(x, m_p.y); }
-  void draw_y(d::inch y) { draw(m_p.x, y); }
+  void draw_x(d::inch x) override { draw(x, m_p.y); }
+  void draw_y(d::inch y) override { draw(m_p.x, y); }
 
   void flash(d::inch x, d::inch y) {
     auto d = m_aperture.diameter();
@@ -153,9 +153,11 @@ public:
   void flash_x(d::inch x) { flash(x, m_p.y); }
   void flash_y(d::inch y) { flash(m_p.x, y); }
 
-  void move(d::inch x, d::inch y) { m_p = {x.as_float(), y.as_float()}; }
-  void move_x(d::inch x) { move(x, m_p.y); }
-  void move_y(d::inch y) { move(m_p.x, y); }
+  void move(d::inch x, d::inch y) override {
+    m_p = {x.as_float(), y.as_float()};
+  }
+  void move_x(d::inch x) override { move(x, m_p.y); }
+  void move_y(d::inch y) override { move(m_p.x, y); }
 };
 
 class instances : voo::update_thread {
