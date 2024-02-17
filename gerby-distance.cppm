@@ -89,6 +89,10 @@ public:
   constexpr auto operator>(const distance<O> &o) const noexcept {
     return m_val > convert(O, DT, o.raw_value());
   }
+  template <distance_type O>
+  constexpr auto operator<(const distance<O> &o) const noexcept {
+    return m_val < convert(O, DT, o.raw_value());
+  }
 
   constexpr auto operator*(long double n) const noexcept {
     return distance<DT>{m_val * n};
