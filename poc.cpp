@@ -325,12 +325,20 @@ extern "C" void casein_handle(const casein::event &e) {
     ne555.copper(p, m);
     bat.copper(p, m);
   };
+  static constexpr const auto copper_mask = [](auto &p) { pads(p, 10.0_mil); };
+
   static constexpr const auto copper = [](auto &p, gerby::d::inch m) {
     turtle t{&p};
     p.aperture(15.0_mil + m);
     nets(t);
 
     pads(p, m);
+  };
+  static constexpr const auto copper_margin = [](auto &p) {
+    copper(p, 15.0_mil);
+  };
+  static constexpr const auto copper_lines = [](auto &p) {
+    copper(p, 0.0_mil);
   };
 
   static constexpr const auto thermals = [](auto &p) { bat.thermal(p); };
@@ -357,30 +365,33 @@ extern "C" void casein_handle(const casein::event &e) {
     f.draw_y(b);
   };
 
+  static constexpr const auto holes = [](auto &p) { bat.hole(p); };
+
+  static constexpr const auto border = [](auto &p, gerby::d::inch a) {
+    p.aperture(a);
+    plane(p);
+  };
+  static constexpr const auto border_lines = [](auto &p) {
+    border(p, 10.0_mil);
+  };
+  static constexpr const auto border_margin = [](auto &p) {
+    border(p, 25.0_mil);
+  };
+
   static gerby::thread t{[](auto b) {
-    constexpr const auto mask_layer = 0;
+    constexpr const auto mask_layer = 1;
     if constexpr (mask_layer) {
-      b->add_region([](auto &f) { plane(f); }, green);
-      b->add_lines([](auto &p) { pads(p, 10.0_mil); }, black);
+      b->add_region(plane, green);
+      b->add_lines(copper_mask, black);
     } else {
-      b->add_region([](auto &f) { plane(f); }, red);
-      b->add_lines([](auto &p) { copper(p, 15.0_mil); }, black);
-      b->add_lines([](auto &p) { copper(p, 0.0); }, red);
-      b->add_lines([](auto &p) { thermals(p); }, red);
-      b->add_lines([](auto &p) { bat.hole(p); }, black);
-      b->add_lines(
-          [](auto &p) {
-            p.aperture(25.0_mil);
-            plane(p);
-          },
-          black);
-      b->add_lines(
-          [](auto &p) {
-            p.aperture(10.0_mil);
-            plane(p);
-          },
-          purple);
+      b->add_region(plane, red);
+      b->add_lines(copper_margin, black);
+      b->add_lines(copper_lines, red);
+      b->add_lines(thermals, red);
     }
+    b->add_lines(holes, black);
+    b->add_lines(border_margin, black);
+    b->add_lines(border_lines, purple);
 
     b->add_lines(
         [](auto &p) {
