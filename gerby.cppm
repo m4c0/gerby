@@ -402,8 +402,13 @@ export enum grb_layer {
 };
 export class thread : public voo::casein_thread {
   grb_layer m_layer{};
+  bool m_fast_cycle{};
 
   void (*m_lb)(builder *, grb_layer);
+
+  void cycle_layer_right() {
+    m_layer = static_cast<grb_layer>((m_layer + 1) % gl_count);
+  }
 
 public:
   explicit constexpr thread(decltype(m_lb) l) : m_lb{l} {}
@@ -414,10 +419,17 @@ public:
       m_layer = static_cast<grb_layer>((m_layer + gl_count - 1) % gl_count);
       break;
     case casein::K_RIGHT:
-      m_layer = static_cast<grb_layer>((m_layer + 1) % gl_count);
+      cycle_layer_right();
       break;
+    case casein::K_SPACE:
+      m_fast_cycle = true;
     default:
       break;
+    }
+  }
+  void key_up(const casein::events::key_up &e) override {
+    if (*e == casein::K_SPACE) {
+      m_fast_cycle = false;
     }
   }
 
@@ -430,6 +442,9 @@ public:
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq, sw, [&] {
+        if (m_fast_cycle) {
+          cycle_layer_right();
+        }
         if (last_rnd != m_layer) {
           last_rnd = m_layer;
           b.reset();
