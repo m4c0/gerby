@@ -36,7 +36,14 @@ public:
   virtual void copper(gerby::pen &, gerby::d::inch margin) const = 0;
   virtual void doc(gerby::pen &) const {};
   virtual void hole(gerby::pen &) const {};
-  virtual void thermal(gerby::pen &) const {};
+
+  void thermal(gerby::pen &p, gerby::d::inch w, unsigned pin) const {
+    p.aperture(25.0_mil, w + 25.0_mil, false);
+    flash_pin(p, pin);
+
+    p.aperture(w + 25.0_mil, 25.0_mil, false);
+    flash_pin(p, pin);
+  }
 
   gerby::d::inch pin_x(unsigned i) const {
     switch (m_rot) {
@@ -92,13 +99,6 @@ public:
   void hole(gerby::pen &p) const override {
     p.aperture(hole_d);
     flash_pins(p, m_count);
-  }
-  void thermal(gerby::pen &p) const override {
-    p.aperture(25.0_mil, 0.1_in + 25.0_mil, false);
-    flash_pin(p, gnd_pin);
-
-    p.aperture(0.1_in + 25.0_mil, 25.0_mil, false);
-    flash_pin(p, gnd_pin);
   }
 };
 
@@ -347,7 +347,13 @@ extern "C" void casein_handle(const casein::event &e) {
     copper(p, 0.0_mil);
   };
 
-  static constexpr const auto thermals = [](auto &p) { bat.thermal(p); };
+  static constexpr const auto thermals = [](auto &p) {
+    bat.thermal(p, 0.1_in, decltype(bat)::gnd_pin);
+    // cap pin 555- 5
+    // cap pin 555- 2
+    // led pin 2
+    // 555 pin 1
+  };
 
   static constexpr const auto plane = [](auto &f) {
     minmax_pen mmp{};
