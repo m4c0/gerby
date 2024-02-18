@@ -37,12 +37,16 @@ public:
   virtual void doc(gerby::pen &) const {};
   virtual void hole(gerby::pen &) const {};
 
-  void thermal(gerby::pen &p, gerby::d::inch w, unsigned pin) const {
-    p.aperture(25.0_mil, w + 25.0_mil, false);
+  void thermal(gerby::pen &p, gerby::d::inch w, gerby::d::inch h,
+               unsigned pin) const {
+    p.aperture(25.0_mil, h + 25.0_mil, false);
     flash_pin(p, pin);
 
     p.aperture(w + 25.0_mil, 25.0_mil, false);
     flash_pin(p, pin);
+  }
+  void thermal(gerby::pen &p, gerby::d::inch w, unsigned pin) const {
+    thermal(p, w, w, pin);
   }
 
   gerby::d::inch pin_x(unsigned i) const {
@@ -353,7 +357,7 @@ extern "C" void casein_handle(const casein::event &e) {
     c1.thermal(p, 1.3_mm, 2);
     c2.thermal(p, 1.3_mm, 2);
     l1.thermal(p, 1.3_mm, 2);
-    ne555.thermal(p, 1.0_mm, 1);
+    ne555.thermal(p, 1.4_mm, 0.7_mm, 1);
   };
 
   static constexpr const auto plane = [](auto &f) {
@@ -391,7 +395,6 @@ extern "C" void casein_handle(const casein::event &e) {
     border(p, 25.0_mil);
   };
 
-  // TODO: merge GND nets into plane
   // TODO: improve GND connection to pin 5's cap
   static gerby::thread t{[](auto b) {
     constexpr const auto mask_layer = false;
