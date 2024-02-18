@@ -348,11 +348,12 @@ extern "C" void casein_handle(const casein::event &e) {
   };
 
   static constexpr const auto thermals = [](auto &p) {
-    bat.thermal(p, 0.1_in, decltype(bat)::gnd_pin);
-    // cap pin 555- 5
-    // cap pin 555- 2
-    // led pin 2
-    // 555 pin 1
+    bat.thermal(p, 2.0_mm, decltype(bat)::gnd_pin);
+
+    c1.thermal(p, 1.3_mm, 2);
+    c2.thermal(p, 1.3_mm, 2);
+    l1.thermal(p, 1.3_mm, 2);
+    ne555.thermal(p, 1.0_mm, 1);
   };
 
   static constexpr const auto plane = [](auto &f) {
