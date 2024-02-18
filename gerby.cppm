@@ -396,21 +396,14 @@ public:
 };
 
 export enum grb_layer {
-  gl_top_copper,
+  gl_top_copper = 0,
   gl_top_mask,
+  gl_count,
 };
 export class thread : public voo::casein_thread {
-  builder *m_b;
   grb_layer m_layer{};
 
   void (*m_lb)(builder *, grb_layer);
-
-  void update_layer() {
-    wait_init();
-
-    m_b->reset();
-    m_lb(m_b, m_layer);
-  }
 
 public:
   explicit constexpr thread(decltype(m_lb) l) : m_lb{l} {}
@@ -418,8 +411,10 @@ public:
   void key_down(const casein::events::key_down &e) override {
     switch (*e) {
     case casein::K_LEFT:
+      m_layer = static_cast<grb_layer>((m_layer + gl_count - 1) % gl_count);
       break;
     case casein::K_RIGHT:
+      m_layer = static_cast<grb_layer>((m_layer + 1) % gl_count);
       break;
     default:
       break;
@@ -429,16 +424,18 @@ public:
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
     builder b{&dq};
-    m_b = &b;
 
-    release_init_lock();
-
-    update_layer();
-
+    auto last_rnd = gl_count;
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq, sw, [&] {
+        if (last_rnd != m_layer) {
+          last_rnd = m_layer;
+          b.reset();
+          m_lb(&b, m_layer);
+        }
+
         auto mm = b.minmax();
         upc pc{
             .center = mm.center(),
