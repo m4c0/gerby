@@ -77,6 +77,9 @@ class pad : public compo {
   }
 
 public:
+  static constexpr const auto vcc_pin = 1;
+  static constexpr const auto gnd_pin = 2;
+
   constexpr pad(gerby::d::inch x, gerby::d::inch y, unsigned n,
                 rotation r = CW0)
       : compo{x, y, r}
@@ -92,10 +95,10 @@ public:
   }
   void thermal(gerby::pen &p) const override {
     p.aperture(25.0_mil, 0.1_in + 25.0_mil, false);
-    flash_pin(p, 1);
+    flash_pin(p, gnd_pin);
 
     p.aperture(0.1_in + 25.0_mil, 25.0_mil, false);
-    flash_pin(p, 1);
+    flash_pin(p, gnd_pin);
   }
 };
 
@@ -314,6 +317,9 @@ extern "C" void casein_handle(const casein::event &e) {
 
     t.move(r3, 2);
     t.draw(l1, 1);
+
+    t.move(bat, decltype(bat)::vcc_pin);
+    t.draw(r1, 1);
   };
   static constexpr const auto pads = [](auto &p, gerby::d::inch m) {
     r1.copper(p, m);
