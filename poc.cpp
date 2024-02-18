@@ -368,6 +368,18 @@ extern "C" void casein_handle(const casein::event &e) {
       b->add_lines([](auto &p) { copper(p, 0.0); }, red);
       b->add_lines([](auto &p) { thermals(p); }, red);
       b->add_lines([](auto &p) { bat.hole(p); }, black);
+      b->add_lines(
+          [](auto &p) {
+            p.aperture(25.0_mil);
+            plane(p);
+          },
+          black);
+      b->add_lines(
+          [](auto &p) {
+            p.aperture(10.0_mil);
+            plane(p);
+          },
+          purple);
     }
 
     b->add_lines(
