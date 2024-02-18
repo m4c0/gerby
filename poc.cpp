@@ -289,7 +289,7 @@ extern "C" void casein_handle(const casein::event &e) {
     t.move(r1, 1);
     t.draw_x(1.0_mm);
     t.draw(1.0_mm, -1.0_mm);
-    t.draw_y(-3.0_mm);
+    t.draw_y(-6.0_mm);
     t.draw(-1.0_mm, -1.0_mm);
     t.draw_x(-6.0_mm);
     t.draw(ne555, 4);
@@ -384,8 +384,10 @@ extern "C" void casein_handle(const casein::event &e) {
     border(p, 25.0_mil);
   };
 
+  // TODO: merge GND nets into plane
+  // TODO: improve GND connection to pin 5's cap
   static gerby::thread t{[](auto b) {
-    constexpr const auto mask_layer = 1;
+    constexpr const auto mask_layer = false;
     if constexpr (mask_layer) {
       b->add_region(plane, green);
       b->add_lines(copper_mask, black);
