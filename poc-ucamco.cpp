@@ -72,7 +72,7 @@ void example_lines_2(gerby::pen &p) {
   p.flash_x(20);
 }
 
-void build_example(gerby::builder *b) {
+void build_example(gerby::builder *b, gerby::grb_layer l) {
   using namespace gerby::palette;
 
   b->add_lines(example_lines_1, red);

@@ -396,9 +396,8 @@ extern "C" void casein_handle(const casein::event &e) {
   };
 
   // TODO: improve GND connection to pin 5's cap
-  static gerby::thread t{[](auto b) {
-    constexpr const auto mask_layer = false;
-    if constexpr (mask_layer) {
+  static gerby::thread t{[](auto b, auto l) {
+    if (l == gerby::gl_top_mask) {
       b->add_region(plane, green);
       b->add_lines(copper_mask, black);
     } else {

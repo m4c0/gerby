@@ -131,7 +131,7 @@ extern "C" void casein_handle(const casein::event &e) {
   static constexpr const auto r2 = resistor{(0.7_in).value(), 0};
   static constexpr const auto r3 = resistor{(0.9_in).value(), 0};
 
-  static gerby::thread t{[](auto b) {
+  static gerby::thread t{[](auto b, auto l) {
     b->add_lines(
         [](auto &p) {
           ic555.copper(p);

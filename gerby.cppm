@@ -379,6 +379,11 @@ export class builder {
 public:
   explicit builder(voo::device_and_queue *dq) : m_dq{dq} {}
 
+  void reset() {
+    m_layers.truncate(0);
+    m_mm = {};
+  }
+
   void add_lines(auto fn, dotz::vec4 colour) {
     m_layers.push_back(lines::create(m_dq, fn, colour, &m_mm));
   }
@@ -390,24 +395,51 @@ public:
   [[nodiscard]] constexpr auto &minmax() noexcept { return m_mm; }
 };
 
+export enum grb_layer {
+  gl_top_copper,
+  gl_top_mask,
+};
 export class thread : public voo::casein_thread {
-  void (*m_lb)(builder *);
+  builder *m_b;
+  grb_layer m_layer{};
+
+  void (*m_lb)(builder *, grb_layer);
+
+  void update_layer() {
+    wait_init();
+
+    m_b->reset();
+    m_lb(m_b, m_layer);
+  }
 
 public:
   explicit constexpr thread(decltype(m_lb) l) : m_lb{l} {}
 
+  void key_down(const casein::events::key_down &e) override {
+    switch (*e) {
+    case casein::K_LEFT:
+      break;
+    case casein::K_RIGHT:
+      break;
+    default:
+      break;
+    }
+  }
+
   void run() override {
     voo::device_and_queue dq{"gerby", native_ptr()};
-
     builder b{&dq};
-    m_lb(&b);
+    m_b = &b;
 
-    auto mm = b.minmax();
+    release_init_lock();
+
+    update_layer();
 
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq, sw, [&] {
+        auto mm = b.minmax();
         upc pc{
             .center = mm.center(),
             .scale = mm.scale(),
