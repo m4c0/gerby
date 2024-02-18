@@ -398,6 +398,7 @@ public:
 export enum grb_layer {
   gl_top_copper = 0,
   gl_top_mask,
+  gl_drill_holes,
   gl_count,
 };
 export class thread : public voo::casein_thread {
