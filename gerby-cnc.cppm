@@ -4,7 +4,7 @@ import :distance;
 import dotz;
 
 namespace gerby::cnc {
-class aperture {
+export class aperture {
   dotz::vec2 m_smear{};
   float m_d{};
   float m_round{1};

@@ -2,6 +2,7 @@
 
 import casein;
 import gerby;
+import gerbyv;
 
 void example_lines_1(gerby::pen &p) {
   p.aperture(0.1); // D10C,0.1

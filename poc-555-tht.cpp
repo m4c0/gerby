@@ -2,6 +2,7 @@
 
 import casein;
 import gerby;
+import gerbyv;
 
 using namespace gerby::literals;
 
