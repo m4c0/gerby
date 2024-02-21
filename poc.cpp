@@ -405,29 +405,31 @@ static constexpr const auto multi_layer = [](auto b) {
   b->add_lines(doc, white);
 };
 
+// TODO: improve GND connection to pin 5's cap
+void draw(auto b, auto l) {
+  switch (l) {
+  case gerby::gl_top_mask:
+    b->add_region(plane, green);
+    b->add_lines(copper_mask, black);
+    multi_layer(b);
+    break;
+  case gerby::gl_top_copper:
+    b->add_region(plane, red);
+    b->add_lines(copper_margin, black);
+    b->add_lines(copper_lines, red);
+    b->add_lines(thermals, red);
+    multi_layer(b);
+    break;
+  case gerby::gl_drill_holes:
+    b->add_lines(holes, white);
+    border_w_margin(b);
+    break;
+  default:
+    break;
+  }
+}
+
 extern "C" void casein_handle(const casein::event &e) {
-  // TODO: improve GND connection to pin 5's cap
-  static gerby::thread t{[](auto b, auto l) {
-    switch (l) {
-    case gerby::gl_top_mask:
-      b->add_region(plane, green);
-      b->add_lines(copper_mask, black);
-      multi_layer(b);
-      break;
-    case gerby::gl_top_copper:
-      b->add_region(plane, red);
-      b->add_lines(copper_margin, black);
-      b->add_lines(copper_lines, red);
-      b->add_lines(thermals, red);
-      multi_layer(b);
-      break;
-    case gerby::gl_drill_holes:
-      b->add_lines(holes, white);
-      border_w_margin(b);
-      break;
-    default:
-      break;
-    }
-  }};
+  static gerby::thread t{draw};
   t.handle(e);
 }
