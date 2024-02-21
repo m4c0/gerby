@@ -4,6 +4,7 @@ import casein;
 import gerby;
 
 using namespace gerby::literals;
+using namespace gerby::palette;
 
 enum rotation { CW0, CW90, CW180, CW270 };
 
@@ -269,148 +270,142 @@ public:
   }
 };
 
+// https://datasheet.lcsc.com/lcsc/2205311800_UNI-ROYAL-Uniroyal-Elec-0805W8F1001T5E_C17513.pdf
+// https://datasheet.lcsc.com/lcsc/2304140030_FH--Guangdong-Fenghua-Advanced-Tech-0805B471K500NT_C1743.pdf
+// https://datasheet.lcsc.com/lcsc/1806151129_Hubei-KENTO-Elec-KT-0805Y_C2296.pdf
+// https://www.ti.com/lit/ds/symlink/lm555.pdf
+static constexpr const r0805 r1{8.0_mm, 0.0_mm, CW270};
+static constexpr const r0805 r2{4.0_mm, 2.0_mm, CW180};
+static constexpr const r0805 r3{-2.5_mm, -3.0_mm, CW270};
+static constexpr const r0805 c1{-2.5_mm, -1.2_mm, CW90};
+static constexpr const r0805 c2{8.0_mm, -4.0_mm, CW270};
+static constexpr const led l1{-5.0_mm, -5.3_mm, CW90};
+static constexpr const pad bat{10.0_mm, 3.0_mm, 2, CW90};
+static constexpr const soic_8 ne555{0.0_mm, 0.0_mm};
+
+static constexpr const auto nets = [](turtle &t) {
+  t.move(ne555, 2);
+  t.draw_x(2.0_mm);
+  t.draw(ne555, 6);
+
+  t.move(r1, 1);
+  t.draw_x(1.0_mm);
+  t.draw(1.0_mm, -1.0_mm);
+  t.draw_y(-6.0_mm);
+  t.draw(-1.0_mm, -1.0_mm);
+  t.draw_x(-6.0_mm);
+  t.draw(ne555, 4);
+
+  t.move(ne555, 8);
+  t.draw(r1, 1);
+
+  t.move(r1, 2);
+  t.draw(ne555, 7);
+
+  t.move(ne555, 7);
+  t.draw_x(-0.6_mm);
+  t.draw(r2, 1);
+
+  t.move(r2, 2);
+  t.draw_y(-3.0_mm);
+  t.draw(ne555, 2);
+  t.draw(c1, 1);
+
+  t.move(ne555, 5);
+  t.draw(c2, 1);
+
+  t.move(ne555, 3);
+  t.draw(r3, 1);
+
+  t.move(r3, 2);
+  t.draw(l1, 1);
+
+  t.move(bat, decltype(bat)::vcc_pin);
+  t.draw(r1, 1);
+};
+static constexpr const auto pads = [](auto &p, gerby::d::inch m) {
+  r1.copper(p, m);
+  r2.copper(p, m);
+  r3.copper(p, m);
+  c1.copper(p, m);
+  c2.copper(p, m);
+  l1.copper(p, m);
+  ne555.copper(p, m);
+  bat.copper(p, m);
+};
+static constexpr const auto copper_mask = [](auto &p) { pads(p, 10.0_mil); };
+
+static constexpr const auto copper = [](auto &p, gerby::d::inch m) {
+  turtle t{&p};
+  p.aperture(15.0_mil + m);
+  nets(t);
+
+  pads(p, m);
+};
+static constexpr const auto copper_margin = [](auto &p) {
+  copper(p, 15.0_mil);
+};
+static constexpr const auto copper_lines = [](auto &p) { copper(p, 0.0_mil); };
+
+static constexpr const auto thermals = [](auto &p) {
+  bat.thermal(p, 2.0_mm, decltype(bat)::gnd_pin);
+
+  c1.thermal(p, 1.3_mm, 2);
+  c2.thermal(p, 1.3_mm, 2);
+  l1.thermal(p, 1.3_mm, 2);
+  ne555.thermal(p, 1.4_mm, 0.7_mm, 1);
+};
+
+static constexpr const auto plane = [](auto &f) {
+  minmax_pen mmp{};
+  turtle trt{&mmp};
+  nets(trt);
+
+  auto cx = mmp.center_x();
+  auto cy = mmp.center_y();
+
+  constexpr const auto w = 20.0_mm;
+  constexpr const auto h = 20.0_mm;
+
+  const auto l = cx - w * 0.5;
+  const auto r = l + w;
+  const auto b = cy - h * 0.5;
+  const auto t = b + h;
+  f.move(l, b);
+  f.draw_x(r);
+  f.draw_y(t);
+  f.draw_x(l);
+  f.draw_y(b);
+};
+
+static constexpr const auto holes = [](auto &p) { bat.hole(p); };
+
+static constexpr const auto border = [](auto &p, gerby::d::inch a) {
+  p.aperture(a);
+  plane(p);
+};
+static constexpr const auto border_lines = [](auto &p) { border(p, 10.0_mil); };
+static constexpr const auto border_margin = [](auto &p) {
+  border(p, 25.0_mil);
+};
+static constexpr const auto border_w_margin = [](auto b) {
+  b->add_lines(border_margin, black);
+  b->add_lines(border_lines, purple);
+};
+
+static constexpr const auto doc = [](auto &p) {
+  ne555.doc(p);
+  l1.doc(p);
+};
+
+static constexpr const auto multi_layer = [](auto b) {
+  b->add_lines(holes, black);
+  border_w_margin(b);
+
+  b->add_lines(doc, white);
+};
+
 extern "C" void casein_handle(const casein::event &e) {
-  using namespace gerby::palette;
-
-  // https://datasheet.lcsc.com/lcsc/2205311800_UNI-ROYAL-Uniroyal-Elec-0805W8F1001T5E_C17513.pdf
-  // https://datasheet.lcsc.com/lcsc/2304140030_FH--Guangdong-Fenghua-Advanced-Tech-0805B471K500NT_C1743.pdf
-  // https://datasheet.lcsc.com/lcsc/1806151129_Hubei-KENTO-Elec-KT-0805Y_C2296.pdf
-  // https://www.ti.com/lit/ds/symlink/lm555.pdf
-  static constexpr const r0805 r1{8.0_mm, 0.0_mm, CW270};
-  static constexpr const r0805 r2{4.0_mm, 2.0_mm, CW180};
-  static constexpr const r0805 r3{-2.5_mm, -3.0_mm, CW270};
-  static constexpr const r0805 c1{-2.5_mm, -1.2_mm, CW90};
-  static constexpr const r0805 c2{8.0_mm, -4.0_mm, CW270};
-  static constexpr const led l1{-5.0_mm, -5.3_mm, CW90};
-  static constexpr const pad bat{10.0_mm, 3.0_mm, 2, CW90};
-  static constexpr const soic_8 ne555{0.0_mm, 0.0_mm};
-
-  static constexpr const auto nets = [](turtle &t) {
-    t.move(ne555, 2);
-    t.draw_x(2.0_mm);
-    t.draw(ne555, 6);
-
-    t.move(r1, 1);
-    t.draw_x(1.0_mm);
-    t.draw(1.0_mm, -1.0_mm);
-    t.draw_y(-6.0_mm);
-    t.draw(-1.0_mm, -1.0_mm);
-    t.draw_x(-6.0_mm);
-    t.draw(ne555, 4);
-
-    t.move(ne555, 8);
-    t.draw(r1, 1);
-
-    t.move(r1, 2);
-    t.draw(ne555, 7);
-
-    t.move(ne555, 7);
-    t.draw_x(-0.6_mm);
-    t.draw(r2, 1);
-
-    t.move(r2, 2);
-    t.draw_y(-3.0_mm);
-    t.draw(ne555, 2);
-    t.draw(c1, 1);
-
-    t.move(ne555, 5);
-    t.draw(c2, 1);
-
-    t.move(ne555, 3);
-    t.draw(r3, 1);
-
-    t.move(r3, 2);
-    t.draw(l1, 1);
-
-    t.move(bat, decltype(bat)::vcc_pin);
-    t.draw(r1, 1);
-  };
-  static constexpr const auto pads = [](auto &p, gerby::d::inch m) {
-    r1.copper(p, m);
-    r2.copper(p, m);
-    r3.copper(p, m);
-    c1.copper(p, m);
-    c2.copper(p, m);
-    l1.copper(p, m);
-    ne555.copper(p, m);
-    bat.copper(p, m);
-  };
-  static constexpr const auto copper_mask = [](auto &p) { pads(p, 10.0_mil); };
-
-  static constexpr const auto copper = [](auto &p, gerby::d::inch m) {
-    turtle t{&p};
-    p.aperture(15.0_mil + m);
-    nets(t);
-
-    pads(p, m);
-  };
-  static constexpr const auto copper_margin = [](auto &p) {
-    copper(p, 15.0_mil);
-  };
-  static constexpr const auto copper_lines = [](auto &p) {
-    copper(p, 0.0_mil);
-  };
-
-  static constexpr const auto thermals = [](auto &p) {
-    bat.thermal(p, 2.0_mm, decltype(bat)::gnd_pin);
-
-    c1.thermal(p, 1.3_mm, 2);
-    c2.thermal(p, 1.3_mm, 2);
-    l1.thermal(p, 1.3_mm, 2);
-    ne555.thermal(p, 1.4_mm, 0.7_mm, 1);
-  };
-
-  static constexpr const auto plane = [](auto &f) {
-    minmax_pen mmp{};
-    turtle trt{&mmp};
-    nets(trt);
-
-    auto cx = mmp.center_x();
-    auto cy = mmp.center_y();
-
-    constexpr const auto w = 20.0_mm;
-    constexpr const auto h = 20.0_mm;
-
-    const auto l = cx - w * 0.5;
-    const auto r = l + w;
-    const auto b = cy - h * 0.5;
-    const auto t = b + h;
-    f.move(l, b);
-    f.draw_x(r);
-    f.draw_y(t);
-    f.draw_x(l);
-    f.draw_y(b);
-  };
-
-  static constexpr const auto holes = [](auto &p) { bat.hole(p); };
-
-  static constexpr const auto border = [](auto &p, gerby::d::inch a) {
-    p.aperture(a);
-    plane(p);
-  };
-  static constexpr const auto border_lines = [](auto &p) {
-    border(p, 10.0_mil);
-  };
-  static constexpr const auto border_margin = [](auto &p) {
-    border(p, 25.0_mil);
-  };
-  static constexpr const auto border_w_margin = [](auto b) {
-    b->add_lines(border_margin, black);
-    b->add_lines(border_lines, purple);
-  };
-
-  static constexpr const auto doc = [](auto &p) {
-    ne555.doc(p);
-    l1.doc(p);
-  };
-
-  static constexpr const auto multi_layer = [](auto b) {
-    b->add_lines(holes, black);
-    border_w_margin(b);
-
-    b->add_lines(doc, white);
-  };
-
   // TODO: improve GND connection to pin 5's cap
   static gerby::thread t{[](auto b, auto l) {
     switch (l) {
