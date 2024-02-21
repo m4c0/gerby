@@ -45,7 +45,7 @@ class pdip {
     }
   };
 
-  void five(gerby::pen &p, float cx, float cy) const {
+  void five(gerby::cnc::pen &p, float cx, float cy) const {
     constexpr const auto f = 0.03;
     p.move(cx + f, cy);
     p.draw_x(cx);

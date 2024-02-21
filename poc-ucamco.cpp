@@ -4,7 +4,7 @@ import casein;
 import gerby;
 import gerbyv;
 
-void example_lines_1(gerby::pen &p) {
+void example_lines_1(gerby::cnc::pen &p) {
   p.aperture(0.1); // D10C,0.1
   p.move(0, 2.5);
   p.draw(0, 0);
@@ -46,7 +46,7 @@ void example_lines_1(gerby::pen &p) {
   p.flash(35, 9);
 }
 
-void example_region_1(gerby::fanner &f) {
+void example_region_1(gerby::cnc::fanner &f) {
   f.move(5, 20);
   f.draw_y(37.5);
   f.draw_x(37.5);
@@ -54,7 +54,7 @@ void example_region_1(gerby::fanner &f) {
   f.draw_x(5);
 }
 
-void example_region_2(gerby::fanner &f) {
+void example_region_2(gerby::cnc::fanner &f) {
   f.move(10, 25);
   f.draw_y(30);
   f.draw(12.5, 32.5); // X12500000Y32500000I2500000J0D01*
@@ -63,7 +63,7 @@ void example_region_2(gerby::fanner &f) {
   f.draw_x(10);
 }
 
-void example_lines_2(gerby::pen &p) {
+void example_lines_2(gerby::cnc::pen &p) {
   p.aperture(0.1); // D10
   p.move(15, 28.75);
   p.draw_x(20);
@@ -73,7 +73,7 @@ void example_lines_2(gerby::pen &p) {
   p.flash_x(20);
 }
 
-void build_example(gerby::builder *b, gerby::grb_layer l) {
+void build_example(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
   using namespace gerby::palette;
 
   b->add_lines(example_lines_1, red);

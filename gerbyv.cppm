@@ -107,7 +107,6 @@ public:
 };
 
 export class pen : public cnc::pen {
-  cnc::aperture m_aperture{};
   voo::mapmem m_map;
   inst *m_buf;
   dotz::vec2 m_p{};
@@ -120,13 +119,11 @@ public:
       , m_buf{static_cast<inst *>(*m_map)}
       , m_minmax{mm} {}
 
-  constexpr void aperture(auto... args) { m_aperture = {args...}; }
-
   [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
 
   void draw(d::inch x, d::inch y) override {
-    auto d = m_aperture.diameter();
-    auto r = m_aperture.roundness();
+    auto d = aperture().diameter();
+    auto r = aperture().roundness();
 
     dotz::vec2 np{x.as_float(), y.as_float()};
     m_minmax->enclose(m_p);
@@ -137,17 +134,17 @@ public:
   void draw_x(d::inch x) override { draw(x, m_p.y); }
   void draw_y(d::inch y) override { draw(m_p.x, y); }
 
-  void flash(d::inch x, d::inch y) {
-    auto d = m_aperture.diameter();
-    auto r = m_aperture.roundness();
-    auto s = m_aperture.smear();
+  void flash(d::inch x, d::inch y) override {
+    auto d = aperture().diameter();
+    auto r = aperture().roundness();
+    auto s = aperture().smear();
 
     m_p = {x.as_float(), y.as_float()};
     m_minmax->enclose(m_p);
     m_buf[m_count++] = {m_p - s, m_p + s, d, r};
   }
-  void flash_x(d::inch x) { flash(x, m_p.y); }
-  void flash_y(d::inch y) { flash(m_p.x, y); }
+  void flash_x(d::inch x) override { flash(x, m_p.y); }
+  void flash_y(d::inch y) override { flash(m_p.x, y); }
 
   void move(d::inch x, d::inch y) override {
     m_p = {x.as_float(), y.as_float()};
@@ -182,7 +179,7 @@ public:
   using update_thread::run_once;
 };
 
-export class fanner {
+export class fanner : public cnc::fanner {
   voo::mapmem m_m;
   rvtx *m_v;
   unsigned m_count{};
@@ -197,19 +194,19 @@ public:
 
   [[nodiscard]] constexpr auto count() const noexcept { return m_count; }
 
-  void move(d::inch x, d::inch y) {
+  void move(d::inch x, d::inch y) override {
     m_fan_ref = {x.as_float(), y.as_float()};
     m_v[m_count++] = {m_fan_ref};
     m_v[m_count++] = {m_fan_ref};
   }
 
-  void draw(d::inch x, d::inch y) {
+  void draw(d::inch x, d::inch y) override {
     m_v[m_count++] = {m_fan_ref};
     m_v[m_count++] = {{x.as_float(), y.as_float()}};
     m_minmax->enclose({x.as_float(), y.as_float()});
   }
-  void draw_x(d::inch x) { draw(x, m_v[m_count - 1].pos.y); }
-  void draw_y(d::inch y) { draw(m_v[m_count - 1].pos.x, y); }
+  void draw_x(d::inch x) override { draw(x, m_v[m_count - 1].pos.y); }
+  void draw_y(d::inch y) override { draw(m_v[m_count - 1].pos.x, y); }
 };
 
 class rvertices : voo::update_thread {
@@ -247,7 +244,7 @@ class lines : public layer {
   instances m_is;
   unsigned m_i_count{};
 
-  void update(void (*load)(pen &), minmax *mm) {
+  void update(void (*load)(cnc::pen &), minmax *mm) {
     {
       auto p = m_is.pen(mm);
       load(p);
@@ -296,7 +293,7 @@ public:
     vee::cmd_draw(cb, v_count, m_i_count);
   }
 
-  static auto create(voo::device_and_queue *dq, void (*load)(pen &),
+  static auto create(voo::device_and_queue *dq, void (*load)(cnc::pen &),
                      dotz::vec4 colour, minmax *mm) {
     auto *res = new lines{dq, colour};
     res->update(load, mm);
@@ -312,7 +309,7 @@ class region : public layer {
   rvertices m_vs;
   unsigned m_count{};
 
-  void update(void (*load)(fanner &), minmax *mm) {
+  void update(void (*load)(cnc::fanner &), minmax *mm) {
     {
       auto p = m_vs.fanner(mm);
       load(p);
@@ -357,7 +354,7 @@ public:
     vee::cmd_draw(cb, m_count);
   }
 
-  static auto create(voo::device_and_queue *dq, void (*load)(fanner &),
+  static auto create(voo::device_and_queue *dq, void (*load)(cnc::fanner &),
                      dotz::vec4 colour, minmax *mm) {
     auto res = new region{dq, colour};
     res->update(load, mm);
@@ -365,7 +362,7 @@ public:
   }
 };
 
-export class builder {
+class builder : public cnc::builder {
   static constexpr const auto max_layers = 1024;
 
   voo::device_and_queue *m_dq;
@@ -380,10 +377,10 @@ public:
     m_mm = {};
   }
 
-  void add_lines(auto fn, dotz::vec4 colour) {
+  void add_lines(void (*fn)(cnc::pen &), dotz::vec4 colour) override {
     m_layers.push_back(lines::create(m_dq, fn, colour, &m_mm));
   }
-  void add_region(auto fn, dotz::vec4 colour) {
+  void add_region(void (*fn)(cnc::fanner &), dotz::vec4 colour) override {
     m_layers.push_back(region::create(m_dq, fn, colour, &m_mm));
   }
 
@@ -391,20 +388,14 @@ public:
   [[nodiscard]] constexpr auto &minmax() noexcept { return m_mm; }
 };
 
-export enum grb_layer {
-  gl_top_copper = 0,
-  gl_top_mask,
-  gl_drill_holes,
-  gl_count,
-};
 export class thread : public voo::casein_thread {
-  grb_layer m_layer{};
+  cnc::grb_layer m_layer{};
   bool m_fast_cycle{};
 
-  void (*m_lb)(builder *, grb_layer);
+  void (*m_lb)(cnc::builder *, cnc::grb_layer);
 
   void cycle_layer_right() {
-    m_layer = static_cast<grb_layer>((m_layer + 1) % gl_count);
+    m_layer = static_cast<cnc::grb_layer>((m_layer + 1) % cnc::gl_count);
   }
 
 public:
@@ -413,7 +404,8 @@ public:
   void key_down(const casein::events::key_down &e) override {
     switch (*e) {
     case casein::K_LEFT:
-      m_layer = static_cast<grb_layer>((m_layer + gl_count - 1) % gl_count);
+      m_layer = static_cast<cnc::grb_layer>((m_layer + cnc::gl_count - 1) %
+                                            cnc::gl_count);
       break;
     case casein::K_RIGHT:
       cycle_layer_right();
@@ -434,7 +426,7 @@ public:
     voo::device_and_queue dq{"gerby", native_ptr()};
     builder b{&dq};
 
-    auto last_rnd = gl_count;
+    auto last_rnd = cnc::gl_count;
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 

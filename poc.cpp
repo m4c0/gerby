@@ -35,11 +35,11 @@ public:
       , m_y{y}
       , m_rot{r} {}
 
-  virtual void copper(gerby::pen &, gerby::d::inch margin) const = 0;
-  virtual void doc(gerby::pen &) const {};
-  virtual void hole(gerby::pen &) const {};
+  virtual void copper(gerby::cnc::pen &, gerby::d::inch margin) const = 0;
+  virtual void doc(gerby::cnc::pen &) const {};
+  virtual void hole(gerby::cnc::pen &) const {};
 
-  void thermal(gerby::pen &p, gerby::d::inch w, gerby::d::inch h,
+  void thermal(gerby::cnc::pen &p, gerby::d::inch w, gerby::d::inch h,
                unsigned pin) const {
     p.aperture(25.0_mil, h + 25.0_mil, false);
     flash_pin(p, pin);
@@ -47,7 +47,7 @@ public:
     p.aperture(w + 25.0_mil, 25.0_mil, false);
     flash_pin(p, pin);
   }
-  void thermal(gerby::pen &p, gerby::d::inch w, unsigned pin) const {
+  void thermal(gerby::cnc::pen &p, gerby::d::inch w, unsigned pin) const {
     thermal(p, w, w, pin);
   }
 
@@ -98,11 +98,11 @@ public:
       : compo{x, y, r}
       , m_count{n} {}
 
-  void copper(gerby::pen &p, gerby::d::inch m) const override {
+  void copper(gerby::cnc::pen &p, gerby::d::inch m) const override {
     p.aperture(copper_d + m);
     flash_pins(p, m_count);
   }
-  void hole(gerby::pen &p) const override {
+  void hole(gerby::cnc::pen &p) const override {
     p.aperture(hole_d);
     flash_pins(p, m_count);
   }
@@ -123,7 +123,7 @@ protected:
 public:
   using compo::compo;
 
-  void copper(gerby::pen &p, gerby::d::inch m) const override {
+  void copper(gerby::cnc::pen &p, gerby::d::inch m) const override {
     if (rot() == CW90 || rot() == CW270) {
       p.aperture(c + m, b + m, false);
     } else {
@@ -137,7 +137,7 @@ class led : public r0805 {
 public:
   using r0805::r0805;
 
-  void doc(gerby::pen &p) const override {
+  void doc(gerby::cnc::pen &p) const override {
     p.aperture(10.0_mil);
 
     auto cx = (pin_x(2) + pin_x(1)) * 0.5;
@@ -179,11 +179,11 @@ class soic_8 : public compo {
 public:
   using compo::compo;
 
-  void copper(gerby::pen &p, gerby::d::inch m) const override {
+  void copper(gerby::cnc::pen &p, gerby::d::inch m) const override {
     p.aperture(pw + m, ph + m, false);
     flash_pins(p, 8);
   }
-  void doc(gerby::pen &p) const override {
+  void doc(gerby::cnc::pen &p) const override {
     p.aperture(10.0_mil, 30.0_mil, true);
     p.flash(x() + pw, y());
   }
@@ -262,6 +262,12 @@ public:
   }
   void move_x(gerby::d::inch x) override { update_x(x); }
   void move_y(gerby::d::inch y) override { update_y(y); }
+  void flash(gerby::d::inch x, gerby::d::inch y) override {
+    update_x(x);
+    update_y(y);
+  }
+  void flash_x(gerby::d::inch x) override { update_x(x); }
+  void flash_y(gerby::d::inch y) override { update_y(y); }
 
   [[nodiscard]] gerby::d::inch center_x() const noexcept {
     return (m_max_x + m_min_x) * 0.5f;
@@ -407,21 +413,21 @@ static constexpr const auto multi_layer = [](auto b) {
 };
 
 // TODO: improve GND connection to pin 5's cap
-void draw(auto b, auto l) {
+extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
   switch (l) {
-  case gerby::gl_top_mask:
+  case gerby::cnc::gl_top_mask:
     b->add_region(plane, green);
     b->add_lines(copper_mask, black);
     multi_layer(b);
     break;
-  case gerby::gl_top_copper:
+  case gerby::cnc::gl_top_copper:
     b->add_region(plane, red);
     b->add_lines(copper_margin, black);
     b->add_lines(copper_lines, red);
     b->add_lines(thermals, red);
     multi_layer(b);
     break;
-  case gerby::gl_drill_holes:
+  case gerby::cnc::gl_drill_holes:
     b->add_lines(holes, white);
     border_w_margin(b);
     break;
@@ -430,6 +436,7 @@ void draw(auto b, auto l) {
   }
 }
 
+extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l);
 extern "C" void casein_handle(const casein::event &e) {
   static gerby::thread t{draw};
   t.handle(e);

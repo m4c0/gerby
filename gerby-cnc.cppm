@@ -31,8 +31,30 @@ public:
   [[nodiscard]] constexpr auto smear() const noexcept { return m_smear; }
 };
 
-export class pen {
+export class fanner {
 public:
+  virtual ~fanner() = default;
+
+  virtual void move(d::inch x, d::inch y) = 0;
+
+  virtual void draw(d::inch x, d::inch y) = 0;
+  virtual void draw_x(d::inch x) = 0;
+  virtual void draw_y(d::inch y) = 0;
+};
+
+export class pen {
+  cnc::aperture m_aperture{};
+
+protected:
+  [[nodiscard]] constexpr const auto aperture() const noexcept {
+    return m_aperture;
+  }
+
+public:
+  virtual ~pen() = default;
+
+  constexpr void aperture(auto a, auto... args) { m_aperture = {a, args...}; }
+
   virtual void move(d::inch x, d::inch y) = 0;
   virtual void move_x(d::inch x) = 0;
   virtual void move_y(d::inch y) = 0;
@@ -40,5 +62,23 @@ public:
   virtual void draw(d::inch x, d::inch y) = 0;
   virtual void draw_x(d::inch x) = 0;
   virtual void draw_y(d::inch y) = 0;
+
+  virtual void flash(d::inch x, d::inch y) = 0;
+  virtual void flash_x(d::inch x) = 0;
+  virtual void flash_y(d::inch y) = 0;
+};
+
+export struct builder {
+  virtual ~builder() = default;
+
+  virtual void add_lines(void (*fn)(pen &p), dotz::vec4 colour) = 0;
+  virtual void add_region(void (*fn)(fanner &p), dotz::vec4 colour) = 0;
+};
+
+export enum grb_layer {
+  gl_top_copper = 0,
+  gl_top_mask,
+  gl_drill_holes,
+  gl_count,
 };
 } // namespace gerby::cnc
