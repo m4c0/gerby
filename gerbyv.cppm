@@ -391,11 +391,13 @@ public:
 export class thread : public voo::casein_thread {
   cnc::grb_layer m_layer{};
   bool m_fast_cycle{};
+  bool m_redraw{true};
 
   void (*m_lb)(cnc::builder *, cnc::grb_layer);
 
   void cycle_layer_right() {
     m_layer = static_cast<cnc::grb_layer>((m_layer + 1) % cnc::gl_count);
+    m_redraw = true;
   }
 
 public:
@@ -406,12 +408,17 @@ public:
     case casein::K_LEFT:
       m_layer = static_cast<cnc::grb_layer>((m_layer + cnc::gl_count - 1) %
                                             cnc::gl_count);
+      m_redraw = true;
       break;
     case casein::K_RIGHT:
       cycle_layer_right();
       break;
     case casein::K_SPACE:
       m_fast_cycle = true;
+      break;
+    case 'e':
+      m_redraw = true;
+      break;
     default:
       break;
     }
@@ -426,7 +433,6 @@ public:
     voo::device_and_queue dq{"gerby", native_ptr()};
     builder b{&dq};
 
-    auto last_rnd = cnc::gl_count;
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 
@@ -434,8 +440,8 @@ public:
         if (m_fast_cycle) {
           cycle_layer_right();
         }
-        if (last_rnd != m_layer) {
-          last_rnd = m_layer;
+        if (m_redraw) {
+          m_redraw = false;
           b.reset();
           m_lb(&b, m_layer);
         }
