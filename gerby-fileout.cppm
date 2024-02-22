@@ -39,7 +39,7 @@ public:
 
 class file_builder : public cnc::builder {
   void polarity(dotz::vec4 colour) {
-    if (colour == palette::black) {
+    if (colour.x + colour.y + colour.z + colour.w == 0) {
       silog::log(silog::debug, "%%LPC*%%");
     } else {
       silog::log(silog::debug, "%%LPD*%%");

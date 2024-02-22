@@ -29,6 +29,13 @@ public:
   [[nodiscard]] constexpr auto diameter() const noexcept { return m_d; }
   [[nodiscard]] constexpr auto roundness() const noexcept { return m_round; }
   [[nodiscard]] constexpr auto smear() const noexcept { return m_smear; }
+
+  [[nodiscard]] constexpr bool operator==(const aperture &o) const noexcept {
+    auto ss = dotz::sq_length(m_smear - o.m_smear);
+    auto dd = m_d - o.m_d;
+    auto rr = m_round - m_round;
+    return 0.00001f > ss + dd * dd + rr * rr;
+  }
 };
 
 export class fanner {
