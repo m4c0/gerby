@@ -1,4 +1,5 @@
-#pragma leco app
+// TODO: migrate this example to DLLs
+// #pragma leco app
 
 import casein;
 import gerby;

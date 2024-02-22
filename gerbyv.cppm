@@ -2,6 +2,7 @@
 #pragma leco add_shader "gerby.frag"
 export module gerbyv;
 import casein;
+import dl;
 import dotz;
 import gerby;
 import hai;
@@ -393,6 +394,8 @@ export class thread : public voo::casein_thread {
   bool m_fast_cycle{};
   bool m_redraw{true};
 
+  const char *m_libname;
+  hai::uptr<dl::lib> m_lib{};
   void (*m_lb)(cnc::builder *, cnc::grb_layer);
 
   void cycle_layer_right() {
@@ -400,8 +403,14 @@ export class thread : public voo::casein_thread {
     m_redraw = true;
   }
 
+  void load_builder() {
+    m_lib = dl::open(m_libname);
+    m_lb = m_lib->fn<void(cnc::builder *, cnc::grb_layer)>("draw");
+    m_redraw = true;
+  }
+
 public:
-  explicit constexpr thread(decltype(m_lb) l) : m_lb{l} {}
+  explicit constexpr thread(const char *libname) : m_libname{libname} {}
 
   void key_down(const casein::events::key_down &e) override {
     switch (*e) {
@@ -416,8 +425,8 @@ public:
     case casein::K_SPACE:
       m_fast_cycle = true;
       break;
-    case 'e':
-      m_redraw = true;
+    case 'r':
+      m_lb = nullptr;
       break;
     default:
       break;
@@ -437,6 +446,9 @@ public:
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq, sw, [&] {
+        if (m_lb == nullptr) {
+          load_builder();
+        }
         if (m_fast_cycle) {
           cycle_layer_right();
         }
