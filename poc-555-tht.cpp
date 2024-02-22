@@ -1,9 +1,6 @@
-// TODO: migrate this example to DLLs
-// #pragma leco app
+#pragma leco dll
 
-import casein;
 import gerby;
-import gerbyv;
 
 using namespace gerby::literals;
 
@@ -125,39 +122,36 @@ public:
   }
 };
 
-extern "C" void casein_handle(const casein::event &e) {
-  using namespace gerby::palette;
+using namespace gerby::palette;
 
-  static constexpr const auto ic555 = pdip{8};
-  static constexpr const auto r1 = resistor{(0.5_in).value(), 0};
-  static constexpr const auto r2 = resistor{(0.7_in).value(), 0};
-  static constexpr const auto r3 = resistor{(0.9_in).value(), 0};
+static constexpr const auto ic555 = pdip{8};
+static constexpr const auto r1 = resistor{(0.5_in).value(), 0};
+static constexpr const auto r2 = resistor{(0.7_in).value(), 0};
+static constexpr const auto r3 = resistor{(0.9_in).value(), 0};
 
-  static gerby::thread t{[](auto b, auto l) {
-    b->add_lines(
-        [](auto &p) {
-          ic555.copper(p);
-          r1.copper(p);
-          r2.copper(p);
-          r3.copper(p);
-        },
-        red);
-    b->add_lines(
-        [](auto &p) {
-          ic555.holes(p);
-          r1.holes(p);
-          r2.holes(p);
-          r3.holes(p);
-        },
-        black);
-    b->add_lines(
-        [](auto &p) {
-          ic555.doc(p);
-          r1.doc(p);
-          r2.doc(p);
-          r3.doc(p);
-        },
-        white);
-  }};
-  t.handle(e);
+extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
+  b->add_lines(
+      [](auto &p) {
+        ic555.copper(p);
+        r1.copper(p);
+        r2.copper(p);
+        r3.copper(p);
+      },
+      red);
+  b->add_lines(
+      [](auto &p) {
+        ic555.holes(p);
+        r1.holes(p);
+        r2.holes(p);
+        r3.holes(p);
+      },
+      black);
+  b->add_lines(
+      [](auto &p) {
+        ic555.doc(p);
+        r1.doc(p);
+        r2.doc(p);
+        r3.doc(p);
+      },
+      white);
 }

@@ -1,9 +1,6 @@
-// TODO: migrate to dll
-// #pragma leco app
+#pragma leco dll
 
-import casein;
 import gerby;
-import gerbyv;
 
 void example_lines_1(gerby::cnc::pen &p) {
   p.aperture(0.1); // D10C,0.1
@@ -74,15 +71,11 @@ void example_lines_2(gerby::cnc::pen &p) {
   p.flash_x(20);
 }
 
-void build_example(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
+extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
   using namespace gerby::palette;
 
   b->add_lines(example_lines_1, red);
   b->add_region(example_region_1, red);
   b->add_region(example_region_2, black);
   b->add_lines(example_lines_2, red);
-}
-extern "C" void casein_handle(const casein::event &e) {
-  static gerby::thread t{build_example};
-  t.handle(e);
 }
