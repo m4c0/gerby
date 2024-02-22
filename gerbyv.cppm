@@ -6,6 +6,7 @@ import dl;
 import dotz;
 import gerby;
 import hai;
+import silog;
 import sith;
 import vee;
 import voo;
@@ -404,6 +405,7 @@ export class thread : public voo::casein_thread {
   }
 
   void load_builder() {
+    silog::log(silog::info, "Loading renderer library");
     m_lib = dl::open(m_libname);
     m_lb = m_lib->fn<void(cnc::builder *, cnc::grb_layer)>("draw");
     m_redraw = true;
@@ -446,7 +448,7 @@ public:
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq, sw, [&] {
-        if (m_lb == nullptr) {
+        if (m_lb == nullptr || m_lib->modified()) {
           load_builder();
         }
         if (m_fast_cycle) {
