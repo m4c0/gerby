@@ -2,6 +2,7 @@ export module gerby:fileout;
 import :cnc;
 import :distance;
 import :palette;
+import hai;
 import dotz;
 import silog;
 import yoyo;
@@ -19,6 +20,55 @@ public:
     m_f.writef(fmt, args...).take([](auto err) {
       silog::log(silog::error, "Failed to write file: %s", err);
     });
+  }
+};
+
+class apdict : public cnc::pen, public cnc::fanner, public cnc::builder {
+  hai::varray<cnc::aperture> m_dict{1024};
+
+  void ap() {
+    auto a = aperture();
+    if (a.diameter() < 0.000001)
+      return;
+    for (const auto &a1 : m_dict) {
+      if (a == a1)
+        return;
+    }
+    m_dict.push_back(a);
+  }
+
+public:
+  void move(d::inch x, d::inch y) override { ap(); }
+  void move_x(d::inch x) override { ap(); }
+  void move_y(d::inch y) override { ap(); }
+
+  void draw(d::inch x, d::inch y) override { ap(); }
+  void draw_x(d::inch x) override { ap(); }
+  void draw_y(d::inch y) override { ap(); }
+
+  void flash(d::inch x, d::inch y) override { ap(); }
+  void flash_x(d::inch x) override { ap(); }
+  void flash_y(d::inch y) override { ap(); }
+
+  void add_lines(void (*fn)(cnc::pen &p), dotz::vec4 colour) override {
+    fn(*this);
+  }
+  void add_region(void (*fn)(cnc::fanner &p), dotz::vec4 colour) override {
+    fn(*this);
+  }
+
+  void write(file *f) const {
+    unsigned d = 10;
+    for (const auto &a : m_dict) {
+      f->write("%%AD%d", d++);
+      if (a.roundness() > 0) {
+        f->write("C,%.6f", a.diameter());
+      } else {
+        auto v = a.smear() * 2.0f + a.diameter();
+        f->write("R,%.6fX%.6f", v.x, v.y);
+      }
+      f->write("*%%\n");
+    }
   }
 };
 
@@ -89,10 +139,14 @@ public:
 void write(const char *fn, lb_t lb, cnc::grb_layer l) {
   silog::log(silog::info, "Generating [%s]", fn);
 
+  apdict ad{};
+  lb(&ad, l);
+
   file f{fn};
   f.write("%%FSLAX26Y26*%%\n");
   f.write("%%MOIN*%%\n");
   f.write("G01*\n");
+  ad.write(&f);
 
   file_builder b{&f};
   lb(&b, l);
