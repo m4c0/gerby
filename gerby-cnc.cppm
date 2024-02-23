@@ -87,5 +87,6 @@ export enum grb_layer {
   gl_top_mask,
   gl_drill_holes,
   gl_count,
+  gl_border,
 };
 } // namespace gerby::cnc

@@ -458,6 +458,7 @@ public:
           m_redraw = false;
           b.reset();
           m_lb(&b, m_layer);
+          m_lb(&b, cnc::gl_border);
         }
 
         auto mm = b.minmax();

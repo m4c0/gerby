@@ -404,8 +404,6 @@ static constexpr const auto doc = [](auto &p) {
 
 static constexpr const auto multi_layer = [](auto b) {
   b->add_lines(holes, black);
-  border_w_margin(b);
-
   b->add_lines(doc, white);
 };
 
@@ -426,8 +424,9 @@ extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
     break;
   case gerby::cnc::gl_drill_holes:
     b->add_lines(holes, white);
-    border_w_margin(b);
     break;
+  case gerby::cnc::gl_border:
+    border_w_margin(b);
   default:
     break;
   }
