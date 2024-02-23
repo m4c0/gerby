@@ -4,26 +4,35 @@ import :distance;
 import :palette;
 import dotz;
 import silog;
+import yoyo;
 
 namespace gerby::out {
 export using lb_t = void(cnc::builder *, cnc::grb_layer);
 
+void fail(const char *msg) {
+  silog::log(silog::error, "Failed to write file: %s", msg);
+}
+
 class file_pen : public cnc::pen, public cnc::fanner {
+  yoyo::file_writer *m_f;
+
   void dxy(d::inch x, d::inch y, unsigned n) {
     int ix = static_cast<int>(x.raw_value() * 1000000.0);
     int iy = static_cast<int>(y.raw_value() * 1000000.0);
-    silog::log(silog::debug, "X%dY%dD%02d", ix, iy, n);
+    m_f->writef("X%dY%dD%02d*\n", ix, iy, n).take(fail);
   }
   void dx(d::inch x, unsigned n) {
     int ix = static_cast<int>(x.raw_value() * 1000000.0);
-    silog::log(silog::debug, "X%dD%02d", ix, n);
+    m_f->writef("X%dD%02d*\n", ix, n).take(fail);
   }
   void dy(d::inch y, unsigned n) {
     int iy = static_cast<int>(y.raw_value() * 1000000.0);
-    silog::log(silog::debug, "Y%dD%02d", iy, n);
+    m_f->writef("Y%dD%02d*\n", iy, n).take(fail);
   }
 
 public:
+  explicit file_pen(yoyo::file_writer *f) : m_f{f} {}
+
   void move(d::inch x, d::inch y) override { dxy(x, y, 2); }
   void move_x(d::inch x) override { dx(x, 2); }
   void move_y(d::inch y) override { dy(y, 2); }
@@ -38,42 +47,47 @@ public:
 };
 
 class file_builder : public cnc::builder {
+  yoyo::file_writer *m_f;
+
   void polarity(dotz::vec4 colour) {
     if (colour.x + colour.y + colour.z + colour.w == 0) {
-      silog::log(silog::debug, "%%LPC*%%");
+      m_f->writef("%%LPC*%%\n").take(fail);
     } else {
-      silog::log(silog::debug, "%%LPD*%%");
+      m_f->writef("%%LPD*%%\n").take(fail);
     }
   }
 
 public:
+  explicit file_builder(yoyo::file_writer *f) : m_f{f} {}
+
   void add_lines(void (*fn)(cnc::pen &p), dotz::vec4 colour) override {
     polarity(colour);
 
-    file_pen p{};
+    file_pen p{m_f};
     fn(p);
   }
   void add_region(void (*fn)(cnc::fanner &p), dotz::vec4 colour) override {
     polarity(colour);
-    silog::log(silog::debug, "G36*");
+    m_f->writef("G36*\n").take(fail);
 
-    file_pen p{};
+    file_pen p{m_f};
     fn(p);
 
-    silog::log(silog::debug, "G37*");
+    m_f->writef("G37*\n").take(fail);
   }
 };
 
 export void write(lb_t *lb) {
   silog::log(silog::info, "Generating top copper layer");
 
-  silog::log(silog::debug, "%%FSLAX26Y26*%%");
-  silog::log(silog::debug, "%%MOIN*%%");
-  silog::log(silog::debug, "G01*");
+  auto f = yoyo::file_writer{"out/board.gtl"};
+  f.writef("%%FSLAX26Y26*%%\n").take(fail);
+  f.writef("%%MOIN*%%\n").take(fail);
+  f.writef("G01*\n").take(fail);
 
-  file_builder b{};
+  file_builder b{&f};
   lb(&b, cnc::gl_top_copper);
 
-  silog::log(silog::debug, "M02*");
+  f.writef("M02*\n").take(fail);
 }
 } // namespace gerby::out
