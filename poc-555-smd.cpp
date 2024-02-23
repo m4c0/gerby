@@ -402,11 +402,6 @@ static constexpr const auto doc = [](auto &p) {
   l1.doc(p);
 };
 
-static constexpr const auto multi_layer = [](auto b) {
-  b->add_lines(holes, black);
-  b->add_lines(doc, white);
-};
-
 // TODO: improve GND connection to pin 5's cap
 extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
   switch (l) {
@@ -418,7 +413,10 @@ extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
     b->add_lines(copper_margin, black);
     b->add_lines(copper_lines, red);
     b->add_lines(thermals, red);
-    multi_layer(b);
+    b->add_lines(holes, black);
+    break;
+  case gerby::cnc::gl_top_silk:
+    b->add_lines(doc, white);
     break;
   case gerby::cnc::gl_drill_holes:
     b->add_lines(holes, white);

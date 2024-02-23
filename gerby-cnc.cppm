@@ -85,6 +85,10 @@ export struct builder {
 export enum grb_layer {
   gl_top_copper = 0,
   gl_top_mask,
+  gl_top_silk,
+  gl_bot_copper,
+  gl_bot_mask,
+  gl_bot_silk,
   gl_drill_holes,
   gl_count,
   gl_border,

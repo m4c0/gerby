@@ -274,6 +274,10 @@ void write_drill(const char *fn, lb_t lb) {
 export void write(lb_t *lb) {
   write("out/board.gtl", lb, cnc::gl_top_copper);
   write("out/board.gts", lb, cnc::gl_top_mask);
+  write("out/board.gto", lb, cnc::gl_top_silk);
+  write("out/board.gbl", lb, cnc::gl_bot_copper);
+  write("out/board.gbs", lb, cnc::gl_bot_mask);
+  write("out/board.gbo", lb, cnc::gl_bot_silk);
   write("out/board.gko", lb, cnc::gl_border);
   write_drill("out/board.xln", lb);
 }
