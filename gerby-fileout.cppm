@@ -25,6 +25,7 @@ public:
 
 class apdict : public cnc::pen, public cnc::fanner, public cnc::builder {
   hai::varray<cnc::aperture> m_dict{1024};
+  unsigned m_cur{};
 
   void ap() {
     auto a = aperture();
@@ -57,6 +58,21 @@ public:
     fn(*this);
   }
 
+  void set(file *f, cnc::aperture a) {
+    unsigned d = 10;
+    for (const auto &a1 : m_dict) {
+      if (a != a1) {
+        d++;
+        continue;
+      }
+      if (m_cur != d) {
+        f->write("D%d*\n", d);
+        m_cur = d;
+      }
+      return;
+    }
+  }
+
   void write(file *f) const {
     unsigned d = 10;
     for (const auto &a : m_dict) {
@@ -74,23 +90,27 @@ public:
 
 class file_pen : public cnc::pen, public cnc::fanner {
   file *m_f;
+  apdict *m_ad;
 
   void dxy(d::inch x, d::inch y, unsigned n) {
     int ix = static_cast<int>(x.raw_value() * 1000000.0);
     int iy = static_cast<int>(y.raw_value() * 1000000.0);
+    m_ad->set(m_f, aperture());
     m_f->write("X%dY%dD%02d*\n", ix, iy, n);
   }
   void dx(d::inch x, unsigned n) {
     int ix = static_cast<int>(x.raw_value() * 1000000.0);
+    m_ad->set(m_f, aperture());
     m_f->write("X%dD%02d*\n", ix, n);
   }
   void dy(d::inch y, unsigned n) {
     int iy = static_cast<int>(y.raw_value() * 1000000.0);
+    m_ad->set(m_f, aperture());
     m_f->write("Y%dD%02d*\n", iy, n);
   }
 
 public:
-  explicit file_pen(file *f) : m_f{f} {}
+  explicit file_pen(file *f, apdict *ad) : m_f{f}, m_ad{ad} {}
 
   void move(d::inch x, d::inch y) override { dxy(x, y, 2); }
   void move_x(d::inch x) override { dx(x, 2); }
@@ -107,6 +127,7 @@ public:
 
 class file_builder : public cnc::builder {
   file *m_f;
+  apdict *m_ad;
 
   void polarity(dotz::vec4 colour) {
     if (colour.x + colour.y + colour.z + colour.w == 0) {
@@ -117,19 +138,19 @@ class file_builder : public cnc::builder {
   }
 
 public:
-  explicit file_builder(file *f) : m_f{f} {}
+  explicit file_builder(file *f, apdict *ad) : m_f{f}, m_ad{ad} {}
 
   void add_lines(void (*fn)(cnc::pen &p), dotz::vec4 colour) override {
     polarity(colour);
 
-    file_pen p{m_f};
+    file_pen p{m_f, m_ad};
     fn(p);
   }
   void add_region(void (*fn)(cnc::fanner &p), dotz::vec4 colour) override {
     polarity(colour);
     m_f->write("G36*\n");
 
-    file_pen p{m_f};
+    file_pen p{m_f, m_ad};
     fn(p);
 
     m_f->write("G37*\n");
@@ -148,7 +169,7 @@ void write(const char *fn, lb_t lb, cnc::grb_layer l) {
   f.write("G01*\n");
   ad.write(&f);
 
-  file_builder b{&f};
+  file_builder b{&f, &ad};
   lb(&b, l);
 
   f.write("M02*\n");
