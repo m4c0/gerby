@@ -346,6 +346,11 @@ static constexpr const auto copper = [](auto &p, gerby::d::inch m) {
 
   pads(p, m);
 };
+static constexpr const auto copper_bot = [](auto &p) { bat.copper(p, 0); };
+static constexpr const auto copper_bot_mask = [](auto &p) {
+  bat.copper(p, 10.0_mil);
+};
+
 static constexpr const auto copper_margin = [](auto &p) {
   copper(p, 15.0_mil);
 };
@@ -417,6 +422,13 @@ extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
     break;
   case gerby::cnc::gl_top_silk:
     b->add_lines(doc, white);
+    break;
+  case gerby::cnc::gl_bot_mask:
+    b->add_lines(copper_bot_mask, dark_green);
+    break;
+  case gerby::cnc::gl_bot_copper:
+    b->add_lines(copper_bot, blue);
+    b->add_lines(holes, black);
     break;
   case gerby::cnc::gl_drill_holes:
     b->add_lines(holes, white);
