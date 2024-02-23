@@ -411,9 +411,7 @@ static constexpr const auto multi_layer = [](auto b) {
 extern "C" void draw(gerby::cnc::builder *b, gerby::cnc::grb_layer l) {
   switch (l) {
   case gerby::cnc::gl_top_mask:
-    b->add_region(plane, green);
-    b->add_lines(copper_mask, black);
-    multi_layer(b);
+    b->add_lines(copper_mask, green);
     break;
   case gerby::cnc::gl_top_copper:
     b->add_region(plane, red);
