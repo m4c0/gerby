@@ -76,7 +76,7 @@ public:
   void write(file *f) const {
     unsigned d = 10;
     for (const auto &a : m_dict) {
-      f->write("%%AD%d", d++);
+      f->write("%%ADD%d", d++);
       if (a.roundness() > 0) {
         f->write("C,%.6f", a.diameter());
       } else {
