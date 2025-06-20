@@ -1,25 +1,27 @@
+module;
+#include <stdio.h>
+
 export module gerby:fileout;
 import :cnc;
 import :distance;
 import :palette;
 import hai;
+import hay;
 import dotz;
+import print;
 import silog;
-import yoyo;
 
 namespace gerby::out {
 export using lb_t = void(cnc::builder *, cnc::grb_layer);
 
 class file {
-  yoyo::file_writer m_f;
+  hay<FILE *, ::fopen, ::fclose> m_f;
 
 public:
-  explicit file(const char *name) : m_f{name} {}
+  explicit file(const char *name) : m_f { name, "wb" } {}
 
   void write(const char *fmt, auto... args) {
-    m_f.writef(fmt, args...).take([](auto err) {
-      silog::log(silog::error, "Failed to write file: %s", err);
-    });
+    fputln(m_f, fmt, args...);
   }
 };
 
