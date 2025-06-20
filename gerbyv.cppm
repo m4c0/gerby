@@ -77,7 +77,7 @@ class vertices : voo::update_thread {
 
 public:
   explicit vertices(voo::device_and_queue *dq)
-      : update_thread{dq}
+      : update_thread { dq->queue() }
       , m_vs{*dq, v_count * sizeof(vtx)} {
     load_buffer();
     run_once();
@@ -167,7 +167,7 @@ class instances : voo::update_thread {
 
 public:
   explicit instances(voo::device_and_queue *dq)
-      : update_thread{dq}
+      : update_thread { dq->queue() }
       , m_is{*dq, max_insts * sizeof(vtx)} {}
 
   [[nodiscard]] constexpr auto local_buffer() const noexcept {
@@ -223,7 +223,7 @@ class rvertices : voo::update_thread {
 
 public:
   explicit rvertices(voo::device_and_queue *dq)
-      : update_thread{dq}
+      : update_thread { dq->queue() }
       , m_is{*dq, max_vtx * sizeof(rvtx)} {}
 
   [[nodiscard]] constexpr auto local_buffer() const noexcept {
