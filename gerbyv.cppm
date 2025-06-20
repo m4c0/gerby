@@ -428,7 +428,8 @@ public:
 
         sw.queue_one_time_submit(dq.queue(), [&](auto pcb) {
           auto scb = sw.cmd_render_pass({
-              .command_buffer = *pcb,
+            .command_buffer = *pcb,
+            .clear_colours { vee::clear_colour(0.01, 0.02, 0.03, 1.0) },
           });
           for (auto &l : b.layers()) {
             l->cmd_draw(*scb, &pc);
