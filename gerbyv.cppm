@@ -263,6 +263,7 @@ public:
             .pipeline_layout = *m_pl,
             .render_pass = dq->render_pass(),
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+            .extent = dq->extent_of(),
             .back_face_cull = false,
             .depth_test = false,
             .shaders{
@@ -328,6 +329,7 @@ public:
             .pipeline_layout = *m_pl,
             .render_pass = dq->render_pass(),
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+            .extent = dq->extent_of(),
             .back_face_cull = false,
             .depth_test = false,
             .shaders{
@@ -433,9 +435,9 @@ public:
 
   void run() override {
     voo::device_and_queue dq{"gerby", casein::native_ptr};
-    builder b{&dq};
 
     while (!interrupted()) {
+      builder b{&dq};
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq.queue(), sw, [&] {
