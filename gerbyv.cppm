@@ -7,6 +7,7 @@ import gerby;
 import hai;
 import silog;
 import sith;
+import traits;
 import vapp;
 import vee;
 import voo;
@@ -255,12 +256,12 @@ public:
           vee::vertex_input_bind_per_instance(sizeof(inst)),
         },
         .attributes{
-          vee::vertex_attribute_vec2(0, 0),
-          vee::vertex_attribute_vec2(1, 0),
-          vee::vertex_attribute_vec2(1, sizeof(dotz::vec2)),
-          vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
-          vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2)),
-          vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2) + sizeof(float)),
+          vee::vertex_attribute_vec2 (0, traits::offset_of(&vtx::delta)),
+          vee::vertex_attribute_vec2 (1, traits::offset_of(&inst::a)),
+          vee::vertex_attribute_vec2 (1, traits::offset_of(&inst::b)),
+          vee::vertex_attribute_float(0, traits::offset_of(&vtx::w)),
+          vee::vertex_attribute_float(1, traits::offset_of(&inst::diam)),
+          vee::vertex_attribute_float(1, traits::offset_of(&inst::rnd)),
         },
       }) }
       , m_vs{dq}
@@ -305,12 +306,12 @@ public:
           vee::vertex_input_bind(sizeof(rvtx)),
         },
         .attributes{
-          vee::vertex_attribute_vec2(0, sizeof(dotz::vec2)),
-          vee::vertex_attribute_vec2(0, 0),
-          vee::vertex_attribute_vec2(0, 0),
-          vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
-          vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
-          vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+          vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pad)),
+          vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pos)),
+          vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pos)),
+          vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
+          vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
+          vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
         },
       }) }
       , m_vs{dq} {}
