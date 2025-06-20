@@ -1,6 +1,5 @@
-#pragma leco add_shader "gerby.vert"
-#pragma leco add_shader "gerby.frag"
 export module gerbyv;
+import :pipeline;
 import casein;
 import dl;
 import dotz;
@@ -30,13 +29,6 @@ constexpr const auto v_count = 8;
 struct rvtx {
   dotz::vec2 pos;
   dotz::vec2 pad{};
-};
-
-struct upc {
-  dotz::vec4 colour;
-  dotz::vec2 center;
-  float scale;
-  float aspect;
 };
 
 class layer {
@@ -239,9 +231,7 @@ public:
 };
 
 class lines : public layer {
-  vee::pipeline_layout m_pl =
-      vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
-  vee::gr_pipeline m_gp;
+  pipeline m_p;
 
   vertices m_vs;
   instances m_is;
@@ -259,40 +249,26 @@ class lines : public layer {
 public:
   explicit lines(voo::device_and_queue *dq, dotz::vec4 colour)
       : layer{colour}
-      , m_gp{vee::create_graphics_pipeline({
-            .pipeline_layout = *m_pl,
-            .render_pass = dq->render_pass(),
-            .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-            .primitive_restart = true,
-            .extent = dq->extent_of(),
-            .back_face_cull = false,
-            .depth_test = false,
-            .shaders{
-                voo::shader("gerby.vert.spv").pipeline_vert_stage(),
-                voo::shader("gerby.frag.spv").pipeline_frag_stage(),
-            },
-            .bindings{
-                vee::vertex_input_bind(sizeof(vtx)),
-                vee::vertex_input_bind_per_instance(sizeof(inst)),
-            },
-            .attributes{
-                vee::vertex_attribute_vec2(0, 0),
-                vee::vertex_attribute_vec2(1, 0),
-                vee::vertex_attribute_vec2(1, sizeof(dotz::vec2)),
-                vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
-                vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2)),
-                vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2) +
-                                                   sizeof(float)),
-            },
-        })}
+      , m_p { pipeline::create(dq, {
+        .bindings {
+          vee::vertex_input_bind(sizeof(vtx)),
+          vee::vertex_input_bind_per_instance(sizeof(inst)),
+        },
+        .attributes{
+          vee::vertex_attribute_vec2(0, 0),
+          vee::vertex_attribute_vec2(1, 0),
+          vee::vertex_attribute_vec2(1, sizeof(dotz::vec2)),
+          vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+          vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2)),
+          vee::vertex_attribute_float(1, 2 * sizeof(dotz::vec2) + sizeof(float)),
+        },
+      }) }
       , m_vs{dq}
       , m_is{dq} {}
 
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
     pc->colour = colour();
-
-    vee::cmd_bind_gr_pipeline(cb, *m_gp);
-    vee::cmd_push_vertex_constants(cb, *m_pl, pc);
+    m_p.bind(cb, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
     vee::cmd_bind_vertex_buffers(cb, 1, m_is.local_buffer());
     vee::cmd_draw(cb, v_count, m_i_count);
@@ -307,9 +283,7 @@ public:
 };
 
 class region : public layer {
-  vee::pipeline_layout m_pl =
-      vee::create_pipeline_layout({vee::vertex_push_constant_range<upc>()});
-  vee::gr_pipeline m_gp;
+  pipeline m_p;
 
   rvertices m_vs;
   unsigned m_count{};
@@ -326,37 +300,25 @@ class region : public layer {
 public:
   explicit region(voo::device_and_queue *dq, dotz::vec4 colour)
       : layer{colour}
-      , m_gp{vee::create_graphics_pipeline({
-            .pipeline_layout = *m_pl,
-            .render_pass = dq->render_pass(),
-            .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-            .primitive_restart = true,
-            .extent = dq->extent_of(),
-            .back_face_cull = false,
-            .depth_test = false,
-            .shaders{
-                voo::shader("gerby.vert.spv").pipeline_vert_stage(),
-                voo::shader("gerby.frag.spv").pipeline_frag_stage(),
-            },
-            .bindings{
-                vee::vertex_input_bind(sizeof(rvtx)),
-            },
-            .attributes{
-                vee::vertex_attribute_vec2(0, sizeof(dotz::vec2)),
-                vee::vertex_attribute_vec2(0, 0),
-                vee::vertex_attribute_vec2(0, 0),
-                vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
-                vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
-                vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
-            },
-        })}
+      , m_p { pipeline::create(dq, {
+        .bindings {
+          vee::vertex_input_bind(sizeof(rvtx)),
+        },
+        .attributes{
+          vee::vertex_attribute_vec2(0, sizeof(dotz::vec2)),
+          vee::vertex_attribute_vec2(0, 0),
+          vee::vertex_attribute_vec2(0, 0),
+          vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+          vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+          vee::vertex_attribute_float(0, sizeof(dotz::vec2)),
+        },
+      }) }
       , m_vs{dq} {}
 
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
     pc->colour = colour();
 
-    vee::cmd_bind_gr_pipeline(cb, *m_gp);
-    vee::cmd_push_vertex_constants(cb, *m_pl, pc);
+    m_p.bind(cb, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
     vee::cmd_draw(cb, m_count);
   }
