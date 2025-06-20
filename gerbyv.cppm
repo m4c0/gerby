@@ -8,6 +8,7 @@ import gerby;
 import hai;
 import silog;
 import sith;
+import vapp;
 import vee;
 import voo;
 
@@ -390,7 +391,7 @@ public:
   [[nodiscard]] constexpr auto &minmax() noexcept { return m_mm; }
 };
 
-export class thread : public voo::casein_thread {
+export class thread : public vapp {
   cnc::grb_layer m_layer{};
   bool m_fast_cycle{};
   bool m_redraw{true};
@@ -412,42 +413,32 @@ export class thread : public voo::casein_thread {
   }
 
 public:
-  explicit constexpr thread(const char *libname) : m_libname{libname} {}
+  explicit constexpr thread(const char * libname) : m_libname { libname } {
+    using namespace casein;
 
-  void key_down(const casein::events::key_down &e) override {
-    switch (*e) {
-    case casein::K_LEFT:
-      m_layer = static_cast<cnc::grb_layer>((m_layer + cnc::gl_count - 1) %
-                                            cnc::gl_count);
+    handle(KEY_DOWN, K_LEFT, [this] {
+      m_layer = static_cast<cnc::grb_layer>((m_layer + cnc::gl_count - 1) % cnc::gl_count);
       m_redraw = true;
-      break;
-    case casein::K_RIGHT:
+    });
+    handle(KEY_DOWN, K_RIGHT, [this] {
       cycle_layer_right();
-      break;
-    case casein::K_SPACE:
-      m_fast_cycle = true;
-      break;
-    case 'r':
+    });
+    handle(KEY_DOWN, K_R, [this] {
       m_lb = nullptr;
-      break;
-    default:
-      break;
-    }
-  }
-  void key_up(const casein::events::key_up &e) override {
-    if (*e == casein::K_SPACE) {
-      m_fast_cycle = false;
-    }
+    });
+
+    handle(KEY_DOWN, K_SPACE, [this] { m_fast_cycle = true;  });
+    handle(KEY_UP,   K_SPACE, [this] { m_fast_cycle = false; });
   }
 
   void run() override {
-    voo::device_and_queue dq{"gerby", native_ptr()};
+    voo::device_and_queue dq{"gerby", casein::native_ptr};
     builder b{&dq};
 
     while (!interrupted()) {
       voo::swapchain_and_stuff sw{dq};
 
-      extent_loop(dq, sw, [&] {
+      extent_loop(dq.queue(), sw, [&] {
         if (m_lb == nullptr || m_lib->modified()) {
           load_builder();
         }
@@ -468,10 +459,9 @@ public:
             .aspect = sw.aspect(),
         };
 
-        sw.queue_one_time_submit(dq, [&](auto pcb) {
+        sw.queue_one_time_submit(dq.queue(), [&](auto pcb) {
           auto scb = sw.cmd_render_pass({
               .command_buffer = *pcb,
-              .clear_color = {},
           });
           for (auto &l : b.layers()) {
             l->cmd_draw(*scb, &pc);
