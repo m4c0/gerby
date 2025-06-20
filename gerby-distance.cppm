@@ -97,6 +97,9 @@ public:
   constexpr auto operator*(long double n) const noexcept {
     return distance<DT>{m_val * n};
   }
+  constexpr auto operator/(long double n) const noexcept {
+    return distance<DT>{m_val / n};
+  }
 };
 } // namespace gerby
 
