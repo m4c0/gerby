@@ -1,4 +1,5 @@
-#pragma leco tool
+#pragma leco app
+#pragma leco add_plugin "poc-555-smd.cpp"
 import casein;
 import gerbyv;
 
