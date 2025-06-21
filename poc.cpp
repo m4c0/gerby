@@ -1,6 +1,6 @@
 #pragma leco app
-#pragma leco add_plugin "poc-555-smd.cpp"
+#pragma leco add_plugin "poc-counter.cpp"
 import casein;
 import gerbyv;
 
-static gerby::thread t{"poc-555-smd"};
+static gerby::thread t{"poc-counter"};
