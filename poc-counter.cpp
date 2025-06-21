@@ -18,6 +18,7 @@ void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
 
 namespace l {
   struct copper {};
+  struct copper_holes {};
   struct silk {};
 }
 template<typename L, typename T> void penpen(cnc::pen & p, L, T t) {
@@ -66,19 +67,24 @@ template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
 }
 
 struct dip14 : point {};
-template<> void penpen(cnc::pen & p, l::copper, dip14 r) {
+void dip14_copper(cnc::pen & p, dip14 r, d::inch margin) {
   static constexpr const auto pin = 0.5_mm;
   static constexpr const auto hole = pin + 0.2_mm;
-  static constexpr const auto copper = hole + 0.6_mm;
 
   static constexpr const auto w = 0.3_in / 2;
   static constexpr const auto h = 0.1_in * 3.0;
 
-  p.aperture(copper);
+  p.aperture(hole + margin);
   for (auto i = 0; i < 7; i++) {
     p.flash(r.x - w, r.y - h + 0.1_in * i);
     p.flash(r.x + w, r.y - h + 0.1_in * i);
   }
+}
+template<> void penpen(cnc::pen & p, l::copper, dip14 r) {
+  dip14_copper(p, r, 0.6_mm);
+}
+template<> void penpen(cnc::pen & p, l::copper_holes, dip14 r) {
+  dip14_copper(p, r, 0.0_mm);
 }
 template<> void penpen(cnc::pen & p, l::silk, dip14 r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * 7);
@@ -109,9 +115,9 @@ const auto q2 = sot23({0.0_mm, 3.0_mm});
 const auto q3 = sot23({0.0_mm, 3.0_mm});
 
 // 7-digit displays
-const auto msd = dip14({0.0_mm, 0.0_mm});
+const auto msd = dip14({-12.0_mm, 0.0_mm});
 const auto nsd = dip14({0.0_mm, 0.0_mm});
-const auto lsd = dip14({0.0_mm, 0.0_mm});
+const auto lsd = dip14({12.0_mm, 0.0_mm});
 
 template<typename T>
 void penny(cnc::pen & p, T t) {
@@ -142,21 +148,25 @@ void penny(cnc::pen & p, T t) {
 void top_copper(cnc::pen & p) {
   penny(p, l::copper {});
 }
+void top_copper_holes(cnc::pen & p) {
+  penny(p, l::copper_holes {});
+}
 void top_silk(cnc::pen & p) {
   penny(p, l::silk {});
 }
 
 void border_margin(cnc::pen & p) {
-  box(p, 0, 0, 20.0_mm + 25.0_mil, 20.0_mm + 25.0_mil);
+  box(p, 0, 0, 40.0_mm + 25.0_mil, 20.0_mm + 25.0_mil);
 }
 void border(cnc::pen & p) {
-  box(p, 0, 0, 20.0_mm, 20.0_mm);
+  box(p, 0, 0, 40.0_mm, 20.0_mm);
 }
 
 extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
   switch (l) {
     case cnc::gl_top_copper:
       b->add_lines(top_copper, red);
+      b->add_lines(top_copper_holes, black);
       break;
     case cnc::gl_top_silk:
       b->add_lines(top_silk, white);
