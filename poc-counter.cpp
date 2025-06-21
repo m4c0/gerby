@@ -23,12 +23,14 @@ namespace l {
 template<typename L, typename T> void penpen(cnc::pen & p, L, T t) {
 }
 
-// https://jlcpcb.com/partdetail/23933-0603WAF5602T5E/C23206
-struct r0603 {
+struct point {
   // Aligned at the center of the compo
   d::inch x;
   d::inch y;
 };
+
+// https://jlcpcb.com/partdetail/23933-0603WAF5602T5E/C23206
+struct r0603 : point {};
 template<> void penpen(cnc::pen & p, l::copper, r0603 r) {
   static constexpr const auto a = 0.90_mm;
   static constexpr const auto b = 0.65_mm;
@@ -47,10 +49,7 @@ template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
 };
 
 // https://jlcpcb.com/partdetail/2503-S8050_J3Y_RANGE_200_350/C2146
-struct sot23 {
-  d::inch x;
-  d::inch y;
-};
+struct sot23 : point {};
 template<> void penpen(cnc::pen & p, l::copper, sot23 r) {
   static constexpr const auto h = 2.02_mm / 2;
   static constexpr const auto w = 1.20_mm / 2;
@@ -67,28 +66,28 @@ template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
 }
 
 // 100k
-const auto r1 = r0603(0.0_mm, 0.0_mm);
-const auto r2 = r0603(0.0_mm, 0.0_mm);
-const auto r3 = r0603(0.0_mm, 0.0_mm);
-const auto r4 = r0603(0.0_mm, 0.0_mm);
+const auto r1 = r0603({0.0_mm, 0.0_mm});
+const auto r2 = r0603({0.0_mm, 0.0_mm});
+const auto r3 = r0603({0.0_mm, 0.0_mm});
+const auto r4 = r0603({0.0_mm, 0.0_mm});
 // 68
-const auto r5 = r0603(0.0_mm, 0.0_mm);
-const auto r6 = r0603(0.0_mm, 0.0_mm);
-const auto r7 = r0603(0.0_mm, 0.0_mm);
-const auto r8 = r0603(0.0_mm, 0.0_mm);
-const auto r9 = r0603(0.0_mm, 0.0_mm);
-const auto r10 = r0603(0.0_mm, 0.0_mm);
-const auto r11 = r0603(0.0_mm, 0.0_mm);
+const auto r5 = r0603({0.0_mm, 0.0_mm});
+const auto r6 = r0603({0.0_mm, 0.0_mm});
+const auto r7 = r0603({0.0_mm, 0.0_mm});
+const auto r8 = r0603({0.0_mm, 0.0_mm});
+const auto r9 = r0603({0.0_mm, 0.0_mm});
+const auto r10 = r0603({0.0_mm, 0.0_mm});
+const auto r11 = r0603({0.0_mm, 0.0_mm});
 
 // 1nF
-const auto c1 = r0603(0.0_mm, 0.0_mm);
+const auto c1 = r0603({0.0_mm, 0.0_mm});
 // 10nF
-const auto c2 = r0603(0.0_mm, 0.0_mm);
+const auto c2 = r0603({0.0_mm, 0.0_mm});
 
 // BJT NPN
-const auto q1 = sot23(0.0_mm, 3.0_mm);
-const auto q2 = sot23(0.0_mm, 3.0_mm);
-const auto q3 = sot23(0.0_mm, 3.0_mm);
+const auto q1 = sot23({0.0_mm, 3.0_mm});
+const auto q2 = sot23({0.0_mm, 3.0_mm});
+const auto q3 = sot23({0.0_mm, 3.0_mm});
 
 template<typename T>
 void penny(cnc::pen & p, T t) {
@@ -103,6 +102,7 @@ void penny(cnc::pen & p, T t) {
   penpen(p, t, r9);
   penpen(p, t, r10);
   penpen(p, t, r11);
+
   penpen(p, t, c1);
   penpen(p, t, c2);
 
