@@ -7,12 +7,29 @@ using namespace gerby;
 
 //static constexpr const auto copper_margin = 15.0_mil;
 
+void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
+  p.aperture(6.0_mil);
+  p.move(cx - w / 2, cy - h / 2);
+  p.draw_x(cx + w / 2);
+  p.draw_y(cy + h / 2);
+  p.draw_x(cx - w / 2);
+  p.draw_y(cy - h / 2);
+}
+
+namespace l {
+  struct copper {};
+  struct silk {};
+}
+template<typename L, typename T> void penpen(cnc::pen & p, L, T t) {
+}
+
 // https://jlcpcb.com/partdetail/23933-0603WAF5602T5E/C23206
 struct r0603 {
+  // Aligned at the center of the compo
   d::inch x;
   d::inch y;
 };
-static void r0603_copper(cnc::pen & p, r0603 r) {
+template<> void penpen(cnc::pen & p, l::copper, r0603 r) {
   static constexpr const auto a = 0.90_mm;
   static constexpr const auto b = 0.65_mm;
   static constexpr const auto c = 0.80_mm;
@@ -23,17 +40,31 @@ static void r0603_copper(cnc::pen & p, r0603 r) {
   p.flash(r.x + px, r.y);
   p.flash(r.x - px, r.y);
 };
-static void r0603_silk(cnc::pen & p, r0603 r) {
+template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
   static constexpr const auto l = 1.6_mm;
   static constexpr const auto w = 0.8_mm;
-
-  p.aperture(6.0_mil);
-  p.move(r.x - l / 2, r.y - w / 2);
-  p.draw_x(r.x + l / 2);
-  p.draw_y(r.y + w / 2);
-  p.draw_x(r.x - l / 2);
-  p.draw_y(r.y - w / 2);
+  box(p, r.x, r.y, l, w);
 };
+
+// https://jlcpcb.com/partdetail/2503-S8050_J3Y_RANGE_200_350/C2146
+struct sot23 {
+  d::inch x;
+  d::inch y;
+};
+template<> void penpen(cnc::pen & p, l::copper, sot23 r) {
+  static constexpr const auto h = 2.02_mm / 2;
+  static constexpr const auto w = 1.20_mm / 2;
+
+  p.aperture(0.6_mm, 0.8_mm, false);
+  p.flash(r.x, r.y - h);
+  p.flash(r.x - w, r.y + h);
+  p.flash(r.x + w, r.y + h);
+}
+template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
+  static constexpr const auto l = 2.9_mm;
+  static constexpr const auto w = 1.3_mm;
+  box(p, r.x, r.y, l, w);
+}
 
 // 100k
 const auto r1 = r0603(0.0_mm, 0.0_mm);
@@ -54,27 +85,44 @@ const auto c1 = r0603(0.0_mm, 0.0_mm);
 // 10nF
 const auto c2 = r0603(0.0_mm, 0.0_mm);
 
-void penny(cnc::pen & p, void (*fn)(cnc::pen &, r0603)) {
-  fn(p, r1);
-  fn(p, r2);
-  fn(p, r3);
-  fn(p, r4);
-  fn(p, r5);
-  fn(p, r6);
-  fn(p, r7);
-  fn(p, r8);
-  fn(p, r9);
-  fn(p, r10);
-  fn(p, r11);
-  fn(p, c1);
-  fn(p, c2);
+// BJT NPN
+const auto q1 = sot23(0.0_mm, 3.0_mm);
+const auto q2 = sot23(0.0_mm, 3.0_mm);
+const auto q3 = sot23(0.0_mm, 3.0_mm);
+
+template<typename T>
+void penny(cnc::pen & p, T t) {
+  penpen(p, t, r1);
+  penpen(p, t, r2);
+  penpen(p, t, r3);
+  penpen(p, t, r4);
+  penpen(p, t, r5);
+  penpen(p, t, r6);
+  penpen(p, t, r7);
+  penpen(p, t, r8);
+  penpen(p, t, r9);
+  penpen(p, t, r10);
+  penpen(p, t, r11);
+  penpen(p, t, c1);
+  penpen(p, t, c2);
+
+  penpen(p, t, q1);
+  penpen(p, t, q2);
+  penpen(p, t, q3);
 }
 
 void top_copper(cnc::pen & p) {
-  penny(p, r0603_copper);
+  penny(p, l::copper {});
 }
 void top_silk(cnc::pen & p) {
-  penny(p, r0603_silk);
+  penny(p, l::silk {});
+}
+
+void border_margin(cnc::pen & p) {
+  box(p, 0, 0, 20.0_mm + 25.0_mil, 20.0_mm + 25.0_mil);
+}
+void border(cnc::pen & p) {
+  box(p, 0, 0, 20.0_mm, 20.0_mm);
 }
 
 extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
@@ -84,6 +132,10 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
       break;
     case cnc::gl_top_silk:
       b->add_lines(top_silk, white);
+      break;
+    case cnc::gl_border:
+      b->add_lines(border_margin, black);
+      b->add_lines(border, purple);
       break;
     default: break;
   }
