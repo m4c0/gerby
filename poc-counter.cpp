@@ -65,6 +65,25 @@ template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
   box(p, r.x, r.y, l, w);
 }
 
+struct dip14 : point {};
+template<> void penpen(cnc::pen & p, l::copper, dip14 r) {
+  static constexpr const auto pin = 0.5_mm;
+  static constexpr const auto hole = pin + 0.2_mm;
+  static constexpr const auto copper = hole + 0.6_mm;
+
+  static constexpr const auto w = 0.3_in / 2;
+  static constexpr const auto h = 0.1_in * 3.0;
+
+  p.aperture(copper);
+  for (auto i = 0; i < 7; i++) {
+    p.flash(r.x - w, r.y - h + 0.1_in * i);
+    p.flash(r.x + w, r.y - h + 0.1_in * i);
+  }
+}
+template<> void penpen(cnc::pen & p, l::silk, dip14 r) {
+  box(p, r.x, r.y, 0.3_in, 0.1_in * 7);
+}
+
 // 100k
 const auto r1 = r0603({0.0_mm, 0.0_mm});
 const auto r2 = r0603({0.0_mm, 0.0_mm});
@@ -89,6 +108,11 @@ const auto q1 = sot23({0.0_mm, 3.0_mm});
 const auto q2 = sot23({0.0_mm, 3.0_mm});
 const auto q3 = sot23({0.0_mm, 3.0_mm});
 
+// 7-digit displays
+const auto msd = dip14({0.0_mm, 0.0_mm});
+const auto nsd = dip14({0.0_mm, 0.0_mm});
+const auto lsd = dip14({0.0_mm, 0.0_mm});
+
 template<typename T>
 void penny(cnc::pen & p, T t) {
   penpen(p, t, r1);
@@ -109,6 +133,10 @@ void penny(cnc::pen & p, T t) {
   penpen(p, t, q1);
   penpen(p, t, q2);
   penpen(p, t, q3);
+  
+  penpen(p, t, msd);
+  penpen(p, t, nsd);
+  penpen(p, t, lsd);
 }
 
 void top_copper(cnc::pen & p) {
