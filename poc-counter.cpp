@@ -150,32 +150,17 @@ const auto ic1 = dip16({-6.0_mm, 10.0_mm});
 const auto ic2 = dip16({ 6.0_mm, 10.0_mm});
 
 template<typename T>
+void pennies(cnc::pen & p, T t, auto... cs) {
+  (penpen(p, t, cs), ...);
+}
+template<typename T>
 void penny(cnc::pen & p, T t) {
-  penpen(p, t, r1);
-  penpen(p, t, r2);
-  penpen(p, t, r3);
-  penpen(p, t, r4);
-  penpen(p, t, r5);
-  penpen(p, t, r6);
-  penpen(p, t, r7);
-  penpen(p, t, r8);
-  penpen(p, t, r9);
-  penpen(p, t, r10);
-  penpen(p, t, r11);
-
-  penpen(p, t, c1);
-  penpen(p, t, c2);
-
-  penpen(p, t, q1);
-  penpen(p, t, q2);
-  penpen(p, t, q3);
-  
-  penpen(p, t, msd);
-  penpen(p, t, nsd);
-  penpen(p, t, lsd);
-
-  penpen(p, t, ic1);
-  penpen(p, t, ic2);
+  pennies(p, t,
+      r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
+      c1, c2,
+      q1, q2, q3,
+      msd, nsd, lsd,
+      ic1, ic2);
 }
 
 void top_copper(cnc::pen & p) {
