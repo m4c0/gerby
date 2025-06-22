@@ -7,8 +7,8 @@ using namespace gerby;
 
 static constexpr const auto def_copper_margin = 15.0_mil;
 
-static constexpr const auto board_w = 40.0_mm;
-static constexpr const auto board_h = 40.0_mm;
+static constexpr const auto board_w = 50.0_mm;
+static constexpr const auto board_h = 50.0_mm;
 
 void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
   p.aperture(6.0_mil);
@@ -118,9 +118,6 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   p.flash(r.x - dip<N>::w + 1.4_mm, r.y + dip<N>::h);
 }
 
-using dip14 = dip<14>;
-using dip16 = dip<16>;
-
 template<unsigned N>
 struct header : point {
   static constexpr const auto pin = 0.5_mm;
@@ -151,38 +148,38 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
 }
 
 // 100k
-const auto r1 = r0603({0.0_mm, 0.0_mm});
-const auto r2 = r0603({0.0_mm, 0.0_mm});
-const auto r3 = r0603({0.0_mm, 0.0_mm});
-const auto r4 = r0603({0.0_mm, 0.0_mm});
+const auto r1 = r0603({ -6.0_mm, 3.0_mm });
+const auto r2 = r0603({ -6.0_mm, 5.0_mm });
+const auto r3 = r0603({ -6.0_mm, 7.0_mm });
+const auto r4 = r0603({ -6.0_mm, 9.0_mm });
 // 68
-const auto r5 = r0603({0.0_mm, 0.0_mm});
-const auto r6 = r0603({0.0_mm, 0.0_mm});
-const auto r7 = r0603({0.0_mm, 0.0_mm});
-const auto r8 = r0603({0.0_mm, 0.0_mm});
-const auto r9 = r0603({0.0_mm, 0.0_mm});
-const auto r10 = r0603({0.0_mm, 0.0_mm});
-const auto r11 = r0603({0.0_mm, 0.0_mm});
+const auto r5  = r0603({ 6.0_mm, 3.0_mm });
+const auto r6  = r0603({ 6.0_mm, 5.0_mm });
+const auto r7  = r0603({ 6.0_mm, 7.0_mm });
+const auto r8  = r0603({ 6.0_mm, 9.0_mm });
+const auto r9  = r0603({ 6.0_mm, 11.0_mm });
+const auto r10 = r0603({ 6.0_mm, 13.0_mm });
+const auto r11 = r0603({ 6.0_mm, 15.0_mm });
 
 // 1nF
-const auto c1 = r0603({0.0_mm, 0.0_mm});
+const auto c1 = r0603({ -12.0_mm, 0.0_mm });
 // 10nF
-const auto c2 = r0603({0.0_mm, 0.0_mm});
+const auto c2 = r0603({  12.0_mm, 0.0_mm });
 
 // BJT NPN
-const auto q1 = sot23({0.0_mm, 3.0_mm});
-const auto q2 = sot23({0.0_mm, 3.0_mm});
-const auto q3 = sot23({0.0_mm, 3.0_mm});
+const auto q1 = sot23({-12.0_mm, -board_h / 2 + 10.0_mm});
+const auto q2 = sot23({  0.0_mm, -board_h / 2 + 10.0_mm});
+const auto q3 = sot23({ 12.0_mm, -board_h / 2 + 10.0_mm});
 
 // 7-digit displays
-const auto msd = dip14({-12.0_mm, -10.0_mm});
-const auto nsd = dip14({  0.0_mm, -10.0_mm});
-const auto lsd = dip14({ 12.0_mm, -10.0_mm});
+const auto msd = dip<14>({-12.0_mm, -board_h/2 + 10.0_mm});
+const auto nsd = dip<14>({  0.0_mm, -board_h/2 + 10.0_mm});
+const auto lsd = dip<14>({ 12.0_mm, -board_h/2 + 10.0_mm});
 
 // MC14553 - 3-digit BCD counter
-const auto ic1 = dip16({-6.0_mm, 10.0_mm});
+const auto ic1 = dip<16>({-6.0_mm, 7.0_mm});
 // MC14511 - BCD to 7 segments
-const auto ic2 = dip16({ 6.0_mm, 10.0_mm});
+const auto ic2 = dip<16>({ 6.0_mm, 7.0_mm});
 
 // Strobe, disable, clock, reset, overflow, V+, V-
 const auto hdr = header<7>({
