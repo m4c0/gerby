@@ -14,16 +14,7 @@ import silog;
 namespace gerby::out {
 export using lb_t = void(cnc::builder *, cnc::grb_layer);
 
-class file {
-  hay<FILE *, ::fopen, ::fclose> m_f;
-
-public:
-  explicit file(const char *name) : m_f { name, "wb" } {}
-
-  void write(const char *fmt, auto... args) {
-    fputln(m_f, fmt, args...);
-  }
-};
+using file = hay<FILE *, ::fopen, ::fclose>;
 
 class apdict : public cnc::pen, public cnc::fanner, public cnc::builder {
   hai::varray<cnc::aperture> m_dict{1024};
@@ -60,7 +51,7 @@ public:
     fn(*this);
   }
 
-  void set(file *f, cnc::aperture a) {
+  void set(file & f, cnc::aperture a) {
     unsigned d = 10;
     for (const auto &a1 : m_dict) {
       if (a != a1) {
@@ -68,13 +59,13 @@ public:
         continue;
       }
       if (m_cur != d) {
-        f->write("D%d*\n", d);
+        fputfn(f, "D%d*", d);
         m_cur = d;
       }
       return;
     }
   }
-  void tool(file *f, cnc::aperture a) {
+  void tool(file & f, cnc::aperture a) {
     unsigned d = 1;
     for (const auto &a1 : m_dict) {
       if (a != a1) {
@@ -82,27 +73,27 @@ public:
         continue;
       }
       if (m_cur != d) {
-        f->write("T%02d\n", d);
+        fputfn(f, "T%02d", d);
         m_cur = d;
       }
       return;
     }
   }
 
-  void write(file *f) const {
+  void write(file & f) const {
     unsigned d = 10;
     for (const auto &a : m_dict) {
-      f->write("%%ADD%d", d++);
+      fputf(f, "%%ADD%d", d++);
       if (a.roundness() > 0) {
-        f->write("C,%.6f", a.diameter());
+        fputf(f, "C,%.6f", a.diameter());
       } else {
         auto v = a.smear() * 2.0f + a.diameter();
-        f->write("R,%.6fX%.6f", v.x, v.y);
+        fputf(f, "R,%.6fX%.6f", v.x, v.y);
       }
-      f->write("*%%\n");
+      fputfn(f, "*%%");
     }
   }
-  void write_tools(file *f) const {
+  void write_tools(file & f) const {
     unsigned d = 1;
     for (const auto &a : m_dict) {
       if (a.roundness() <= 0) {
@@ -117,34 +108,34 @@ public:
         continue;
       }
 
-      f->write("T%02dC%0.4f\n", d++, din);
+      fputfn(f, "T%02dC%0.4f", d++, din);
     }
   }
 };
 
 class file_pen : public cnc::pen, public cnc::fanner {
-  file *m_f;
+  file & m_f;
   apdict *m_ad;
 
   void dxy(d::inch x, d::inch y, unsigned n) {
     int ix = static_cast<int>(x.raw_value() * 1000000.0);
     int iy = static_cast<int>(y.raw_value() * 1000000.0);
     m_ad->set(m_f, aperture());
-    m_f->write("X%dY%dD%02d*\n", ix, iy, n);
+    fputfn(m_f, "X%dY%dD%02d*", ix, iy, n);
   }
   void dx(d::inch x, unsigned n) {
     int ix = static_cast<int>(x.raw_value() * 1000000.0);
     m_ad->set(m_f, aperture());
-    m_f->write("X%dD%02d*\n", ix, n);
+    fputfn(m_f, "X%dD%02d*", ix, n);
   }
   void dy(d::inch y, unsigned n) {
     int iy = static_cast<int>(y.raw_value() * 1000000.0);
     m_ad->set(m_f, aperture());
-    m_f->write("Y%dD%02d*\n", iy, n);
+    fputfn(m_f, "Y%dD%02d*", iy, n);
   }
 
 public:
-  explicit file_pen(file *f, apdict *ad) : m_f{f}, m_ad{ad} {}
+  explicit file_pen(file & f, apdict *ad) : m_f{f}, m_ad{ad} {}
 
   void move(d::inch x, d::inch y) override { dxy(x, y, 2); }
   void move_x(d::inch x) override { dx(x, 2); }
@@ -160,19 +151,19 @@ public:
 };
 
 class file_builder : public cnc::builder {
-  file *m_f;
+  file & m_f;
   apdict *m_ad;
 
   void polarity(dotz::vec4 colour) {
     if (colour.x + colour.y + colour.z + colour.w == 0) {
-      m_f->write("%%LPC*%%\n");
+      fputfn(m_f, "%%LPC*%%");
     } else {
-      m_f->write("%%LPD*%%\n");
+      fputfn(m_f, "%%LPD*%%");
     }
   }
 
 public:
-  explicit file_builder(file *f, apdict *ad) : m_f{f}, m_ad{ad} {}
+  explicit file_builder(file & f, apdict *ad) : m_f{f}, m_ad{ad} {}
 
   void add_lines(void (*fn)(cnc::pen &p), dotz::vec4 colour) override {
     polarity(colour);
@@ -182,22 +173,22 @@ public:
   }
   void add_region(void (*fn)(cnc::fanner &p), dotz::vec4 colour) override {
     polarity(colour);
-    m_f->write("G36*\n");
+    fputln(m_f, "G36*");
 
     file_pen p{m_f, m_ad};
     fn(p);
 
-    m_f->write("G37*\n");
+    fputln(m_f, "G37*");
   }
 };
 
 class drill_pen : public cnc::pen, public cnc::fanner {
-  file *m_f;
+  file & m_f;
   apdict *m_ad;
 
   void dxy(d::inch x, d::inch y) {
     m_ad->tool(m_f, aperture());
-    m_f->write("X%.6fY%.6f\n", x.as_float(), y.as_float());
+    fputfn(m_f, "X%.6fY%.6f", x.as_float(), y.as_float());
   }
 
   void unsup() {
@@ -206,7 +197,7 @@ class drill_pen : public cnc::pen, public cnc::fanner {
   }
 
 public:
-  explicit drill_pen(file *f, apdict *ad) : m_f{f}, m_ad{ad} {}
+  explicit drill_pen(file & f, apdict *ad) : m_f{f}, m_ad{ad} {}
 
   void move(d::inch x, d::inch y) override { unsup(); }
   void move_x(d::inch x) override { unsup(); }
@@ -222,11 +213,11 @@ public:
 };
 
 class drill_builder : public cnc::builder {
-  file *m_f;
+  file & m_f;
   apdict *m_ad;
 
 public:
-  explicit drill_builder(file *f, apdict *ad) : m_f{f}, m_ad{ad} {}
+  explicit drill_builder(file & f, apdict *ad) : m_f{f}, m_ad{ad} {}
 
   void add_lines(void (*fn)(cnc::pen &p), dotz::vec4 colour) override {
     drill_pen p{m_f, m_ad};
@@ -243,16 +234,16 @@ void write(const char *fn, lb_t lb, cnc::grb_layer l) {
   apdict ad{};
   lb(&ad, l);
 
-  file f{fn};
-  f.write("%%FSLAX26Y26*%%\n");
-  f.write("%%MOIN*%%\n");
-  f.write("G01*\n");
-  ad.write(&f);
+  file f { fn, "wb" };
+  fputln(f, "%%FSLAX26Y26*%%");
+  fputln(f, "%%MOIN*%%");
+  fputln(f, "G01*");
+  ad.write(f);
 
-  file_builder b{&f, &ad};
+  file_builder b { f, &ad };
   lb(&b, l);
 
-  f.write("M02*\n");
+  fputln(f, "M02*");
 }
 void write_drill(const char *fn, lb_t lb) {
   silog::log(silog::info, "Generating drill [%s]", fn);
@@ -260,17 +251,17 @@ void write_drill(const char *fn, lb_t lb) {
   apdict ad{};
   lb(&ad, cnc::gl_drill_holes);
 
-  file f{fn};
-  f.write("M48\n");
-  f.write("INCH\n");
-  ad.write_tools(&f);
-  f.write("%%\n");
-  f.write("G05\n");
+  file f { fn, "wb" };
+  fputln(f, "M48");
+  fputln(f, "INCH");
+  ad.write_tools(f);
+  fputln(f, "%%");
+  fputln(f, "G05");
 
-  drill_builder b{&f, &ad};
+  drill_builder b { f, &ad };
   lb(&b, cnc::gl_drill_holes);
 
-  f.write("M30\n");
+  fputln(f, "M30");
 }
 
 export void write(lb_t *lb) {
