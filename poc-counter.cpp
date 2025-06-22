@@ -93,7 +93,7 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * N / 2);
 
   p.aperture(0.6_mm);
-  p.flash(r.x - dip<N>::w + 1.4_mm, r.y - dip<N>::h);
+  p.flash(r.x - dip<N>::w + 1.4_mm, r.y + dip<N>::h);
 }
 
 using dip14 = dip<14>;
