@@ -259,6 +259,8 @@ export class thread : public vapp {
   }
 
   void load_builder() {
+    m_lib.reset(nullptr);
+
     silog::log(silog::info, "Loading renderer library");
     m_lib = dl::open(m_libname);
     m_lb = m_lib->fn<void(cnc::builder *, cnc::grb_layer)>("draw");
