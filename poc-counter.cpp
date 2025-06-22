@@ -234,9 +234,9 @@ const auto c1 = r0603({ -12.0_mm, 0.0_mm });
 const auto c2 = r0603({  12.0_mm, 0.0_mm });
 
 // BJT NPN
-const auto q1 = sot23({-12.0_mm, -board_h / 2 + 10.0_mm});
-const auto q2 = sot23({  0.0_mm, -board_h / 2 + 10.0_mm});
-const auto q3 = sot23({ 12.0_mm, -board_h / 2 + 10.0_mm});
+const auto q1 = sot23({-12.0_mm, -board_h / 2 + 8.0_mm});
+const auto q2 = sot23({  0.0_mm, -board_h / 2 + 8.0_mm});
+const auto q3 = sot23({ 12.0_mm, -board_h / 2 + 8.0_mm});
 
 // 7-digit displays
 const auto msd = dip<14>({-12.0_mm, -board_h/2 + 10.0_mm});
@@ -278,18 +278,26 @@ void link_digits(turtle & t, unsigned pin, d::inch d0x, d::inch d0y, d::inch d1x
   t.draw_x(d1x);
   t.draw(lsd.pin(pin));
 }
+void link_digit_gnd(turtle & t, const auto & d) {
+  t.move(d.pin(12));
+  t.draw(d.pin(4));
+}
 
 void top_nets(cnc::pen & p) {
   turtle t { &p };
 
-  link_digits(t, 14, 2.2_mm,  2.2_mm, 7.0_mm);
-  link_digits(t, 13, 4.0_mm,  4.0_mm, 4.0_mm);
-  link_digits(t, 2,  3.8_mm, -3.8_mm, 4.5_mm);
-  link_digits(t, 1,  3.8_mm, -3.8_mm, 4.5_mm);
+  link_digits(t,  1, 2.2_mm,  2.2_mm, 7.0_mm);
+  link_digits(t,  2, 4.0_mm,  4.0_mm, 4.0_mm);
+  link_digits(t, 14, 3.8_mm, -3.8_mm, 4.5_mm);
+  link_digits(t, 13, 3.8_mm, -3.8_mm, 4.5_mm);
 
   link_digits(t, 8,  1.25_mm, -1.25_mm, 8.0_mm);
   link_digits(t, 7,  1.25_mm,  1.25_mm, 8.0_mm);
   link_digits(t, 6,  1.25_mm,  1.25_mm, 8.0_mm);
+
+  link_digit_gnd(t, msd);
+  link_digit_gnd(t, nsd);
+  link_digit_gnd(t, lsd);
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
