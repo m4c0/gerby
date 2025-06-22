@@ -223,8 +223,24 @@ public:
   }
 };
 
+auto line_pipeline(voo::device_and_queue * dq) {
+  return pipeline::create(dq, {
+    .bindings {
+      vee::vertex_input_bind(sizeof(vtx)),
+      vee::vertex_input_bind_per_instance(sizeof(inst)),
+    },
+    .attributes{
+      vee::vertex_attribute_vec2 (0, traits::offset_of(&vtx::delta)),
+      vee::vertex_attribute_vec2 (1, traits::offset_of(&inst::a)),
+      vee::vertex_attribute_vec2 (1, traits::offset_of(&inst::b)),
+      vee::vertex_attribute_float(0, traits::offset_of(&vtx::w)),
+      vee::vertex_attribute_float(1, traits::offset_of(&inst::diam)),
+      vee::vertex_attribute_float(1, traits::offset_of(&inst::rnd)),
+    },
+  });
+}
 class lines : public layer {
-  pipeline m_p;
+  pipeline * m_p;
 
   vertices m_vs;
   instances m_is;
@@ -237,43 +253,45 @@ class lines : public layer {
   }
 
 public:
-  explicit lines(voo::device_and_queue *dq, dotz::vec4 colour)
+  explicit lines(voo::device_and_queue *dq, pipeline * p, dotz::vec4 colour)
       : layer{colour}
-      , m_p { pipeline::create(dq, {
-        .bindings {
-          vee::vertex_input_bind(sizeof(vtx)),
-          vee::vertex_input_bind_per_instance(sizeof(inst)),
-        },
-        .attributes{
-          vee::vertex_attribute_vec2 (0, traits::offset_of(&vtx::delta)),
-          vee::vertex_attribute_vec2 (1, traits::offset_of(&inst::a)),
-          vee::vertex_attribute_vec2 (1, traits::offset_of(&inst::b)),
-          vee::vertex_attribute_float(0, traits::offset_of(&vtx::w)),
-          vee::vertex_attribute_float(1, traits::offset_of(&inst::diam)),
-          vee::vertex_attribute_float(1, traits::offset_of(&inst::rnd)),
-        },
-      }) }
+      , m_p { p }
       , m_vs{dq}
       , m_is{dq} {}
 
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
     pc->colour = colour();
-    m_p.bind(cb, pc);
+    m_p->bind(cb, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
     vee::cmd_bind_vertex_buffers(cb, 1, m_is.local_buffer());
     vee::cmd_draw(cb, v_count, m_i_count);
   }
 
-  static auto create(voo::device_and_queue *dq, void (*load)(cnc::pen &),
+  static auto create(voo::device_and_queue *dq, pipeline * p, void (*load)(cnc::pen &),
                      dotz::vec4 colour, minmax *mm) {
-    auto *res = new lines{dq, colour};
+    auto *res = new lines { dq, p, colour };
     res->update(load, mm);
     return hai::uptr<layer>{res};
   }
 };
 
+auto region_pipeline(voo::device_and_queue * dq) {
+  return pipeline::create(dq, {
+    .bindings {
+      vee::vertex_input_bind(sizeof(rvtx)),
+    },
+    .attributes{
+      vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pad)),
+      vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pos)),
+      vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pos)),
+      vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
+      vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
+      vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
+    },
+  });
+}
 class region : public layer {
-  pipeline m_p;
+  pipeline * m_p;
 
   rvertices m_vs;
   unsigned m_count{};
@@ -285,34 +303,22 @@ class region : public layer {
   }
 
 public:
-  explicit region(voo::device_and_queue *dq, dotz::vec4 colour)
+  explicit region(voo::device_and_queue *dq, pipeline * p, dotz::vec4 colour)
       : layer{colour}
-      , m_p { pipeline::create(dq, {
-        .bindings {
-          vee::vertex_input_bind(sizeof(rvtx)),
-        },
-        .attributes{
-          vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pad)),
-          vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pos)),
-          vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pos)),
-          vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
-          vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
-          vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
-        },
-      }) }
+      , m_p { p }
       , m_vs{dq} {}
 
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
     pc->colour = colour();
 
-    m_p.bind(cb, pc);
+    m_p->bind(cb, pc);
     vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
     vee::cmd_draw(cb, m_count);
   }
 
-  static auto create(voo::device_and_queue *dq, void (*load)(cnc::fanner &),
+  static auto create(voo::device_and_queue *dq, pipeline * p, void (*load)(cnc::fanner &),
                      dotz::vec4 colour, minmax *mm) {
-    auto res = new region{dq, colour};
+    auto res = new region { dq, p, colour };
     res->update(load, mm);
     return hai::uptr<layer>{res};
   }
@@ -322,6 +328,10 @@ class builder : public cnc::builder {
   static constexpr const auto max_layers = 1024;
 
   voo::device_and_queue *m_dq;
+
+  pipeline m_lines_ppl = line_pipeline(m_dq);
+  pipeline m_regions_ppl = region_pipeline(m_dq);
+
   hai::varray<hai::uptr<gerby::layer>> m_layers{max_layers};
   minmax m_mm{};
 
@@ -334,10 +344,10 @@ public:
   }
 
   void add_lines(void (*fn)(cnc::pen &), dotz::vec4 colour) override {
-    m_layers.push_back(lines::create(m_dq, fn, colour, &m_mm));
+    m_layers.push_back(lines::create(m_dq, &m_lines_ppl, fn, colour, &m_mm));
   }
   void add_region(void (*fn)(cnc::fanner &), dotz::vec4 colour) override {
-    m_layers.push_back(region::create(m_dq, fn, colour, &m_mm));
+    m_layers.push_back(region::create(m_dq, &m_regions_ppl, fn, colour, &m_mm));
   }
 
   [[nodiscard]] constexpr auto &layers() noexcept { return m_layers; }
@@ -386,9 +396,9 @@ public:
 
   void run() override {
     voo::device_and_queue dq{"gerby", casein::native_ptr};
+    builder b{&dq};
 
     while (!interrupted()) {
-      builder b{&dq};
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq.queue(), sw, [&] {
