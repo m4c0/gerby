@@ -46,16 +46,11 @@ public:
   virtual void cmd_draw(vee::command_buffer cb, upc *pc) = 0;
 };
 
-class vertices : voo::update_thread {
-  voo::h2l_buffer m_vs;
-
-  void build_cmd_buf(vee::command_buffer cb) override {
-    voo::cmd_buf_one_time_submit pcb{cb};
-    m_vs.setup_copy(*pcb);
-  }
+class vertices {
+  voo::bound_buffer m_vs;
 
   void load_buffer() {
-    voo::mapmem m{m_vs.host_memory()};
+    voo::mapmem m { *m_vs.memory };
 
     auto *v = static_cast<vtx *>(*m);
 
@@ -71,15 +66,15 @@ class vertices : voo::update_thread {
 
 public:
   explicit vertices(voo::device_and_queue *dq)
-      : update_thread { dq->queue() }
-      , m_vs{*dq, v_count * sizeof(vtx)} {
+    : m_vs { voo::bound_buffer::create_from_host(
+      dq->physical_device(), v_count * sizeof(vtx),
+      vee::buffer_usage::vertex_buffer
+    ) }
+  {
     load_buffer();
-    run_once();
   }
 
-  [[nodiscard]] constexpr auto local_buffer() const noexcept {
-    return m_vs.local_buffer();
-  }
+  [[nodiscard]] constexpr auto buffer() const { return *m_vs.buffer; }
 };
 
 class minmax {
@@ -162,9 +157,7 @@ public:
     ) }
   {}
 
-  [[nodiscard]] constexpr auto local_buffer() const noexcept {
-    return *m_is.buffer;
-  }
+  [[nodiscard]] constexpr auto buffer() const { return *m_is.buffer; }
 
   [[nodiscard]] auto pen(minmax *mm) noexcept {
     return gerby::pen { *m_is.memory, mm };
@@ -262,8 +255,8 @@ public:
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
     pc->colour = colour();
     m_p->bind(cb, pc);
-    vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
-    vee::cmd_bind_vertex_buffers(cb, 1, m_is.local_buffer());
+    vee::cmd_bind_vertex_buffers(cb, 0, m_vs.buffer());
+    vee::cmd_bind_vertex_buffers(cb, 1, m_is.buffer());
     vee::cmd_draw(cb, v_count, m_i_count);
   }
 
