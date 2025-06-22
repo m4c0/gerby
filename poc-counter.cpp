@@ -90,6 +90,31 @@ template<> void penpen(cnc::pen & p, l::silk, dip14 r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * 7);
 }
 
+// TODO: unify dip14/16
+struct dip16 : point {};
+void dip16_copper(cnc::pen & p, dip16 r, d::inch margin) {
+  static constexpr const auto pin = 0.5_mm;
+  static constexpr const auto hole = pin + 0.2_mm;
+
+  static constexpr const auto w = 0.3_in / 2;
+  static constexpr const auto h = 0.1_in * 3.5;
+
+  p.aperture(hole + margin);
+  for (auto i = 0; i < 8; i++) {
+    p.flash(r.x - w, r.y - h + 0.1_in * i);
+    p.flash(r.x + w, r.y - h + 0.1_in * i);
+  }
+}
+template<> void penpen(cnc::pen & p, l::copper, dip16 r) {
+  dip16_copper(p, r, 0.6_mm);
+}
+template<> void penpen(cnc::pen & p, l::holes, dip16 r) {
+  dip16_copper(p, r, 0.0_mm);
+}
+template<> void penpen(cnc::pen & p, l::silk, dip16 r) {
+  box(p, r.x, r.y, 0.3_in, 0.1_in * 8);
+}
+
 // 100k
 const auto r1 = r0603({0.0_mm, 0.0_mm});
 const auto r2 = r0603({0.0_mm, 0.0_mm});
@@ -115,9 +140,14 @@ const auto q2 = sot23({0.0_mm, 3.0_mm});
 const auto q3 = sot23({0.0_mm, 3.0_mm});
 
 // 7-digit displays
-const auto msd = dip14({-12.0_mm, 0.0_mm});
-const auto nsd = dip14({0.0_mm, 0.0_mm});
-const auto lsd = dip14({12.0_mm, 0.0_mm});
+const auto msd = dip14({-12.0_mm, -10.0_mm});
+const auto nsd = dip14({  0.0_mm, -10.0_mm});
+const auto lsd = dip14({ 12.0_mm, -10.0_mm});
+
+// MC14553 - 3-digit BCD counter
+const auto ic1 = dip16({-6.0_mm, 10.0_mm});
+// MC14511 - BCD to 7 segments
+const auto ic2 = dip16({ 6.0_mm, 10.0_mm});
 
 template<typename T>
 void penny(cnc::pen & p, T t) {
@@ -143,6 +173,9 @@ void penny(cnc::pen & p, T t) {
   penpen(p, t, msd);
   penpen(p, t, nsd);
   penpen(p, t, lsd);
+
+  penpen(p, t, ic1);
+  penpen(p, t, ic2);
 }
 
 void top_copper(cnc::pen & p) {
@@ -156,10 +189,10 @@ void holes(cnc::pen & p) {
 }
 
 void border_margin(cnc::pen & p) {
-  box(p, 0, 0, 40.0_mm + 25.0_mil, 20.0_mm + 25.0_mil);
+  box(p, 0, 0, 40.0_mm + 25.0_mil, 40.0_mm + 25.0_mil);
 }
 void border(cnc::pen & p) {
-  box(p, 0, 0, 40.0_mm, 20.0_mm);
+  box(p, 0, 0, 40.0_mm, 40.0_mm);
 }
 
 extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
