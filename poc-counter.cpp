@@ -18,7 +18,7 @@ void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
 
 namespace l {
   struct copper {};
-  struct copper_holes {};
+  struct holes {};
   struct silk {};
 }
 template<typename L, typename T> void penpen(cnc::pen & p, L, T t) {
@@ -83,7 +83,7 @@ void dip14_copper(cnc::pen & p, dip14 r, d::inch margin) {
 template<> void penpen(cnc::pen & p, l::copper, dip14 r) {
   dip14_copper(p, r, 0.6_mm);
 }
-template<> void penpen(cnc::pen & p, l::copper_holes, dip14 r) {
+template<> void penpen(cnc::pen & p, l::holes, dip14 r) {
   dip14_copper(p, r, 0.0_mm);
 }
 template<> void penpen(cnc::pen & p, l::silk, dip14 r) {
@@ -148,11 +148,11 @@ void penny(cnc::pen & p, T t) {
 void top_copper(cnc::pen & p) {
   penny(p, l::copper {});
 }
-void top_copper_holes(cnc::pen & p) {
-  penny(p, l::copper_holes {});
-}
 void top_silk(cnc::pen & p) {
   penny(p, l::silk {});
+}
+void holes(cnc::pen & p) {
+  penny(p, l::holes {});
 }
 
 void border_margin(cnc::pen & p) {
@@ -166,7 +166,7 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
   switch (l) {
     case cnc::gl_top_copper:
       b->add_lines(top_copper, red);
-      b->add_lines(top_copper_holes, black);
+      b->add_lines(holes, black);
       break;
     case cnc::gl_top_silk:
       b->add_lines(top_silk, white);
@@ -174,6 +174,9 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
     case cnc::gl_border:
       b->add_lines(border_margin, black);
       b->add_lines(border, purple);
+      break;
+    case cnc::gl_drill_holes:
+      b->add_lines(holes, white);
       break;
     default: break;
   }
