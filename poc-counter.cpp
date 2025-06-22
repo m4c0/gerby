@@ -5,7 +5,7 @@ using namespace gerby::literals;
 using namespace gerby::palette;
 using namespace gerby;
 
-//static constexpr const auto copper_margin = 15.0_mil;
+static constexpr const auto def_copper_margin = 15.0_mil;
 
 void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
   p.aperture(6.0_mil);
@@ -18,6 +18,7 @@ void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
 
 namespace l {
   struct copper {};
+  struct copper_margin {};
   struct holes {};
   struct silk {};
 }
@@ -31,18 +32,25 @@ struct point {
 };
 
 // https://jlcpcb.com/partdetail/23933-0603WAF5602T5E/C23206
-struct r0603 : point {};
-template<> void penpen(cnc::pen & p, l::copper, r0603 r) {
-  static constexpr const auto a = 0.90_mm;
-  static constexpr const auto b = 0.65_mm;
-  static constexpr const auto c = 0.80_mm;
+struct r0603 : point {
+  void copper(cnc::pen & p, d::inch margin) {
+    static constexpr const auto a = 0.90_mm;
+    static constexpr const auto b = 0.65_mm;
+    static constexpr const auto c = 0.80_mm;
 
-  static constexpr const auto px = (a + b) / 2;
+    static constexpr const auto px = (a + b) / 2;
 
-  p.aperture(b, c, false);
-  p.flash(r.x + px, r.y);
-  p.flash(r.x - px, r.y);
+    p.aperture(b + margin, c + margin, false);
+    p.flash(x + px, y);
+    p.flash(x - px, y);
+  };
 };
+template<> void penpen(cnc::pen & p, l::copper, r0603 r) {
+  r.copper(p, 0);
+};
+template<> void penpen(cnc::pen & p, l::copper_margin, r0603 r) {
+  r.copper(p, def_copper_margin);
+}
 template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
   static constexpr const auto l = 1.6_mm;
   static constexpr const auto w = 0.8_mm;
@@ -50,15 +58,22 @@ template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
 };
 
 // https://jlcpcb.com/partdetail/2503-S8050_J3Y_RANGE_200_350/C2146
-struct sot23 : point {};
-template<> void penpen(cnc::pen & p, l::copper, sot23 r) {
-  static constexpr const auto h = 2.02_mm / 2;
-  static constexpr const auto w = 1.20_mm / 2;
+struct sot23 : point {
+  void copper(cnc::pen &p, d::inch m) {
+    static constexpr const auto h = 2.02_mm / 2;
+    static constexpr const auto w = 1.20_mm / 2;
 
-  p.aperture(0.6_mm, 0.8_mm, false);
-  p.flash(r.x, r.y - h);
-  p.flash(r.x - w, r.y + h);
-  p.flash(r.x + w, r.y + h);
+    p.aperture(0.6_mm + m, 0.8_mm + m, false);
+    p.flash(x,     y + h);
+    p.flash(x - w, y - h);
+    p.flash(x + w, y - h);
+  }
+};
+template<> void penpen(cnc::pen & p, l::copper, sot23 r) {
+  r.copper(p, 0);
+}
+template<> void penpen(cnc::pen & p, l::copper_margin, sot23 r) {
+  r.copper(p, def_copper_margin);
 }
 template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
   static constexpr const auto l = 2.9_mm;
@@ -83,6 +98,10 @@ struct dip : point {
 };
 template<unsigned N> void penpen(cnc::pen & p, l::copper, dip<N> r) {
   p.aperture(dip<N>::hole + 0.6_mm);
+  r.copper(p);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::copper_margin, dip<N> r) {
+  p.aperture(dip<N>::hole + 0.6_mm + def_copper_margin);
   r.copper(p);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::holes, dip<N> r) {
@@ -150,6 +169,9 @@ void penny(cnc::pen & p, T t) {
 void top_copper(cnc::pen & p) {
   penny(p, l::copper {});
 }
+void top_copper_margin(cnc::pen & p) {
+  penny(p, l::copper_margin {});
+}
 void top_silk(cnc::pen & p) {
   penny(p, l::silk {});
 }
@@ -180,6 +202,7 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
   switch (l) {
     case cnc::gl_top_copper:
       b->add_region(plane, red);
+      b->add_lines(top_copper_margin, black);
       b->add_lines(top_copper, red);
       b->add_lines(holes, black);
       break;
