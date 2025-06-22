@@ -286,9 +286,9 @@ public:
 
   void run() override {
     voo::device_and_queue dq{"gerby", casein::native_ptr};
-    builder b{&dq};
 
     while (!interrupted()) {
+      builder b{&dq};
       voo::swapchain_and_stuff sw{dq};
 
       extent_loop(dq.queue(), sw, [&] {
