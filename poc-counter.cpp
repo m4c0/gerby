@@ -20,8 +20,10 @@ void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
 }
 
 namespace l {
-  struct copper {};
-  struct copper_margin {};
+  struct top_copper {};
+  struct top_copper_margin {};
+  struct bottom_copper {};
+  struct bottom_copper_margin {};
   struct holes {};
   struct silk {};
 }
@@ -91,10 +93,10 @@ struct r0603 : point {
     p.flash(x - px, y);
   };
 };
-template<> void penpen(cnc::pen & p, l::copper, r0603 r) {
+template<> void penpen(cnc::pen & p, l::top_copper, r0603 r) {
   r.copper(p, 0);
 };
-template<> void penpen(cnc::pen & p, l::copper_margin, r0603 r) {
+template<> void penpen(cnc::pen & p, l::top_copper_margin, r0603 r) {
   r.copper(p, def_copper_margin);
 }
 template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
@@ -115,10 +117,10 @@ struct sot23 : point {
     p.flash(x + w, y - h);
   }
 };
-template<> void penpen(cnc::pen & p, l::copper, sot23 r) {
+template<> void penpen(cnc::pen & p, l::top_copper, sot23 r) {
   r.copper(p, 0);
 }
-template<> void penpen(cnc::pen & p, l::copper_margin, sot23 r) {
+template<> void penpen(cnc::pen & p, l::top_copper_margin, sot23 r) {
   r.copper(p, def_copper_margin);
 }
 template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
@@ -152,13 +154,19 @@ struct dip : point {
     }
   }
 };
-template<unsigned N> void penpen(cnc::pen & p, l::copper, dip<N> r) {
+template<unsigned N> void penpen(cnc::pen & p, l::top_copper, dip<N> r) {
   p.aperture(dip<N>::hole + 0.6_mm);
   r.copper(p);
 }
-template<unsigned N> void penpen(cnc::pen & p, l::copper_margin, dip<N> r) {
+template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper, dip<N> r) {
+  penpen(p, l::top_copper {}, r);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, dip<N> r) {
   p.aperture(dip<N>::hole + 0.6_mm + def_copper_margin);
   r.copper(p);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper_margin, dip<N> r) {
+  penpen(p, l::top_copper_margin {}, r);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::holes, dip<N> r) {
   p.aperture(dip<N>::hole);
@@ -184,13 +192,19 @@ struct header : point {
     }
   }
 };
-template<unsigned N> void penpen(cnc::pen & p, l::copper, header<N> r) {
+template<unsigned N> void penpen(cnc::pen & p, l::top_copper, header<N> r) {
   p.aperture(header<N>::hole + 0.6_mm);
   r.copper(p);
 }
-template<unsigned N> void penpen(cnc::pen & p, l::copper_margin, header<N> r) {
+template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper, header<N> r) {
+  penpen(p, l::top_copper {}, r);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, header<N> r) {
   p.aperture(header<N>::hole + 0.6_mm + def_copper_margin);
   r.copper(p);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper_margin, header<N> r) {
+  penpen(p, l::top_copper_margin {}, r);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::holes, header<N> r) {
   p.aperture(header<N>::hole);
@@ -255,40 +269,67 @@ void penny(cnc::pen & p, T t) {
       hdr);
 }
 
-void nets(cnc::pen & p) {
+void link_digits(turtle & t, unsigned pin, float m) {
+  t.move(msd.pin(pin));
+  t.draw(1.2_mm, 1.2_mm * m);
+  t.draw_x(9.5_mm);
+  t.draw(nsd.pin(pin));
+  t.draw(1.2_mm, 1.2_mm * m);
+  t.draw_x(9.5_mm);
+  t.draw(lsd.pin(pin));
+}
+
+void top_nets(cnc::pen & p) {
   turtle t { &p };
 
-  t.move(msd.pin(14));
-  t.draw(3.0_mm, 3.0_mm);
-  t.draw_x(3.0_mm);
-  t.draw(nsd.pin(14));
-  t.draw(3.0_mm, 3.0_mm);
-  t.draw_x(3.0_mm);
-  t.draw(lsd.pin(14));
+  link_digits(t, 14,  1);
+  link_digits(t, 13,  1);
+  link_digits(t, 8,   1);
+  link_digits(t, 7,  -1);
+  link_digits(t, 6,   1);
+  link_digits(t, 2,  -1);
+}
+void bottom_nets(cnc::pen & p) {
+  turtle t { &p };
+  link_digits(t, 1,  -1);
 }
 
 void top_copper(cnc::pen & p) {
-  penny(p, l::copper {});
+  penny(p, l::top_copper {});
 
-  p.aperture(15.0_mil);
-  nets(p);
+  p.aperture(10.0_mil);
+  top_nets(p);
 }
 void top_copper_margin(cnc::pen & p) {
-  penny(p, l::copper_margin {});
+  penny(p, l::top_copper_margin {});
 
-  p.aperture(15.0_mil + def_copper_margin);
-  nets(p);
+  p.aperture(10.0_mil + def_copper_margin);
+  top_nets(p);
 }
 void top_silk(cnc::pen & p) {
   penny(p, l::silk {});
 }
+
+void bottom_copper(cnc::pen & p) {
+  penny(p, l::bottom_copper {});
+
+  p.aperture(10.0_mil);
+  bottom_nets(p);
+}
+void bottom_copper_margin(cnc::pen & p) {
+  penny(p, l::bottom_copper_margin {});
+
+  p.aperture(10.0_mil + def_copper_margin);
+  bottom_nets(p);
+}
+
 void holes(cnc::pen & p) {
   penny(p, l::holes {});
 }
-
 void border_margin(cnc::pen & p) {
   box(p, 0, 0, board_w + 25.0_mil, board_h + 25.0_mil);
 }
+
 void border(cnc::pen & p) {
   box(p, 0, 0, board_w, board_h);
 }
@@ -313,6 +354,11 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
       break;
     case cnc::gl_top_silk:
       b->add_lines(top_silk, white);
+      break;
+    case cnc::gl_bot_copper:
+      b->add_lines(bottom_copper_margin, black);
+      b->add_lines(bottom_copper, blue);
+      b->add_lines(holes, black);
       break;
     case cnc::gl_border:
       b->add_lines(border_margin, black);
