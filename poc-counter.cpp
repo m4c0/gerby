@@ -269,29 +269,30 @@ void penny(cnc::pen & p, T t) {
       hdr);
 }
 
-void link_digits(turtle & t, unsigned pin, float m) {
+void link_digits(turtle & t, unsigned pin, d::inch d0x, d::inch d0y, d::inch d1x) {
   t.move(msd.pin(pin));
-  t.draw(1.2_mm, 1.2_mm * m);
-  t.draw_x(9.5_mm);
+  t.draw(d0x, d0y);
+  t.draw_x(d1x);
   t.draw(nsd.pin(pin));
-  t.draw(1.2_mm, 1.2_mm * m);
-  t.draw_x(9.5_mm);
+  t.draw(d0x, d0y);
+  t.draw_x(d1x);
   t.draw(lsd.pin(pin));
 }
 
 void top_nets(cnc::pen & p) {
   turtle t { &p };
 
-  link_digits(t, 14,  1);
-  link_digits(t, 13,  1);
-  link_digits(t, 8,   1);
-  link_digits(t, 7,  -1);
-  link_digits(t, 6,   1);
-  link_digits(t, 2,  -1);
+  link_digits(t, 14, 2.2_mm,  2.2_mm, 7.0_mm);
+  link_digits(t, 13, 4.0_mm,  4.0_mm, 4.0_mm);
+  link_digits(t, 2,  3.8_mm, -3.8_mm, 4.5_mm);
+  link_digits(t, 1,  3.8_mm, -3.8_mm, 4.5_mm);
+
+  link_digits(t, 8,  1.25_mm, -1.25_mm, 8.0_mm);
+  link_digits(t, 7,  1.25_mm,  1.25_mm, 8.0_mm);
+  link_digits(t, 6,  1.25_mm,  1.25_mm, 8.0_mm);
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
-  link_digits(t, 1,  -1);
 }
 
 void top_copper(cnc::pen & p) {
