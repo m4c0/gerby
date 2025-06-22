@@ -149,30 +149,26 @@ public:
   void move_y(d::inch y) override { move(m_p.x, y); }
 };
 
-class instances : voo::update_thread {
+class instances {
   static constexpr const auto max_insts = 10240;
 
-  voo::h2l_buffer m_is;
-
-  void build_cmd_buf(vee::command_buffer cb) override {
-    voo::cmd_buf_one_time_submit pcb{cb};
-    m_is.setup_copy(*pcb);
-  }
+  voo::bound_buffer m_is;
 
 public:
   explicit instances(voo::device_and_queue *dq)
-      : update_thread { dq->queue() }
-      , m_is{*dq, max_insts * sizeof(vtx)} {}
+    : m_is { voo::bound_buffer::create_from_host(
+        dq->physical_device(), max_insts * sizeof(vtx),
+        vee::buffer_usage::vertex_buffer
+    ) }
+  {}
 
   [[nodiscard]] constexpr auto local_buffer() const noexcept {
-    return m_is.local_buffer();
+    return *m_is.buffer;
   }
 
   [[nodiscard]] auto pen(minmax *mm) noexcept {
-    return gerby::pen{m_is.host_memory(), mm};
+    return gerby::pen { *m_is.memory, mm };
   }
-
-  using update_thread::run_once;
 };
 
 export class fanner : public cnc::fanner {
@@ -205,30 +201,26 @@ public:
   void draw_y(d::inch y) override { draw(m_v[m_count - 1].pos.x, y); }
 };
 
-class rvertices : voo::update_thread {
+class rvertices {
   static constexpr const auto max_vtx = 10240;
 
-  voo::h2l_buffer m_is;
-
-  void build_cmd_buf(vee::command_buffer cb) override {
-    voo::cmd_buf_one_time_submit pcb{cb};
-    m_is.setup_copy(*pcb);
-  }
+  voo::bound_buffer m_is;
 
 public:
   explicit rvertices(voo::device_and_queue *dq)
-      : update_thread { dq->queue() }
-      , m_is{*dq, max_vtx * sizeof(rvtx)} {}
+    : m_is { voo::bound_buffer::create_from_host(
+        dq->physical_device(), max_vtx * sizeof(rvtx),
+        vee::buffer_usage::vertex_buffer
+    ) }
+  {}
 
   [[nodiscard]] constexpr auto local_buffer() const noexcept {
-    return m_is.local_buffer();
+    return *m_is.buffer;
   }
 
   [[nodiscard]] auto fanner(minmax *mm) const noexcept {
-    return gerby::fanner{m_is.host_memory(), mm};
+    return gerby::fanner { *m_is.memory, mm };
   }
-
-  using update_thread::run_once;
 };
 
 class lines : public layer {
@@ -239,12 +231,9 @@ class lines : public layer {
   unsigned m_i_count{};
 
   void update(void (*load)(cnc::pen &), minmax *mm) {
-    {
-      auto p = m_is.pen(mm);
-      load(p);
-      m_i_count = p.count();
-    }
-    m_is.run_once();
+    auto p = m_is.pen(mm);
+    load(p);
+    m_i_count = p.count();
   }
 
 public:
@@ -290,12 +279,9 @@ class region : public layer {
   unsigned m_count{};
 
   void update(void (*load)(cnc::fanner &), minmax *mm) {
-    {
-      auto p = m_vs.fanner(mm);
-      load(p);
-      m_count = p.count();
-    }
-    m_vs.run_once();
+    auto p = m_vs.fanner(mm);
+    load(p);
+    m_count = p.count();
   }
 
 public:
