@@ -66,28 +66,32 @@ template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
   box(p, r.x, r.y, l, w);
 }
 
-struct dip14 : point {};
-void dip14_copper(cnc::pen & p, dip14 r, d::inch margin) {
+struct dip14 : point {
   static constexpr const auto pin = 0.5_mm;
   static constexpr const auto hole = pin + 0.2_mm;
 
   static constexpr const auto w = 0.3_in / 2;
   static constexpr const auto h = 0.1_in * 3.0;
-
-  p.aperture(hole + margin);
+};
+void dip14_copper(cnc::pen & p, dip14 r) {
   for (auto i = 0; i < 7; i++) {
-    p.flash(r.x - w, r.y - h + 0.1_in * i);
-    p.flash(r.x + w, r.y - h + 0.1_in * i);
+    p.flash(r.x - dip14::w, r.y - dip14::h + 0.1_in * i);
+    p.flash(r.x + dip14::w, r.y - dip14::h + 0.1_in * i);
   }
 }
 template<> void penpen(cnc::pen & p, l::copper, dip14 r) {
-  dip14_copper(p, r, 0.6_mm);
+  p.aperture(dip14::hole + 0.6_mm);
+  dip14_copper(p, r);
 }
 template<> void penpen(cnc::pen & p, l::holes, dip14 r) {
-  dip14_copper(p, r, 0.0_mm);
+  p.aperture(dip14::hole);
+  dip14_copper(p, r);
 }
 template<> void penpen(cnc::pen & p, l::silk, dip14 r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * 7);
+
+  p.aperture(0.6_mm);
+  p.flash(r.x - dip14::w + 1.4_mm, r.y - dip14::h);
 }
 
 // TODO: unify dip14/16
