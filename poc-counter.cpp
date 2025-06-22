@@ -7,6 +7,9 @@ using namespace gerby;
 
 static constexpr const auto def_copper_margin = 15.0_mil;
 
+static constexpr const auto board_w = 40.0_mm;
+static constexpr const auto board_h = 40.0_mm;
+
 void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
   p.aperture(6.0_mil);
   p.move(cx - w / 2, cy - h / 2);
@@ -182,7 +185,10 @@ const auto ic1 = dip16({-6.0_mm, 10.0_mm});
 const auto ic2 = dip16({ 6.0_mm, 10.0_mm});
 
 // Strobe, disable, clock, reset, overflow, V+, V-
-const auto hdr = header<7>({ 0.0_mm, 0.0_mm });;
+const auto hdr = header<7>({
+  0.4_in - board_w / 2.0,
+  -0.1_in + board_h / 2.0,
+});
 
 template<typename T>
 void pennies(cnc::pen & p, T t, auto... cs) {
@@ -212,8 +218,6 @@ void holes(cnc::pen & p) {
   penny(p, l::holes {});
 }
 
-static constexpr const auto board_w = 40.0_mm;
-static constexpr const auto board_h = 40.0_mm;
 void border_margin(cnc::pen & p) {
   box(p, 0, 0, board_w + 25.0_mil, board_h + 25.0_mil);
 }
