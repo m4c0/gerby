@@ -157,16 +157,29 @@ void holes(cnc::pen & p) {
   penny(p, l::holes {});
 }
 
+static constexpr const auto board_w = 40.0_mm;
+static constexpr const auto board_h = 40.0_mm;
 void border_margin(cnc::pen & p) {
-  box(p, 0, 0, 40.0_mm + 25.0_mil, 40.0_mm + 25.0_mil);
+  box(p, 0, 0, board_w + 25.0_mil, board_h + 25.0_mil);
 }
 void border(cnc::pen & p) {
-  box(p, 0, 0, 40.0_mm, 40.0_mm);
+  box(p, 0, 0, board_w, board_h);
+}
+void plane(cnc::fanner & p) {
+  static constexpr const auto m = 1.0_mm;
+  static constexpr const auto w = (board_w - m) / 2;
+  static constexpr const auto h = (board_h - m) / 2;
+  p.move(-w, -h);
+  p.draw_x(w);
+  p.draw_y(h);
+  p.draw_x(-w);
+  p.draw_y(-h);
 }
 
 extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
   switch (l) {
     case cnc::gl_top_copper:
+      b->add_region(plane, red);
       b->add_lines(top_copper, red);
       b->add_lines(holes, black);
       break;
