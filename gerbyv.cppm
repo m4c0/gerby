@@ -1,4 +1,5 @@
 export module gerbyv;
+import :buffers;
 import :pipeline;
 import casein;
 import dl;
@@ -7,30 +8,11 @@ import gerby;
 import hai;
 import silog;
 import sith;
-import traits;
 import vapp;
 import vee;
 import voo;
 
 namespace gerby {
-struct vtx {
-  dotz::vec2 delta;
-  float w;
-};
-static_assert(sizeof(vtx) == 3 * sizeof(float));
-struct inst {
-  dotz::vec2 a;
-  dotz::vec2 b;
-  float diam;
-  float rnd;
-};
-static_assert(sizeof(inst) == 6 * sizeof(float));
-constexpr const auto v_count = 8;
-
-struct rvtx {
-  dotz::vec2 pos;
-  dotz::vec2 pad{};
-};
 
 class layer {
   dotz::vec4 m_colour;
@@ -44,37 +26,6 @@ public:
   virtual ~layer() = default;
 
   virtual void cmd_draw(vee::command_buffer cb, upc *pc) = 0;
-};
-
-class vertices {
-  voo::bound_buffer m_vs;
-
-  void load_buffer() {
-    voo::mapmem m { *m_vs.memory };
-
-    auto *v = static_cast<vtx *>(*m);
-
-    v[0] = {{-1.f, -1.f}, 0};
-    v[1] = {{-1.f, 1.f}, 0};
-    v[2] = {{0.f, -1.f}, 0};
-    v[3] = {{0.f, 1.f}, 0};
-    v[4] = {{0.f, -1.f}, 1};
-    v[5] = {{0.f, 1.f}, 1};
-    v[6] = {{1.f, -1.f}, 1};
-    v[7] = {{1.f, 1.f}, 1};
-  }
-
-public:
-  explicit vertices(voo::device_and_queue *dq)
-    : m_vs { voo::bound_buffer::create_from_host(
-      dq->physical_device(), v_count * sizeof(vtx),
-      vee::buffer_usage::vertex_buffer
-    ) }
-  {
-    load_buffer();
-  }
-
-  [[nodiscard]] constexpr auto buffer() const { return *m_vs.buffer; }
 };
 
 class minmax {
@@ -144,26 +95,6 @@ public:
   void move_y(d::inch y) override { move(m_p.x, y); }
 };
 
-class instances {
-  static constexpr const auto max_insts = 10240;
-
-  voo::bound_buffer m_is;
-
-public:
-  explicit instances(voo::device_and_queue *dq)
-    : m_is { voo::bound_buffer::create_from_host(
-        dq->physical_device(), max_insts * sizeof(vtx),
-        vee::buffer_usage::vertex_buffer
-    ) }
-  {}
-
-  [[nodiscard]] constexpr auto buffer() const { return *m_is.buffer; }
-
-  [[nodiscard]] auto pen(minmax *mm) noexcept {
-    return gerby::pen { *m_is.memory, mm };
-  }
-};
-
 export class fanner : public cnc::fanner {
   voo::mapmem m_m;
   rvtx *m_v;
@@ -194,44 +125,6 @@ public:
   void draw_y(d::inch y) override { draw(m_v[m_count - 1].pos.x, y); }
 };
 
-class rvertices {
-  static constexpr const auto max_vtx = 10240;
-
-  voo::bound_buffer m_is;
-
-public:
-  explicit rvertices(voo::device_and_queue *dq)
-    : m_is { voo::bound_buffer::create_from_host(
-        dq->physical_device(), max_vtx * sizeof(rvtx),
-        vee::buffer_usage::vertex_buffer
-    ) }
-  {}
-
-  [[nodiscard]] constexpr auto local_buffer() const noexcept {
-    return *m_is.buffer;
-  }
-
-  [[nodiscard]] auto fanner(minmax *mm) const noexcept {
-    return gerby::fanner { *m_is.memory, mm };
-  }
-};
-
-auto line_pipeline(voo::device_and_queue * dq) {
-  return pipeline::create(dq, {
-    .bindings {
-      vee::vertex_input_bind(sizeof(vtx)),
-      vee::vertex_input_bind_per_instance(sizeof(inst)),
-    },
-    .attributes{
-      vee::vertex_attribute_vec2 (0, traits::offset_of(&vtx::delta)),
-      vee::vertex_attribute_vec2 (1, traits::offset_of(&inst::a)),
-      vee::vertex_attribute_vec2 (1, traits::offset_of(&inst::b)),
-      vee::vertex_attribute_float(0, traits::offset_of(&vtx::w)),
-      vee::vertex_attribute_float(1, traits::offset_of(&inst::diam)),
-      vee::vertex_attribute_float(1, traits::offset_of(&inst::rnd)),
-    },
-  });
-}
 class lines : public layer {
   pipeline * m_p;
 
@@ -240,7 +133,7 @@ class lines : public layer {
   unsigned m_i_count{};
 
   void update(void (*load)(cnc::pen &), minmax *mm) {
-    auto p = m_is.pen(mm);
+    gerby::pen p { m_is.memory(), mm };
     load(p);
     m_i_count = p.count();
   }
@@ -268,21 +161,6 @@ public:
   }
 };
 
-auto region_pipeline(voo::device_and_queue * dq) {
-  return pipeline::create(dq, {
-    .bindings {
-      vee::vertex_input_bind(sizeof(rvtx)),
-    },
-    .attributes{
-      vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pad)),
-      vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pos)),
-      vee::vertex_attribute_vec2 (0, traits::offset_of(&rvtx::pos)),
-      vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
-      vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
-      vee::vertex_attribute_float(0, traits::offset_of(&rvtx::pad)),
-    },
-  });
-}
 class region : public layer {
   pipeline * m_p;
 
@@ -290,7 +168,7 @@ class region : public layer {
   unsigned m_count{};
 
   void update(void (*load)(cnc::fanner &), minmax *mm) {
-    auto p = m_vs.fanner(mm);
+    gerby::fanner p { m_vs.memory(), mm };
     load(p);
     m_count = p.count();
   }
@@ -305,7 +183,7 @@ public:
     pc->colour = colour();
 
     m_p->bind(cb, pc);
-    vee::cmd_bind_vertex_buffers(cb, 0, m_vs.local_buffer());
+    vee::cmd_bind_vertex_buffers(cb, 0, m_vs.buffer());
     vee::cmd_draw(cb, m_count);
   }
 
