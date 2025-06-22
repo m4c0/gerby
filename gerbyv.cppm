@@ -13,15 +13,32 @@ import vee;
 import voo;
 
 namespace gerby {
+  static constexpr const auto max_layers = 1024;
+  static constexpr const auto max_insts = 10240;
+  static constexpr const auto max_rvtx = 10240;
+
+  struct objects {
+    voo::device_and_queue * dq;
+
+    pipeline lines_ppl = line_pipeline(dq);
+    pipeline regions_ppl = region_pipeline(dq);
+
+    vertices vs { dq };
+
+    hai::array<voo::bound_buffer> is { max_layers };
+    hai::array<voo::bound_buffer> rs { max_layers };
+  };
 
 class layer {
   dotz::vec4 m_colour;
+  unsigned m_idx;
 
 protected:
   [[nodiscard]] constexpr auto colour() const noexcept { return m_colour; }
+  [[nodiscard]] constexpr auto index() const noexcept { return m_idx; }
 
 public:
-  explicit layer(dotz::vec4 c) : m_colour{c} {}
+  explicit layer(dotz::vec4 c, unsigned i) : m_colour{c}, m_idx{i} {}
 
   virtual ~layer() = default;
 
@@ -126,88 +143,90 @@ public:
 };
 
 class lines : public layer {
-  pipeline * m_p;
-
-  vertices m_vs;
-  instances m_is;
+  objects * m_o;
   unsigned m_i_count{};
 
   void update(void (*load)(cnc::pen &), minmax *mm) {
-    gerby::pen p { m_is.memory(), mm };
+    gerby::pen p { *m_o->is[index()].memory, mm };
     load(p);
     m_i_count = p.count();
   }
 
 public:
-  explicit lines(voo::device_and_queue *dq, pipeline * p, dotz::vec4 colour)
-      : layer{colour}
-      , m_p { p }
-      , m_vs{dq}
-      , m_is{dq} {}
+  explicit lines(objects * o, unsigned n, dotz::vec4 colour)
+    : layer { colour, n }
+    , m_o { o }
+  {}
 
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
     pc->colour = colour();
-    m_p->bind(cb, pc);
-    vee::cmd_bind_vertex_buffers(cb, 0, m_vs.buffer());
-    vee::cmd_bind_vertex_buffers(cb, 1, m_is.buffer());
+    m_o->lines_ppl.bind(cb, pc);
+    vee::cmd_bind_vertex_buffers(cb, 0, m_o->vs.buffer());
+    vee::cmd_bind_vertex_buffers(cb, 1, *m_o->is[index()].buffer);
     vee::cmd_draw(cb, v_count, m_i_count);
   }
 
-  static auto create(voo::device_and_queue *dq, pipeline * p, void (*load)(cnc::pen &),
+  static auto create(objects * o, unsigned n, void (*load)(cnc::pen &),
                      dotz::vec4 colour, minmax *mm) {
-    auto *res = new lines { dq, p, colour };
+    auto *res = new lines { o, n, colour };
     res->update(load, mm);
     return hai::uptr<layer>{res};
   }
 };
 
 class region : public layer {
-  pipeline * m_p;
-
-  rvertices m_vs;
+  objects * m_o;
   unsigned m_count{};
 
   void update(void (*load)(cnc::fanner &), minmax *mm) {
-    gerby::fanner p { m_vs.memory(), mm };
+    gerby::fanner p { *m_o->rs[index()].memory, mm };
     load(p);
     m_count = p.count();
   }
 
 public:
-  explicit region(voo::device_and_queue *dq, pipeline * p, dotz::vec4 colour)
-      : layer{colour}
-      , m_p { p }
-      , m_vs{dq} {}
+  explicit region(objects * o, unsigned n, dotz::vec4 colour)
+    : layer { colour, n }
+    , m_o { o }
+  {}
 
   void cmd_draw(vee::command_buffer cb, upc *pc) override {
     pc->colour = colour();
 
-    m_p->bind(cb, pc);
-    vee::cmd_bind_vertex_buffers(cb, 0, m_vs.buffer());
+    m_o->regions_ppl.bind(cb, pc);
+    vee::cmd_bind_vertex_buffers(cb, 0, *m_o->rs[index()].buffer);
     vee::cmd_draw(cb, m_count);
   }
 
-  static auto create(voo::device_and_queue *dq, pipeline * p, void (*load)(cnc::fanner &),
+  static auto create(objects * o, unsigned n, void (*load)(cnc::fanner &),
                      dotz::vec4 colour, minmax *mm) {
-    auto res = new region { dq, p, colour };
+    auto res = new region { o, n, colour };
     res->update(load, mm);
     return hai::uptr<layer>{res};
   }
 };
 
 class builder : public cnc::builder {
-  static constexpr const auto max_layers = 1024;
-
-  voo::device_and_queue *m_dq;
-
-  pipeline m_lines_ppl = line_pipeline(m_dq);
-  pipeline m_regions_ppl = region_pipeline(m_dq);
+  objects m_objs;
 
   hai::varray<hai::uptr<gerby::layer>> m_layers{max_layers};
   minmax m_mm{};
 
 public:
-  explicit builder(voo::device_and_queue *dq) : m_dq{dq} {}
+  explicit builder(voo::device_and_queue *dq) : m_objs { dq } {
+    for (auto & i : m_objs.is) {
+      i = voo::bound_buffer::create_from_host(
+        dq->physical_device(), max_insts * sizeof(vtx),
+        vee::buffer_usage::vertex_buffer
+      );
+    }
+    for (auto & r : m_objs.rs) {
+      r = voo::bound_buffer::create_from_host(
+        dq->physical_device(), max_rvtx * sizeof(rvtx),
+        vee::buffer_usage::vertex_buffer
+      );
+    }
+  }
 
   void reset() {
     m_layers.truncate(0);
@@ -215,10 +234,10 @@ public:
   }
 
   void add_lines(void (*fn)(cnc::pen &), dotz::vec4 colour) override {
-    m_layers.push_back(lines::create(m_dq, &m_lines_ppl, fn, colour, &m_mm));
+    m_layers.push_back(lines::create(&m_objs, m_layers.size(), fn, colour, &m_mm));
   }
   void add_region(void (*fn)(cnc::fanner &), dotz::vec4 colour) override {
-    m_layers.push_back(region::create(m_dq, &m_regions_ppl, fn, colour, &m_mm));
+    m_layers.push_back(region::create(&m_objs, m_layers.size(), fn, colour, &m_mm));
   }
 
   [[nodiscard]] constexpr auto &layers() noexcept { return m_layers; }
