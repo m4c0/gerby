@@ -118,6 +118,35 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
 using dip14 = dip<14>;
 using dip16 = dip<16>;
 
+template<unsigned N>
+struct header : point {
+  static constexpr const auto pin = 0.5_mm;
+  static constexpr const auto hole = pin + 0.2_mm;
+
+  static constexpr const auto len = 0.1_in * (N / 2.0 - 0.5);
+
+  void copper(cnc::pen & p) {
+    for (auto i = 0; i < N; i++) {
+      p.flash(x - len + 0.1_in * i, y);
+    }
+  }
+};
+template<unsigned N> void penpen(cnc::pen & p, l::copper, header<N> r) {
+  p.aperture(header<N>::hole + 0.6_mm);
+  r.copper(p);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::copper_margin, header<N> r) {
+  p.aperture(header<N>::hole + 0.6_mm + def_copper_margin);
+  r.copper(p);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::holes, header<N> r) {
+  p.aperture(header<N>::hole);
+  r.copper(p);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
+  box(p, r.x, r.y, 0.1_in * N, 0.1_in);
+}
+
 // 100k
 const auto r1 = r0603({0.0_mm, 0.0_mm});
 const auto r2 = r0603({0.0_mm, 0.0_mm});
@@ -152,6 +181,9 @@ const auto ic1 = dip16({-6.0_mm, 10.0_mm});
 // MC14511 - BCD to 7 segments
 const auto ic2 = dip16({ 6.0_mm, 10.0_mm});
 
+// Strobe, disable, clock, reset, overflow, V+, V-
+const auto hdr = header<7>({ 0.0_mm, 0.0_mm });;
+
 template<typename T>
 void pennies(cnc::pen & p, T t, auto... cs) {
   (penpen(p, t, cs), ...);
@@ -163,7 +195,8 @@ void penny(cnc::pen & p, T t) {
       c1, c2,
       q1, q2, q3,
       msd, nsd, lsd,
-      ic1, ic2);
+      ic1, ic2,
+      hdr);
 }
 
 void top_copper(cnc::pen & p) {
