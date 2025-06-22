@@ -34,6 +34,49 @@ struct point {
   d::inch y;
 };
 
+class turtle {
+  cnc::pen *m_pen;
+
+  d::inch m_x{};
+  d::inch m_y{};
+
+public:
+  explicit constexpr turtle(cnc::pen *p) : m_pen{p} {}
+
+  void move(const point & p) {
+    m_x = p.x;
+    m_y = p.y;
+    m_pen->move(m_x, m_y);
+  }
+
+  void draw(const point & p) {
+    auto dx = p.x - m_x;
+    auto dy = p.y - m_y;
+    if (dx.abs() > dy.abs()) {
+      m_pen->draw(m_x + dy.abs() * dx.sign(), p.y);
+    } else {
+      m_pen->draw(p.x, m_y + dx.abs() * dy.sign());
+    }
+
+    m_x = p.x;
+    m_y = p.y;
+    m_pen->draw(m_x, m_y);
+  }
+  void draw(d::inch dx, d::inch dy) {
+    m_x = m_x + dx;
+    m_y = m_y + dy;
+    m_pen->draw(m_x, m_y);
+  }
+  void draw_x(d::inch dx) {
+    m_x = m_x + dx;
+    m_pen->draw_x(m_x);
+  }
+  void draw_y(d::inch dy) {
+    m_y = m_y + dy;
+    m_pen->draw_y(m_y);
+  }
+};
+
 // https://jlcpcb.com/partdetail/23933-0603WAF5602T5E/C23206
 struct r0603 : point {
   void copper(cnc::pen & p, d::inch margin) {
@@ -86,16 +129,26 @@ template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
 
 template<unsigned N>
 struct dip : point {
-  static constexpr const auto pin = 0.5_mm;
-  static constexpr const auto hole = pin + 0.2_mm;
+  static constexpr const auto pin_r = 0.5_mm;
+  static constexpr const auto hole = pin_r + 0.2_mm;
 
   static constexpr const auto w = 0.3_in / 2;
   static constexpr const auto h = 0.1_in * (N / 4.0 - 0.5);
 
-  void copper(cnc::pen & p) {
+  point pin(int n) const {
+    if (n <= N / 2) {
+      auto i = (N / 2) - n;
+      return { x - w, y - h + 0.1_in * i };
+    } else {
+      auto i = n - (N / 2) - 1;
+      return { x + w, y - h + 0.1_in * i };
+    }
+  }
+
+  void copper(cnc::pen & p) const {
     for (auto i = 0; i < N / 2; i++) {
-      p.flash(x - w, y - h + 0.1_in * i);
-      p.flash(x + w, y - h + 0.1_in * i);
+      p.flash(pin(i + 1).x, pin(i + 1).y);
+      p.flash(pin(N - i).x, pin(N - i).y);
     }
   }
 };
@@ -115,7 +168,7 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * N / 2);
 
   p.aperture(0.6_mm);
-  p.flash(r.x - dip<N>::w + 1.4_mm, r.y + dip<N>::h);
+  p.flash(r.pin(1).x + 1.4_mm, r.pin(1).y);
 }
 
 template<unsigned N>
@@ -202,11 +255,29 @@ void penny(cnc::pen & p, T t) {
       hdr);
 }
 
+void nets(cnc::pen & p) {
+  turtle t { &p };
+
+  t.move(msd.pin(14));
+  t.draw(3.0_mm, 3.0_mm);
+  t.draw_x(3.0_mm);
+  t.draw(nsd.pin(14));
+  t.draw(3.0_mm, 3.0_mm);
+  t.draw_x(3.0_mm);
+  t.draw(lsd.pin(14));
+}
+
 void top_copper(cnc::pen & p) {
   penny(p, l::copper {});
+
+  p.aperture(15.0_mil);
+  nets(p);
 }
 void top_copper_margin(cnc::pen & p) {
   penny(p, l::copper_margin {});
+
+  p.aperture(15.0_mil + def_copper_margin);
+  nets(p);
 }
 void top_silk(cnc::pen & p) {
   penny(p, l::silk {});
