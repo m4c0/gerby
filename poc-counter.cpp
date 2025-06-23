@@ -36,6 +36,18 @@ struct point {
   d::inch y;
 };
 
+void thermal(cnc::pen & p, point pin, d::inch w, d::inch h) {
+  p.aperture(25.0_mil, h + 25.0_mil, false);
+  p.flash(pin.x, pin.y);
+
+  p.aperture(w + 25.0_mil, 25.0_mil, false);
+  p.flash(pin.x, pin.y);
+}
+template<typename T>
+void thermal(cnc::pen & p, const T & c, int pin) {
+  thermal(p, c.pin(pin), T::pad_w, T::pad_h);
+}
+
 class turtle {
   cnc::pen *m_pen;
 
@@ -81,16 +93,24 @@ public:
 
 // https://jlcpcb.com/partdetail/23933-0603WAF5602T5E/C23206
 struct r0603 : point {
-  void copper(cnc::pen & p, d::inch margin) {
-    static constexpr const auto a = 0.90_mm;
-    static constexpr const auto b = 0.65_mm;
-    static constexpr const auto c = 0.80_mm;
+  static constexpr const auto a = 0.90_mm;
+  static constexpr const auto b = 0.65_mm;
+  static constexpr const auto c = 0.80_mm;
 
+  static constexpr const auto pad_w = b + def_copper_margin;
+  static constexpr const auto pad_h = c + def_copper_margin;
+
+  point pin(int n) const {
     static constexpr const auto px = (a + b) / 2;
+    if (n == 1) return point { x + px, y };
+    if (n == 2) return point { x - px, y };
+    return point {};
+  }
 
+  void copper(cnc::pen & p, d::inch margin) const {
     p.aperture(b + margin, c + margin, false);
-    p.flash(x + px, y);
-    p.flash(x - px, y);
+    p.flash(pin(1).x, pin(1).y);
+    p.flash(pin(2).x, pin(2).y);
   };
 };
 template<> void penpen(cnc::pen & p, l::top_copper, r0603 r) {
@@ -110,6 +130,9 @@ struct sot23 : point { // NPN only
   static constexpr const auto h = 2.02_mm / 2;
   static constexpr const auto w = 1.20_mm / 2;
 
+  static constexpr const auto pad_w = 0.6_mm;
+  static constexpr const auto pad_h = 0.8_mm;
+
   enum { nil, b, e, c };
 
   point pin(int n) const {
@@ -122,7 +145,7 @@ struct sot23 : point { // NPN only
   }
 
   void copper(cnc::pen &p, d::inch m) const {
-    p.aperture(0.6_mm + m, 0.8_mm + m, false);
+    p.aperture(pad_w + m, pad_h + m, false);
     p.flash(pin(c).x, pin(c).y);
     p.flash(pin(b).x, pin(b).y);
     p.flash(pin(e).x, pin(e).y);
@@ -147,6 +170,9 @@ struct dip : point {
 
   static constexpr const auto w = 0.3_in / 2;
   static constexpr const auto h = 0.1_in * (N / 4.0 - 0.5);
+
+  static constexpr const auto pad_w = 0.6_mm + hole;
+  static constexpr const auto pad_h = 0.6_mm + hole;
 
   point pin(int n) const {
     if (n <= N / 2) {
@@ -328,6 +354,17 @@ void top_copper(cnc::pen & p) {
 
   p.aperture(10.0_mil);
   top_nets(p);
+
+  thermal(p, q1, sot23::e);
+  thermal(p, q2, sot23::e);
+  thermal(p, q3, sot23::e);
+  thermal(p, ic1, 8);
+  thermal(p, ic2, 8);
+  thermal(p, ic2, 5);
+  thermal(p, r1, 2);
+  thermal(p, r2, 2);
+  thermal(p, r3, 2);
+  thermal(p, r4, 2);
 }
 void top_copper_margin(cnc::pen & p) {
   penny(p, l::top_copper_margin {});
