@@ -106,15 +106,26 @@ template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
 };
 
 // https://jlcpcb.com/partdetail/2503-S8050_J3Y_RANGE_200_350/C2146
-struct sot23 : point {
-  void copper(cnc::pen &p, d::inch m) {
-    static constexpr const auto h = 2.02_mm / 2;
-    static constexpr const auto w = 1.20_mm / 2;
+struct sot23 : point { // NPN only
+  static constexpr const auto h = 2.02_mm / 2;
+  static constexpr const auto w = 1.20_mm / 2;
 
+  enum { nil, b, e, c };
+
+  point pin(int n) const {
+    switch (n) {
+      case b: return { x + w, y + h };
+      case e: return { x - w, y + h };
+      case c: return { x,     y - h };
+      default: return {};
+    }
+  }
+
+  void copper(cnc::pen &p, d::inch m) const {
     p.aperture(0.6_mm + m, 0.8_mm + m, false);
-    p.flash(x,     y + h);
-    p.flash(x - w, y - h);
-    p.flash(x + w, y - h);
+    p.flash(pin(c).x, pin(c).y);
+    p.flash(pin(b).x, pin(b).y);
+    p.flash(pin(e).x, pin(e).y);
   }
 };
 template<> void penpen(cnc::pen & p, l::top_copper, sot23 r) {
@@ -234,9 +245,9 @@ const auto c1 = r0603({ -12.0_mm, 0.0_mm });
 const auto c2 = r0603({  12.0_mm, 0.0_mm });
 
 // BJT NPN
-const auto q1 = sot23({-12.0_mm, -board_h / 2 + 8.0_mm});
-const auto q2 = sot23({  0.0_mm, -board_h / 2 + 8.0_mm});
-const auto q3 = sot23({ 12.0_mm, -board_h / 2 + 8.0_mm});
+const auto q1 = sot23({-15.0_mm, 18.0_mm});
+const auto q2 = sot23({-15.0_mm, 14.0_mm});
+const auto q3 = sot23({-15.0_mm, 10.0_mm});
 
 // 7-digit displays
 const auto msd = dip<14>({-12.0_mm, -board_h/2 + 10.0_mm});
@@ -298,6 +309,15 @@ void top_nets(cnc::pen & p) {
   link_digit_gnd(t, msd);
   link_digit_gnd(t, nsd);
   link_digit_gnd(t, lsd);
+
+  t.move(ic1.pin(15));
+  t.draw(q1.pin(sot23::b));
+
+  t.move(ic1.pin(1));
+  t.draw(q2.pin(sot23::b));
+
+  t.move(ic1.pin(2));
+  t.draw(q3.pin(sot23::b));
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
