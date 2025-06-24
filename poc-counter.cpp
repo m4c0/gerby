@@ -6,6 +6,8 @@ using namespace gerby::palette;
 using namespace gerby;
 
 static constexpr const auto def_copper_margin = 15.0_mil;
+static constexpr const auto def_cu_w = 10.0_mil;
+static constexpr const auto def_cu_wm = def_cu_w + def_copper_margin;
 
 static constexpr const auto board_w = 50.0_mm;
 static constexpr const auto board_h = 50.0_mm;
@@ -34,7 +36,12 @@ struct point {
   // Aligned at the center of the compo
   d::inch x;
   d::inch y;
+
+  point plus(d::inch dx, d::inch dy) const {
+    return { x + dx, y + dy };
+  }
 };
+constexpr point operator+(const point & a, const point & b) { return a.plus(b.x, b.y); }
 
 void thermal(cnc::pen & p, point pin, d::inch w, d::inch h) {
   p.aperture(25.0_mil, h + 25.0_mil, false);
@@ -258,11 +265,16 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
   box(p, r.x, r.y, 0.1_in * N, 0.1_in);
 }
 
+// MC14553 - 3-digit BCD counter
+const auto ic1 = dip<16>({ 12.0_mm, 7.0_mm});
+// MC14511 - BCD to 7 segments
+const auto ic2 = dip<16>({-6.0_mm, 7.0_mm});
+
 // 100k
-const auto r1 = r0603({ 12.0_mm, 5.0_mm });
-const auto r2 = r0603({ 12.0_mm, 3.0_mm });
-const auto r3 = r0603({ 12.0_mm, 1.0_mm });
-const auto r4 = r0603({ 12.0_mm, 7.0_mm });
+const auto r1 = r0603(ic1.pin(12) + point { -3.0_mm, 0 });
+const auto r2 = r0603(ic1.pin(11) + point { -3.0_mm, 0 });
+const auto r3 = r0603(ic1.pin(10) + point { -3.0_mm, 0 });
+const auto r4 = r0603(ic1.pin(13) + point { -3.0_mm, 0 });
 // 68
 const auto r5  = r0603({ -6.0_mm, 3.0_mm });
 const auto r6  = r0603({ -6.0_mm, 5.0_mm });
@@ -286,11 +298,6 @@ const auto q3 = sot23({ 4.0_mm,  9.0_mm });
 const auto msd = dip<14>({-12.0_mm, -board_h/2 + 10.0_mm});
 const auto nsd = dip<14>({  0.0_mm, -board_h/2 + 10.0_mm});
 const auto lsd = dip<14>({ 12.0_mm, -board_h/2 + 10.0_mm});
-
-// MC14553 - 3-digit BCD counter
-const auto ic1 = dip<16>({ 12.0_mm, 7.0_mm});
-// MC14511 - BCD to 7 segments
-const auto ic2 = dip<16>({-6.0_mm, 7.0_mm});
 
 enum hdr_pins {
   h_nil = 0, // not a real pin
@@ -362,33 +369,32 @@ void top_nets(cnc::pen & p) {
   t.draw(q3.pin(sot23::b));
 
   t.move(hdr.pin(h_overflow));
-  t.draw(3.5_mm, -3.5_mm);
-  t.draw_x(7.0_mm);
-  t.draw(1.0_mm, -1.0_mm);
-  t.draw_y(-6.0_mm);
+  t.draw(hdr.pin(h_strobe).plus(0.0_mm, -1.5_mm - def_cu_wm * 3));
+  t.draw(ic1.pin(15).plus(5.0_mm - def_cu_wm * 4, 2.0_mm));
+  t.draw(ic1.pin(15).plus(5.0_mm - def_cu_wm * 4, 0));
   t.draw(ic1.pin(14));
 
   t.move(hdr.pin(h_reset));
-  t.draw(2.8_mm, -2.8_mm);
-  t.draw_x(6.0_mm);
-  t.draw(1.0_mm, -1.0_mm);
-  t.draw_y(-9.5_mm);
+  t.draw(hdr.pin(h_strobe).plus(0.0_mm, -1.5_mm - def_cu_wm * 2));
+  t.draw(ic1.pin(14).plus(5.0_mm - def_cu_wm * 3, 5.0_mm));
+  t.draw(ic1.pin(14).plus(5.0_mm - def_cu_wm * 3, 0));
   t.draw(ic1.pin(13)); t.draw(r4.pin(1)); 
 
   t.move(hdr.pin(h_clock));
-  t.draw(2.0_mm, -2.0_mm);
-  t.draw_x(5.0_mm);
-  t.draw(1.0_mm, -1.0_mm);
-  t.draw_y(-12.0_mm);
+  t.draw(hdr.pin(h_strobe).plus(0.0_mm, -1.5_mm - def_cu_wm));
+  t.draw(ic1.pin(13).plus(5.0_mm - def_cu_wm * 2, 9.0_mm));
+  t.draw(ic1.pin(13).plus(5.0_mm - def_cu_wm * 2, 0));
   t.draw(ic1.pin(12)); t.draw(r1.pin(1)); 
 
   t.move(hdr.pin(h_disable));
-  t.draw(1.2_mm, -1.2_mm);
-  t.draw_x(5.0_mm);
-  t.draw(1.0_mm, -1.0_mm);
-  t.draw_y(-12.0_mm);
+  t.draw(hdr.pin(h_strobe).plus(0.0_mm, -1.5_mm));
+  t.draw(ic1.pin(12).plus(5.0_mm - def_cu_wm, 3.0_mm));
+  t.draw(ic1.pin(12).plus(5.0_mm - def_cu_wm, 0));
   t.draw(ic1.pin(11)); t.draw(r2.pin(1)); 
- // t.move(hdr.pin(h_strobe));  t.draw(ic1.pin(10)); t.draw(r3.pin(1)); 
+
+  t.move(hdr.pin(h_strobe));
+  t.draw(ic1.pin(11).plus(5.0_mm, 0));
+  t.draw(ic1.pin(10)); t.draw(r3.pin(1)); 
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
