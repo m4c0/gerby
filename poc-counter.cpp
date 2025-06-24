@@ -433,6 +433,12 @@ void bottom_copper(cnc::pen & p) {
 
   p.aperture(10.0_mil);
   bottom_nets(p);
+
+  thermal(p, ic1, 16);
+  thermal(p, ic2, 16);
+  thermal(p, ic2, 4);
+  thermal(p, ic2, 3);
+  thermal(p, hdr, 6);
 }
 void bottom_copper_margin(cnc::pen & p) {
   penny(p, l::bottom_copper_margin {});
@@ -474,6 +480,7 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
       b->add_lines(top_silk, white);
       break;
     case cnc::gl_bot_copper:
+      b->add_region(plane, blue);
       b->add_lines(bottom_copper_margin, black);
       b->add_lines(bottom_copper, blue);
       b->add_lines(holes, black);
