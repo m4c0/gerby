@@ -362,27 +362,33 @@ void top_nets(cnc::pen & p) {
   t.draw(q3.pin(sot23::b));
 
   t.move(hdr.pin(h_overflow));
-  t.draw_x(-7.0_mm);
-  t.draw(-1.0_mm, -1.0_mm);
-  t.draw_y(-9.0_mm);
+  t.draw(3.5_mm, -3.5_mm);
+  t.draw_x(7.0_mm);
+  t.draw(1.0_mm, -1.0_mm);
+  t.draw_y(-6.0_mm);
   t.draw(ic1.pin(14));
 
-  t.move(hdr.pin(h_clock));
-  t.draw(-2.5_mm, -2.5_mm);
-  t.draw_x(-8.3_mm);
-  t.draw(-1.0_mm, -1.0_mm);
-  t.draw_y(-10.3_mm);
-  t.draw(ic1.pin(12)); t.draw(r1.pin(1)); 
-
- // t.move(hdr.pin(h_disable)); t.draw(ic1.pin(11)); t.draw(r2.pin(1)); 
- // t.move(hdr.pin(h_strobe));  t.draw(ic1.pin(10)); t.draw(r3.pin(1)); 
-
   t.move(hdr.pin(h_reset));
-  t.draw(-1.5_mm, -1.5_mm);
-  t.draw_x(-7.4_mm);
-  t.draw(-1.0_mm, -1.0_mm);
+  t.draw(2.8_mm, -2.8_mm);
+  t.draw_x(6.0_mm);
+  t.draw(1.0_mm, -1.0_mm);
   t.draw_y(-9.5_mm);
   t.draw(ic1.pin(13)); t.draw(r4.pin(1)); 
+
+  t.move(hdr.pin(h_clock));
+  t.draw(2.0_mm, -2.0_mm);
+  t.draw_x(5.0_mm);
+  t.draw(1.0_mm, -1.0_mm);
+  t.draw_y(-12.0_mm);
+  t.draw(ic1.pin(12)); t.draw(r1.pin(1)); 
+
+  t.move(hdr.pin(h_disable));
+  t.draw(1.2_mm, -1.2_mm);
+  t.draw_x(5.0_mm);
+  t.draw(1.0_mm, -1.0_mm);
+  t.draw_y(-12.0_mm);
+  t.draw(ic1.pin(11)); t.draw(r2.pin(1)); 
+ // t.move(hdr.pin(h_strobe));  t.draw(ic1.pin(10)); t.draw(r3.pin(1)); 
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
