@@ -218,14 +218,21 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
 
 template<unsigned N>
 struct header : point {
-  static constexpr const auto pin = 0.5_mm;
-  static constexpr const auto hole = pin + 0.2_mm;
+  static constexpr const auto pin_r = 0.5_mm;
+  static constexpr const auto hole = pin_r + 0.2_mm;
 
   static constexpr const auto len = 0.1_in * (N / 2.0 - 0.5);
 
+  static constexpr const auto pad_w = 0.6_mm + hole;
+  static constexpr const auto pad_h = 0.6_mm + hole;
+
+  point pin(int n) const {
+    return point { x - len + 0.1_in * (n - 1), y };
+  }
+
   void copper(cnc::pen & p) {
     for (auto i = 0; i < N; i++) {
-      p.flash(x - len + 0.1_in * i, y);
+      p.flash(pin(i + 1).x, pin(i + 1).y);
     }
   }
 };
@@ -252,18 +259,18 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
 }
 
 // 100k
-const auto r1 = r0603({ -6.0_mm, 3.0_mm });
-const auto r2 = r0603({ -6.0_mm, 5.0_mm });
-const auto r3 = r0603({ -6.0_mm, 7.0_mm });
-const auto r4 = r0603({ -6.0_mm, 9.0_mm });
+const auto r1 = r0603({ 12.0_mm, 5.0_mm });
+const auto r2 = r0603({ 12.0_mm, 3.0_mm });
+const auto r3 = r0603({ 12.0_mm, 1.0_mm });
+const auto r4 = r0603({ 12.0_mm, 7.0_mm });
 // 68
-const auto r5  = r0603({ 6.0_mm, 3.0_mm });
-const auto r6  = r0603({ 6.0_mm, 5.0_mm });
-const auto r7  = r0603({ 6.0_mm, 7.0_mm });
-const auto r8  = r0603({ 6.0_mm, 9.0_mm });
-const auto r9  = r0603({ 6.0_mm, 11.0_mm });
-const auto r10 = r0603({ 6.0_mm, 13.0_mm });
-const auto r11 = r0603({ 6.0_mm, 15.0_mm });
+const auto r5  = r0603({ -6.0_mm, 3.0_mm });
+const auto r6  = r0603({ -6.0_mm, 5.0_mm });
+const auto r7  = r0603({ -6.0_mm, 7.0_mm });
+const auto r8  = r0603({ -6.0_mm, 9.0_mm });
+const auto r9  = r0603({ -6.0_mm, 11.0_mm });
+const auto r10 = r0603({ -6.0_mm, 13.0_mm });
+const auto r11 = r0603({ -6.0_mm, 15.0_mm });
 
 // 1nF
 const auto c1 = r0603({ -12.0_mm, 0.0_mm });
@@ -271,9 +278,9 @@ const auto c1 = r0603({ -12.0_mm, 0.0_mm });
 const auto c2 = r0603({  12.0_mm, 0.0_mm });
 
 // BJT NPN
-const auto q1 = sot23({-15.0_mm, 18.0_mm});
-const auto q2 = sot23({-15.0_mm, 14.0_mm});
-const auto q3 = sot23({-15.0_mm, 10.0_mm});
+const auto q1 = sot23({ 4.0_mm, 17.0_mm });
+const auto q2 = sot23({ 4.0_mm, 13.0_mm });
+const auto q3 = sot23({ 4.0_mm,  9.0_mm });
 
 // 7-digit displays
 const auto msd = dip<14>({-12.0_mm, -board_h/2 + 10.0_mm});
@@ -281,13 +288,22 @@ const auto nsd = dip<14>({  0.0_mm, -board_h/2 + 10.0_mm});
 const auto lsd = dip<14>({ 12.0_mm, -board_h/2 + 10.0_mm});
 
 // MC14553 - 3-digit BCD counter
-const auto ic1 = dip<16>({-6.0_mm, 7.0_mm});
+const auto ic1 = dip<16>({ 12.0_mm, 7.0_mm});
 // MC14511 - BCD to 7 segments
-const auto ic2 = dip<16>({ 6.0_mm, 7.0_mm});
+const auto ic2 = dip<16>({-6.0_mm, 7.0_mm});
 
-// Strobe, disable, clock, reset, overflow, V+, V-
+enum hdr_pins {
+  h_nil = 0, // not a real pin
+  h_overflow,
+  h_reset,
+  h_clock,
+  h_disable,
+  h_strobe,
+  h_v_plus,
+  h_v_minus,
+};
 const auto hdr = header<7>({
-  0.4_in - board_w / 2.0,
+  -0.4_in + board_w / 2.0,
   -0.1_in + board_h / 2.0,
 });
 
@@ -344,6 +360,29 @@ void top_nets(cnc::pen & p) {
 
   t.move(ic1.pin(2));
   t.draw(q3.pin(sot23::b));
+
+  t.move(hdr.pin(h_overflow));
+  t.draw_x(-7.0_mm);
+  t.draw(-1.0_mm, -1.0_mm);
+  t.draw_y(-9.0_mm);
+  t.draw(ic1.pin(14));
+
+  t.move(hdr.pin(h_clock));
+  t.draw(-2.5_mm, -2.5_mm);
+  t.draw_x(-8.3_mm);
+  t.draw(-1.0_mm, -1.0_mm);
+  t.draw_y(-10.3_mm);
+  t.draw(ic1.pin(12)); t.draw(r1.pin(1)); 
+
+ // t.move(hdr.pin(h_disable)); t.draw(ic1.pin(11)); t.draw(r2.pin(1)); 
+ // t.move(hdr.pin(h_strobe));  t.draw(ic1.pin(10)); t.draw(r3.pin(1)); 
+
+  t.move(hdr.pin(h_reset));
+  t.draw(-1.5_mm, -1.5_mm);
+  t.draw_x(-7.4_mm);
+  t.draw(-1.0_mm, -1.0_mm);
+  t.draw_y(-9.5_mm);
+  t.draw(ic1.pin(13)); t.draw(r4.pin(1)); 
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
@@ -365,6 +404,7 @@ void top_copper(cnc::pen & p) {
   thermal(p, r2, 2);
   thermal(p, r3, 2);
   thermal(p, r4, 2);
+  thermal(p, hdr, 7);
 }
 void top_copper_margin(cnc::pen & p) {
   penny(p, l::top_copper_margin {});
