@@ -15,13 +15,16 @@ static constexpr const auto def_mask_margin = 10.0_mil;
 static constexpr const auto board_w = 50.0_mm;
 static constexpr const auto board_h = 50.0_mm;
 
-void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
-  p.aperture(6.0_mil);
+void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h, d::inch a) {
+  p.aperture(a);
   p.move(cx - w / 2, cy - h / 2);
   p.draw_x(cx + w / 2);
   p.draw_y(cy + h / 2);
   p.draw_x(cx - w / 2);
   p.draw_y(cy - h / 2);
+}
+void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
+  box(p, cx, cy, w, h, 6.0_mil);
 }
 
 namespace l {
@@ -653,13 +656,14 @@ void bottom_mask(cnc::pen & p) {
 void holes(cnc::pen & p) {
   penny(p, l::holes {});
 }
+
 void border_margin(cnc::pen & p) {
-  box(p, 0, 0, board_w + 25.0_mil, board_h + 25.0_mil);
+  box(p, 0, 0, board_w, board_h, 25.0_mil);
+}
+void border(cnc::pen & p) {
+  box(p, 0, 0, board_w, board_h, 10.0_mil);
 }
 
-void border(cnc::pen & p) {
-  box(p, 0, 0, board_w, board_h);
-}
 void plane(cnc::fanner & p) {
   static constexpr const auto m = 1.0_mm;
   static constexpr const auto w = (board_w - m) / 2;
