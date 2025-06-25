@@ -215,7 +215,7 @@ static dotz::vec2 dip_pin_tc_1down(int n, int mx) {
   if (n <= mx / 2) {
     return { 1, n - 1 };
   } else {
-    return { -1, n - (mx / 2) - 1 };
+    return { -1, mx - n };
   }
 }
 
@@ -310,6 +310,29 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
   box(p, r.x, r.y, 0.1_in * N, 0.1_in);
 }
 
+struct via : point {
+  static constexpr const auto hole = 0.2_mm;
+  static constexpr const auto diam = hole + 0.15_mm;
+};
+void penpen(cnc::pen & p, l::top_copper, via r) {
+  p.aperture(via::diam);
+  p.flash(r.x, r.y);
+}
+void penpen(cnc::pen & p, l::top_copper_margin, via r) {
+  p.aperture(via::diam + def_copper_margin);
+  p.flash(r.x, r.y);
+}
+void penpen(cnc::pen & p, l::bottom_copper, via r) {
+  penpen(p, l::top_copper {}, r);
+}
+void penpen(cnc::pen & p, l::bottom_copper_margin, via r) {
+  penpen(p, l::top_copper_margin {}, r);
+}
+void penpen(cnc::pen & p, l::holes, via r) {
+  p.aperture(via::hole);
+  p.flash(r.x, r.y);
+}
+
 // MC14553 - 3-digit BCD counter
 const auto ic1 = dip<16>{{ 12.0_mm, 7.0_mm}};
 // MC14511 - BCD to 7 segments
@@ -341,8 +364,12 @@ const auto r6  = r0603(ic2.pin(12).plus(-3.0_mm, 0));
 const auto r7  = r0603(ic2.pin(11).plus(-3.0_mm, 0));
 const auto r8  = r0603(ic2.pin(10).plus(-3.0_mm, 0));
 const auto r9  = r0603(ic2.pin( 9).plus(-3.0_mm, 0));
-const auto r10 = r0603(ic2.pin(15).plus( 3.0_mm, 0));
+const auto r10 = r0603(ic2.pin(15).plus(-3.0_mm, 0));
 const auto r11 = r0603(ic2.pin(14).plus(-3.0_mm, 0));
+
+const auto vr8  = via { r8.pin(2).plus(-1.3_mm, 0) };
+const auto vr9  = via { r9.pin(2).plus(-1.3_mm, 0) };
+const auto vr11 = via { r11.pin(2).plus(-1.3_mm, 0) };
 
 // 1nF
 const auto c1 = r0603(ic1.pin(2).plus(3.0_mm, 0));
@@ -353,6 +380,10 @@ const auto c2 = r0603(hdr.pin(h_v_minus).plus(-0.5_mm, -2.9_mm));
 const auto q1 = sot23({ 4.0_mm, 17.0_mm });
 const auto q2 = sot23({ 4.0_mm, 13.0_mm });
 const auto q3 = sot23({ 4.0_mm,  9.0_mm });
+
+const auto vq1 = via { q1.pin(sot23::c).plus(-1.3_mm, 0) };
+const auto vq2 = via { q2.pin(sot23::c).plus(-1.3_mm, 0) };
+const auto vq3 = via { q3.pin(sot23::c).plus(-1.3_mm, 0) };
 
 // 7-digit displays
 const auto msd = dip<14>{{-12.0_mm, -board_h/2 + 10.0_mm}};
@@ -371,7 +402,9 @@ void penny(cnc::pen & p, T t) {
       q1, q2, q3,
       msd, nsd, lsd,
       ic1, ic2,
-      hdr);
+      hdr,
+      vr8, vr9, vr11,
+      vq1, vq2, vq3);
 }
 
 void link_digits(turtle & t, unsigned pin, d::inch d0x, d::inch d0y, d::inch d1x) {
@@ -465,41 +498,78 @@ void top_nets(cnc::pen & p) {
   t.move(ic2.pin(13));
   t.draw(r5.pin(1));
   t.move(r5.pin(2));
-  t.draw(msd.pin(14));
+  t.draw_x(-2.0_mm);
+  t.draw(msd.pin(2).plus(-1.5_mm, -0.3_mm));
+  t.draw(msd.pin(2).plus(0, -1.3_mm));
+  t.draw_ld(msd.pin(14));
 
   t.move(ic2.pin(12));
   t.draw(r6.pin(1));
   t.move(r6.pin(2));
-  t.draw(msd.pin(13));
+  t.draw_x(-2.0_mm);
+  t.draw(msd.pin(3).plus(-2.5_mm, -0.3_mm));
+  t.draw(msd.pin(3).plus(0, -1.3_mm));
+  t.draw_ld(msd.pin(13));
 
   t.move(ic2.pin(11));
   t.draw(r7.pin(1));
   t.move(r7.pin(2));
-  t.draw(msd.pin(8));
+  t.draw_x(-2.0_mm);
+  t.draw(msd.pin(7).plus(-3.5_mm, -0.3_mm));
+  t.draw(msd.pin(7).plus(0, -1.3_mm));
+  t.draw_ld(msd.pin(8));
 
   t.move(ic2.pin(10));
   t.draw(r8.pin(1));
   t.move(r8.pin(2));
-  t.draw(msd.pin(7));
+  t.draw(vr8);
 
   t.move(ic2.pin(9));
   t.draw(r9.pin(1));
   t.move(r9.pin(2));
-  t.draw(msd.pin(6));
+  t.draw(vr9);
 
   t.move(ic2.pin(15));
-  t.draw(r10.pin(2));
-  t.move(r10.pin(1));
-  t.draw_ld(nsd.pin(1).plus(0, 3.0_mm));
-  t.draw_ld(nsd.pin(1));
+  t.draw(r10.pin(1));
+  t.move(r10.pin(2));
+  t.draw_ld(msd.pin(1));
 
   t.move(ic2.pin(14));
   t.draw(r11.pin(1));
+  t.move(r11.pin(2));
+  t.draw(vr11);
+
+  t.move(q1.pin(sot23::c)); t.draw(vq1);
+  t.move(q2.pin(sot23::c)); t.draw(vq2);
+  t.move(q3.pin(sot23::c)); t.draw(vq3);
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
-  t.move(r11.pin(2));
+  t.move(vr11);
+  t.draw(vr11.plus(0.5_mm, -0.5_mm));
   t.draw_ld(msd.pin(2));
+
+  t.move(vr8);
+  t.draw(vr8.plus(1.5_mm, -1.5_mm));
+  t.draw_ld(msd.pin(7));
+
+  t.move(vr9);
+  t.draw(vr9.plus(-4.0_mm, -4.0_mm));
+  t.draw_ld(msd.pin(6));
+
+  t.move(vq1);
+  t.draw(ic2.pin(1).plus(2.0_mm, 0));
+  t.draw(ic2.pin(1).plus(-2.0_mm, -2.0_mm));
+  t.draw(msd.pin(13).plus(1.5_mm, 0));
+  t.draw_ld(msd.pin(12));
+
+  t.move(vq2);
+  t.draw(ic2.pin(1).plus(3.0_mm, 0));
+  t.draw_ld(nsd.pin(4));
+
+  t.move(vq3);
+  t.draw(ic1.pin(8).plus(-2.0_mm, 0));
+  t.draw_ld(lsd.pin(4));
 }
 
 void top_copper(cnc::pen & p) {
