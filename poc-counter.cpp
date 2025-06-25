@@ -447,6 +447,20 @@ void top_nets(cnc::pen & p) {
 
   t.move(ic1.pin(4));
   t.draw(c1.pin(1));
+
+  t.move(ic1.pin(9));
+  t.draw(ic2.pin(1).plus(0, -2.0_mm));
+  t.draw(ic2.pin(6).plus(-1.8_mm, 0));
+  t.draw_ld(ic2.pin(7));
+
+  t.move(ic1.pin(7));
+  t.draw(ic2.pin(1));
+
+  t.move(ic1.pin(6));
+  t.draw(ic2.pin(2));
+
+  t.move(ic1.pin(5));
+  t.draw_ld(ic2.pin(6));
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
