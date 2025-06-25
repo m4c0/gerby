@@ -235,8 +235,8 @@ void write(const char *fn, lb_t lb, cnc::grb_layer l) {
   lb(&ad, l);
 
   file f { fn, "wb" };
-  fputln(f, "%%FSLAX26Y26*%%");
-  fputln(f, "%%MOIN*%%");
+  fputln(f, "%FSLAX26Y26*%");
+  fputln(f, "%MOIN*%");
   fputln(f, "G01*");
   ad.write(f);
 
@@ -255,7 +255,7 @@ void write_drill(const char *fn, lb_t lb) {
   fputln(f, "M48");
   fputln(f, "INCH");
   ad.write_tools(f);
-  fputln(f, "%%");
+  fputln(f, "%");
   fputln(f, "G05");
 
   drill_builder b { f, &ad };
