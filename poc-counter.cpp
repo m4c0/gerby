@@ -10,6 +10,8 @@ static constexpr const auto def_copper_margin = 15.0_mil;
 static constexpr const auto def_cu_w = 10.0_mil;
 static constexpr const auto def_cu_wm = def_cu_w + def_copper_margin;
 
+static constexpr const auto def_mask_margin = 10.0_mil;
+
 static constexpr const auto board_w = 50.0_mm;
 static constexpr const auto board_h = 50.0_mm;
 
@@ -25,8 +27,10 @@ void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
 namespace l {
   struct top_copper {};
   struct top_copper_margin {};
+  struct top_mask {};
   struct bottom_copper {};
   struct bottom_copper_margin {};
+  struct bottom_mask {};
   struct holes {};
   struct silk {};
 }
@@ -160,6 +164,9 @@ template<> void penpen(cnc::pen & p, l::top_copper, r0603 r) {
 template<> void penpen(cnc::pen & p, l::top_copper_margin, r0603 r) {
   r.copper(p, def_copper_margin);
 }
+template<> void penpen(cnc::pen & p, l::top_mask, r0603 r) {
+  r.copper(p, def_mask_margin);
+}
 template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
   static constexpr const auto l = 1.6_mm;
   static constexpr const auto w = 0.8_mm;
@@ -197,6 +204,9 @@ template<> void penpen(cnc::pen & p, l::top_copper, sot23 r) {
 }
 template<> void penpen(cnc::pen & p, l::top_copper_margin, sot23 r) {
   r.copper(p, def_copper_margin);
+}
+template<> void penpen(cnc::pen & p, l::top_mask, sot23 r) {
+  r.copper(p, def_mask_margin);
 }
 template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
   static constexpr const auto l = 2.9_mm;
@@ -248,6 +258,13 @@ template<unsigned N> void penpen(cnc::pen & p, l::top_copper, dip<N> r) {
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper, dip<N> r) {
   penpen(p, l::top_copper {}, r);
 }
+template<unsigned N> void penpen(cnc::pen & p, l::top_mask, dip<N> r) {
+  p.aperture(dip<N>::hole + 0.6_mm + def_mask_margin);
+  r.copper(p);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::bottom_mask, dip<N> r) {
+  penpen(p, l::top_mask {}, r);
+}
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, dip<N> r) {
   p.aperture(dip<N>::hole + 0.6_mm + def_copper_margin);
   r.copper(p);
@@ -294,6 +311,13 @@ template<unsigned N> void penpen(cnc::pen & p, l::top_copper, header<N> r) {
 }
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper, header<N> r) {
   penpen(p, l::top_copper {}, r);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::top_mask, header<N> r) {
+  p.aperture(header<N>::hole + 0.6_mm + def_mask_margin);
+  r.copper(p);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::bottom_mask, header<N> r) {
+  penpen(p, l::top_mask {}, r);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, header<N> r) {
   p.aperture(header<N>::hole + 0.6_mm + def_copper_margin);
@@ -600,6 +624,9 @@ void top_copper_margin(cnc::pen & p) {
 void top_silk(cnc::pen & p) {
   penny(p, l::silk {});
 }
+void top_mask(cnc::pen & p) {
+  penny(p, l::top_mask {});
+}
 
 void bottom_copper(cnc::pen & p) {
   penny(p, l::bottom_copper {});
@@ -618,6 +645,9 @@ void bottom_copper_margin(cnc::pen & p) {
 
   p.aperture(10.0_mil + def_copper_margin);
   bottom_nets(p);
+}
+void bottom_mask(cnc::pen & p) {
+  penny(p, l::bottom_mask {});
 }
 
 void holes(cnc::pen & p) {
@@ -649,6 +679,9 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
       b->add_lines(top_copper, red);
       b->add_lines(holes, black);
       break;
+    case cnc::gl_top_mask:
+      b->add_lines(top_mask, green);
+      break;
     case cnc::gl_top_silk:
       b->add_lines(top_silk, white);
       break;
@@ -657,6 +690,9 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
       b->add_lines(bottom_copper_margin, black);
       b->add_lines(bottom_copper, blue);
       b->add_lines(holes, black);
+      break;
+    case cnc::gl_bot_mask:
+      b->add_lines(bottom_mask, dark_green);
       break;
     case cnc::gl_border:
       b->add_lines(border_margin, black);
