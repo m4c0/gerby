@@ -102,7 +102,7 @@ public:
       }
       auto din = a.diameter();
       d::mm dmm{d::inch{din}};
-      if (dmm.raw_value() < 0.3 || dmm.raw_value() > 6.3) {
+      if (dmm.raw_value() < 0.15 || dmm.raw_value() > 6.3) {
         silog::log(silog::error, "incompatible drill size: %Lfmm/%fin",
                    dmm.raw_value(), din);
         continue;
