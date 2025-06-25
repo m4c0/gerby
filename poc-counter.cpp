@@ -336,13 +336,13 @@ const auto r2 = r0603(ic1.pin(11) + point { -3.0_mm, 0 });
 const auto r3 = r0603(ic1.pin(10) + point { -3.0_mm, 0 });
 const auto r4 = r0603(ic1.pin(13) + point { -3.0_mm, 0 });
 // 68
-const auto r5  = r0603({ -6.0_mm, 3.0_mm });
-const auto r6  = r0603({ -6.0_mm, 5.0_mm });
-const auto r7  = r0603({ -6.0_mm, 7.0_mm });
-const auto r8  = r0603({ -6.0_mm, 9.0_mm });
-const auto r9  = r0603({ -6.0_mm, 11.0_mm });
-const auto r10 = r0603({ -6.0_mm, 13.0_mm });
-const auto r11 = r0603({ -6.0_mm, 15.0_mm });
+const auto r5  = r0603(ic2.pin(13).plus(-3.0_mm, 0));
+const auto r6  = r0603(ic2.pin(12).plus(-3.0_mm, 0));
+const auto r7  = r0603(ic2.pin(11).plus(-3.0_mm, 0));
+const auto r8  = r0603(ic2.pin(10).plus(-3.0_mm, 0));
+const auto r9  = r0603(ic2.pin( 9).plus(-3.0_mm, 0));
+const auto r10 = r0603(ic2.pin(15).plus( 3.0_mm, 0));
+const auto r11 = r0603(ic2.pin(14).plus(-3.0_mm, 0));
 
 // 1nF
 const auto c1 = r0603(ic1.pin(2).plus(3.0_mm, 0));
@@ -461,9 +461,45 @@ void top_nets(cnc::pen & p) {
 
   t.move(ic1.pin(5));
   t.draw_ld(ic2.pin(6));
+
+  t.move(ic2.pin(13));
+  t.draw(r5.pin(1));
+  t.move(r5.pin(2));
+  t.draw(msd.pin(14));
+
+  t.move(ic2.pin(12));
+  t.draw(r6.pin(1));
+  t.move(r6.pin(2));
+  t.draw(msd.pin(13));
+
+  t.move(ic2.pin(11));
+  t.draw(r7.pin(1));
+  t.move(r7.pin(2));
+  t.draw(msd.pin(8));
+
+  t.move(ic2.pin(10));
+  t.draw(r8.pin(1));
+  t.move(r8.pin(2));
+  t.draw(msd.pin(7));
+
+  t.move(ic2.pin(9));
+  t.draw(r9.pin(1));
+  t.move(r9.pin(2));
+  t.draw(msd.pin(6));
+
+  t.move(ic2.pin(15));
+  t.draw(r10.pin(2));
+  t.move(r10.pin(1));
+  t.draw_ld(nsd.pin(1).plus(0, 3.0_mm));
+  t.draw_ld(nsd.pin(1));
+
+  t.move(ic2.pin(14));
+  t.draw(r11.pin(1));
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
+  t.move(r11.pin(2));
+  t.draw_ld(msd.pin(2));
 }
 
 void top_copper(cnc::pen & p) {
