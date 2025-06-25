@@ -40,8 +40,13 @@ struct point {
   point plus(d::inch dx, d::inch dy) const {
     return { x + dx, y + dy };
   }
+
+  point flip() const {
+    return { y, x };
+  }
 };
 constexpr point operator+(const point & a, const point & b) { return a.plus(b.x, b.y); }
+constexpr point operator*(const point & a, float f) { return { a.x * f, a.y * f }; }
 
 void thermal(cnc::pen & p, point pin, d::inch w, d::inch h) {
   p.aperture(25.0_mil, h + 25.0_mil, false);
@@ -70,6 +75,7 @@ public:
     m_pen->move(m_x, m_y);
   }
 
+  // TODO: rename to line_dl
   void draw(const point & p) {
     auto dx = p.x - m_x;
     auto dy = p.y - m_y;
@@ -77,6 +83,20 @@ public:
       m_pen->draw(m_x + dy.abs() * dx.sign(), p.y);
     } else {
       m_pen->draw(p.x, m_y + dx.abs() * dy.sign());
+    }
+
+    m_x = p.x;
+    m_y = p.y;
+    m_pen->draw(m_x, m_y);
+  }
+  void draw_ld(const point & p) {
+    auto dx = p.x - m_x;
+    auto dy = p.y - m_y;
+
+    if (dx.abs() > dy.abs()) {
+      m_pen->draw_x(p.x - dy.abs() * dx.sign());
+    } else {
+      m_pen->draw_y(p.y - dx.abs() * dy.sign());
     }
 
     m_x = p.x;
@@ -95,6 +115,19 @@ public:
   void draw_y(d::inch dy) {
     m_y = m_y + dy;
     m_pen->draw_y(m_y);
+  }
+};
+
+/// Utility to hold bus lines together
+struct bus : point {
+  point dist { def_cu_wm, 0 };
+
+  point pin(int n) const {
+    return *this + dist * n;
+  }
+
+  bus flip() const {
+    return { *this, dist.flip() };
   }
 };
 
@@ -270,6 +303,21 @@ const auto ic1 = dip<16>({ 12.0_mm, 7.0_mm});
 // MC14511 - BCD to 7 segments
 const auto ic2 = dip<16>({-6.0_mm, 7.0_mm});
 
+enum hdr_pins {
+  h_nil = 0, // not a real pin
+  h_overflow,
+  h_reset,
+  h_clock,
+  h_disable,
+  h_strobe,
+  h_v_plus,
+  h_v_minus,
+};
+const auto hdr = header<7>({
+  -0.4_in + board_w / 2.0,
+  -0.1_in + board_h / 2.0,
+});
+
 // 100k
 const auto r1 = r0603(ic1.pin(12) + point { -3.0_mm, 0 });
 const auto r2 = r0603(ic1.pin(11) + point { -3.0_mm, 0 });
@@ -285,9 +333,9 @@ const auto r10 = r0603({ -6.0_mm, 13.0_mm });
 const auto r11 = r0603({ -6.0_mm, 15.0_mm });
 
 // 1nF
-const auto c1 = r0603({ -12.0_mm, 0.0_mm });
+const auto c1 = r0603(ic1.pin(2).plus(3.0_mm, 0));
 // 10nF
-const auto c2 = r0603({  12.0_mm, 0.0_mm });
+const auto c2 = r0603(hdr.pin(h_v_minus).plus(-0.5_mm, -2.9_mm));
 
 // BJT NPN
 const auto q1 = sot23({ 4.0_mm, 17.0_mm });
@@ -298,21 +346,6 @@ const auto q3 = sot23({ 4.0_mm,  9.0_mm });
 const auto msd = dip<14>({-12.0_mm, -board_h/2 + 10.0_mm});
 const auto nsd = dip<14>({  0.0_mm, -board_h/2 + 10.0_mm});
 const auto lsd = dip<14>({ 12.0_mm, -board_h/2 + 10.0_mm});
-
-enum hdr_pins {
-  h_nil = 0, // not a real pin
-  h_overflow,
-  h_reset,
-  h_clock,
-  h_disable,
-  h_strobe,
-  h_v_plus,
-  h_v_minus,
-};
-const auto hdr = header<7>({
-  -0.4_in + board_w / 2.0,
-  -0.1_in + board_h / 2.0,
-});
 
 template<typename T>
 void pennies(cnc::pen & p, T t, auto... cs) {
@@ -368,33 +401,40 @@ void top_nets(cnc::pen & p) {
   t.move(ic1.pin(2));
   t.draw(q3.pin(sot23::b));
 
+  bus hb0 { ic1.pin(15).plus(1.5_mm, 0) };
+  bus hb1 = bus { hdr.pin(h_strobe).plus(-1.5_mm, -3.0_mm) }.flip();
+
   t.move(hdr.pin(h_overflow));
-  t.draw(hdr.pin(h_strobe).plus(0.0_mm, -1.5_mm - def_cu_wm * 3));
-  t.draw(ic1.pin(15).plus(5.0_mm - def_cu_wm * 4, 2.0_mm));
-  t.draw(ic1.pin(15).plus(5.0_mm - def_cu_wm * 4, 0));
-  t.draw(ic1.pin(14));
+  t.draw(hb1.pin(0));
+  t.draw(hb0.pin(0));
+  t.draw_ld(ic1.pin(14));
 
   t.move(hdr.pin(h_reset));
-  t.draw(hdr.pin(h_strobe).plus(0.0_mm, -1.5_mm - def_cu_wm * 2));
-  t.draw(ic1.pin(14).plus(5.0_mm - def_cu_wm * 3, 5.0_mm));
-  t.draw(ic1.pin(14).plus(5.0_mm - def_cu_wm * 3, 0));
-  t.draw(ic1.pin(13)); t.draw(r4.pin(1)); 
+  t.draw(hb1.pin(1));
+  t.draw(hb0.pin(1));
+  t.draw_ld(ic1.pin(13)); t.draw(r4.pin(1)); 
 
   t.move(hdr.pin(h_clock));
-  t.draw(hdr.pin(h_strobe).plus(0.0_mm, -1.5_mm - def_cu_wm));
-  t.draw(ic1.pin(13).plus(5.0_mm - def_cu_wm * 2, 9.0_mm));
-  t.draw(ic1.pin(13).plus(5.0_mm - def_cu_wm * 2, 0));
-  t.draw(ic1.pin(12)); t.draw(r1.pin(1)); 
+  t.draw(hb1.pin(2));
+  t.draw(hb0.pin(2));
+  t.draw_ld(ic1.pin(12)); t.draw(r1.pin(1)); 
 
   t.move(hdr.pin(h_disable));
-  t.draw(hdr.pin(h_strobe).plus(0.0_mm, -1.5_mm));
-  t.draw(ic1.pin(12).plus(5.0_mm - def_cu_wm, 3.0_mm));
-  t.draw(ic1.pin(12).plus(5.0_mm - def_cu_wm, 0));
-  t.draw(ic1.pin(11)); t.draw(r2.pin(1)); 
+  t.draw(hb0.pin(3));
+  t.draw_ld(ic1.pin(11)); t.draw(r2.pin(1)); 
 
   t.move(hdr.pin(h_strobe));
-  t.draw(ic1.pin(11).plus(5.0_mm, 0));
-  t.draw(ic1.pin(10)); t.draw(r3.pin(1)); 
+  t.draw(hb0.pin(4));
+  t.draw_ld(ic1.pin(10)); t.draw(r3.pin(1)); 
+
+  t.move(hdr.pin(h_v_plus));
+  t.draw(c2.pin(2));
+
+  t.move(ic1.pin(3));
+  t.draw(c1.pin(2));
+
+  t.move(ic1.pin(4));
+  t.draw(c1.pin(1));
 }
 void bottom_nets(cnc::pen & p) {
   turtle t { &p };
@@ -416,6 +456,7 @@ void top_copper(cnc::pen & p) {
   thermal(p, r2, 2);
   thermal(p, r3, 2);
   thermal(p, r4, 2);
+  thermal(p, c2, 1);
   thermal(p, hdr, 7);
 }
 void top_copper_margin(cnc::pen & p) {
