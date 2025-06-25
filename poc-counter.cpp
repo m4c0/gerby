@@ -215,20 +215,20 @@ struct dip : point {
   static constexpr const auto pad_h = 0.6_mm + hole;
 
   point pin(int n) const {
+    float dx;
+    float dy;
     if (n <= N / 2) {
-      auto i = (N / 2) - n;
-      return { x - w, y - h + 0.1_in * i };
+      dx = -1;
+      dy = (N / 2) - n;
     } else {
-      auto i = n - (N / 2) - 1;
-      return { x + w, y - h + 0.1_in * i };
+      dx = 1;
+      dy = n - (N / 2) - 1;
     }
+    return { x + w * dx, y - h + 0.1_in * dy };
   }
 
   void copper(cnc::pen & p) const {
-    for (auto i = 0; i < N / 2; i++) {
-      p.flash(pin(i + 1).x, pin(i + 1).y);
-      p.flash(pin(N - i).x, pin(N - i).y);
-    }
+    for (auto i = 0; i < N; i++) p.flash(pin(i + 1).x, pin(i + 1).y);
   }
 };
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper, dip<N> r) {
