@@ -1,4 +1,5 @@
 #pragma leco dll
+import dotz;
 import gerby;
 
 using namespace gerby::literals;
@@ -203,6 +204,21 @@ template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
   box(p, r.x, r.y, l, w);
 }
 
+static dotz::vec2 dip_pin_tc_1up(int n, int mx) {
+  if (n <= mx / 2) {
+    return { -1, (mx / 2) - n };
+  } else {
+    return { 1, n - (mx / 2) - 1 };
+  }
+}
+static dotz::vec2 dip_pin_tc_1down(int n, int mx) {
+  if (n <= mx / 2) {
+    return { 1, n - 1 };
+  } else {
+    return { -1, n - (mx / 2) - 1 };
+  }
+}
+
 template<unsigned N>
 struct dip : point {
   static constexpr const auto pin_r = 0.5_mm;
@@ -214,16 +230,10 @@ struct dip : point {
   static constexpr const auto pad_w = 0.6_mm + hole;
   static constexpr const auto pad_h = 0.6_mm + hole;
 
+  dotz::vec2 (*pin_fn)(int, int) = dip_pin_tc_1up;
+
   point pin(int n) const {
-    float dx;
-    float dy;
-    if (n <= N / 2) {
-      dx = -1;
-      dy = (N / 2) - n;
-    } else {
-      dx = 1;
-      dy = n - (N / 2) - 1;
-    }
+    auto [dx, dy] = pin_fn(n, N);
     return { x + w * dx, y - h + 0.1_in * dy };
   }
 
@@ -252,8 +262,10 @@ template<unsigned N> void penpen(cnc::pen & p, l::holes, dip<N> r) {
 template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * N / 2);
 
+  auto sign = (r.pin(N).x - r.pin(1).x).sign();
+
   p.aperture(0.6_mm);
-  p.flash(r.pin(1).x + 1.4_mm, r.pin(1).y);
+  p.flash(r.pin(1).x + 1.4_mm * sign, r.pin(1).y);
 }
 
 template<unsigned N>
@@ -299,9 +311,9 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
 }
 
 // MC14553 - 3-digit BCD counter
-const auto ic1 = dip<16>({ 12.0_mm, 7.0_mm});
+const auto ic1 = dip<16>{{ 12.0_mm, 7.0_mm}};
 // MC14511 - BCD to 7 segments
-const auto ic2 = dip<16>({-6.0_mm, 7.0_mm});
+const auto ic2 = dip<16>{{-6.0_mm, 7.0_mm}, dip_pin_tc_1down};
 
 enum hdr_pins {
   h_nil = 0, // not a real pin
@@ -343,9 +355,9 @@ const auto q2 = sot23({ 4.0_mm, 13.0_mm });
 const auto q3 = sot23({ 4.0_mm,  9.0_mm });
 
 // 7-digit displays
-const auto msd = dip<14>({-12.0_mm, -board_h/2 + 10.0_mm});
-const auto nsd = dip<14>({  0.0_mm, -board_h/2 + 10.0_mm});
-const auto lsd = dip<14>({ 12.0_mm, -board_h/2 + 10.0_mm});
+const auto msd = dip<14>{{-12.0_mm, -board_h/2 + 10.0_mm}};
+const auto nsd = dip<14>{{  0.0_mm, -board_h/2 + 10.0_mm}};
+const auto lsd = dip<14>{{ 12.0_mm, -board_h/2 + 10.0_mm}};
 
 template<typename T>
 void pennies(cnc::pen & p, T t, auto... cs) {
