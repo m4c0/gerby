@@ -179,7 +179,7 @@ template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
 // https://jlcpcb.com/partdetail/2503-S8050_J3Y_RANGE_200_350/C2146
 struct sot23 : point { // NPN only
   static constexpr const auto h = 2.02_mm / 2;
-  static constexpr const auto w = 1.20_mm / 2;
+  static constexpr const auto w = 1.90_mm / 2;
 
   static constexpr const auto pad_w = 0.6_mm;
   static constexpr const auto pad_h = 0.8_mm;
@@ -710,20 +710,26 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
 }
 
 extern "C" void cpl(cpl::builder * b) {
-  b->add({ "R1",  r1.x,  r1.y,  true, 0 });
-  b->add({ "R2",  r2.x,  r2.y,  true, 0 });
-  b->add({ "R3",  r3.x,  r3.y,  true, 0 });
-  b->add({ "R4",  r4.x,  r4.y,  true, 0 });
-  b->add({ "R5",  r5.x,  r5.y,  true, 0 });
-  b->add({ "R6",  r6.x,  r6.y,  true, 0 });
-  b->add({ "R7",  r7.x,  r7.y,  true, 0 });
-  b->add({ "R8",  r8.x,  r8.y,  true, 0 });
-  b->add({ "R9",  r9.x,  r9.y,  true, 0 });
-  b->add({ "R10", r10.x, r10.y, true, 0 });
-  b->add({ "R11", r11.x, r11.y, true, 0 });
-  b->add({ "C1",  c1.x,  c1.y,  true, 0 });
-  b->add({ "C2",  c2.x,  c2.y,  true, 0 });
-  b->add({ "Q1",  q1.x,  q1.y,  true, 90 });
-  b->add({ "Q2",  q2.x,  q2.y,  true, 90 });
-  b->add({ "Q3",  q3.x,  q3.y,  true, 90 });
+  b->part({ "R1",  r1.x,  r1.y,  true, 0 });
+  b->part({ "R2",  r2.x,  r2.y,  true, 0 });
+  b->part({ "R3",  r3.x,  r3.y,  true, 0 });
+  b->part({ "R4",  r4.x,  r4.y,  true, 0 });
+  b->part({ "R5",  r5.x,  r5.y,  true, 0 });
+  b->part({ "R6",  r6.x,  r6.y,  true, 0 });
+  b->part({ "R7",  r7.x,  r7.y,  true, 0 });
+  b->part({ "R8",  r8.x,  r8.y,  true, 0 });
+  b->part({ "R9",  r9.x,  r9.y,  true, 0 });
+  b->part({ "R10", r10.x, r10.y, true, 0 });
+  b->part({ "R11", r11.x, r11.y, true, 0 });
+  b->part({ "C1",  c1.x,  c1.y,  true, 0 });
+  b->part({ "C2",  c2.x,  c2.y,  true, 0 });
+  b->part({ "Q1",  q1.x,  q1.y,  true, 90 });
+  b->part({ "Q2",  q2.x,  q2.y,  true, 90 });
+  b->part({ "Q3",  q3.x,  q3.y,  true, 90 });
+
+  b->bom({ "100k", "R1-4", "0603_R", "C25803" });
+  b->bom({ "56", "R5-11", "0603_R", "C23206" });
+  b->bom({ "1nF", "C1", "0603_C", "C1588" });
+  b->bom({ "10nF", "C2", "0603_C", "C57112" });
+  b->bom({ "NPN", "Q1-3", "SOT-23", "C2146" });
 }
