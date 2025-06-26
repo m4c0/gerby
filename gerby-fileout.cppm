@@ -14,7 +14,7 @@ import silog;
 namespace gerby::out {
 export using lb_t = void(cnc::builder *, cnc::grb_layer);
 
-using file = hay<FILE *, ::fopen, ::fclose>;
+export using file = hay<FILE *, ::fopen, ::fclose>;
 
 class apdict : public cnc::pen, public cnc::fanner, public cnc::builder {
   hai::varray<cnc::aperture> m_dict{1024};

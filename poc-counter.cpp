@@ -338,7 +338,7 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
 }
 
 struct via : point {
-  static constexpr const auto hole = 0.2_mm;
+  static constexpr const auto hole = 0.3_mm;
   static constexpr const auto diam = hole + 0.15_mm;
 };
 void penpen(cnc::pen & p, l::top_copper, via r) {
@@ -707,4 +707,23 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
       break;
     default: break;
   }
+}
+
+extern "C" void cpl(cpl::builder * b) {
+  b->add({ "R1",  r1.x,  r1.y,  true, 0 });
+  b->add({ "R2",  r2.x,  r2.y,  true, 0 });
+  b->add({ "R3",  r3.x,  r3.y,  true, 0 });
+  b->add({ "R4",  r4.x,  r4.y,  true, 0 });
+  b->add({ "R5",  r5.x,  r5.y,  true, 0 });
+  b->add({ "R6",  r6.x,  r6.y,  true, 0 });
+  b->add({ "R7",  r7.x,  r7.y,  true, 0 });
+  b->add({ "R8",  r8.x,  r8.y,  true, 0 });
+  b->add({ "R9",  r9.x,  r9.y,  true, 0 });
+  b->add({ "R10", r10.x, r10.y, true, 0 });
+  b->add({ "R11", r11.x, r11.y, true, 0 });
+  b->add({ "C1",  c1.x,  c1.y,  true, 0 });
+  b->add({ "C2",  c2.x,  c2.y,  true, 0 });
+  b->add({ "Q1",  q1.x,  q1.y,  true, 90 });
+  b->add({ "Q2",  q2.x,  q2.y,  true, 90 });
+  b->add({ "Q3",  q3.x,  q3.y,  true, 90 });
 }

@@ -4,6 +4,8 @@ import dl;
 import gerby;
 import silog;
 
+using namespace gerby;
+
 int main(int argc, char ** argv) {
   if (argc != 2) {
     silog::log(silog::error, "Usage: %s <libname>", argv[0]);
@@ -25,6 +27,14 @@ int main(int argc, char ** argv) {
   }
 
   gerby::out::write(fn);
+
+  auto cpl_fn = dll->fn<cpl::b_t>("cpl");
+  if (!cpl_fn) {
+    silog::log(silog::info, "Missing pick-n-place function in [%s] - bailing out", argv[1]);
+    return 0;
+  }
+
+  cpl::write(cpl_fn);
 
   return 0;
 }

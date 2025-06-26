@@ -90,7 +90,7 @@ export enum grb_layer {
   gl_bot_mask,
   gl_bot_silk,
   gl_drill_holes,
-  gl_count,
+  gl_count, // Used only as a counter
   gl_border,
 };
 } // namespace gerby::cnc
