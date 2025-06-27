@@ -4,6 +4,11 @@ import :distance;
 import dotz;
 
 namespace gerby::cnc {
+export struct point {
+  d::inch x;
+  d::inch y;
+};
+
 export class aperture {
   dotz::vec2 m_smear{};
   float m_d{};
@@ -12,6 +17,7 @@ export class aperture {
 public:
   constexpr aperture() noexcept = default;
   constexpr aperture(d::inch d) noexcept : aperture{d, d, true} {}
+  constexpr aperture(point i, bool round) noexcept : aperture{i.x, i.y, round} {}
   constexpr aperture(d::inch iw, d::inch ih, bool round) noexcept {
     auto w = iw.as_float();
     auto h = ih.as_float();
@@ -42,8 +48,10 @@ export class fanner {
 public:
   virtual ~fanner() = default;
 
+  void move(point p) { move(p.x, p.y); }
   virtual void move(d::inch x, d::inch y) = 0;
 
+  void draw(point p) { draw(p.x, p.y); }
   virtual void draw(d::inch x, d::inch y) = 0;
   virtual void draw_x(d::inch x) = 0;
   virtual void draw_y(d::inch y) = 0;
@@ -62,14 +70,17 @@ public:
 
   constexpr void aperture(auto a, auto... args) { m_aperture = {a, args...}; }
 
+  void move(point p) { move(p.x, p.y); }
   virtual void move(d::inch x, d::inch y) = 0;
   virtual void move_x(d::inch x) = 0;
   virtual void move_y(d::inch y) = 0;
 
+  void draw(point p) { draw(p.x, p.y); }
   virtual void draw(d::inch x, d::inch y) = 0;
   virtual void draw_x(d::inch x) = 0;
   virtual void draw_y(d::inch y) = 0;
 
+  void flash(point p) { flash(p.x, p.y); }
   virtual void flash(d::inch x, d::inch y) = 0;
   virtual void flash_x(d::inch x) = 0;
   virtual void flash_y(d::inch y) = 0;
@@ -94,3 +105,16 @@ export enum grb_layer {
   gl_border,
 };
 } // namespace gerby::cnc
+
+namespace gerby::cnc::utils {
+  export void box(auto & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
+    p.move(cx - w / 2, cy - h / 2);
+    p.draw_x(cx + w / 2);
+    p.draw_y(cy + h / 2);
+    p.draw_x(cx - w / 2);
+    p.draw_y(cy - h / 2);
+  }
+  export void box(auto & p, point center, point size) {
+    box(p, center.x, center.y, size.x, size.y);
+  }
+}

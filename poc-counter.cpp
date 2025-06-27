@@ -17,14 +17,11 @@ static constexpr const auto board_h = 50.0_mm;
 
 void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h, d::inch a) {
   p.aperture(a);
-  p.move(cx - w / 2, cy - h / 2);
-  p.draw_x(cx + w / 2);
-  p.draw_y(cy + h / 2);
-  p.draw_x(cx - w / 2);
-  p.draw_y(cy - h / 2);
+  cnc::utils::box(p, cx, cy, w, h);
 }
 void box(cnc::pen & p, d::inch cx, d::inch cy, d::inch w, d::inch h) {
-  box(p, cx, cy, w, h, 6.0_mil);
+  p.aperture(6.0_mil);
+  cnc::utils::box(p, cx, cy, w, h);
 }
 
 namespace l {
@@ -40,11 +37,8 @@ namespace l {
 template<typename L, typename T> void penpen(cnc::pen & p, L, T t) {
 }
 
-struct point {
-  // Aligned at the center of the compo
-  d::inch x;
-  d::inch y;
-
+// Aligned at the center of the compo
+struct point : cnc::point {
   point plus(d::inch dx, d::inch dy) const {
     return { x + dx, y + dy };
   }
@@ -58,10 +52,10 @@ constexpr point operator*(const point & a, float f) { return { a.x * f, a.y * f 
 
 void thermal(cnc::pen & p, point pin, d::inch w, d::inch h) {
   p.aperture(25.0_mil, h + 25.0_mil, false);
-  p.flash(pin.x, pin.y);
+  p.flash(pin);
 
   p.aperture(w + 25.0_mil, 25.0_mil, false);
-  p.flash(pin.x, pin.y);
+  p.flash(pin);
 }
 template<typename T>
 void thermal(cnc::pen & p, const T & c, int pin) {
@@ -157,8 +151,8 @@ struct r0603 : point {
 
   void copper(cnc::pen & p, d::inch margin) const {
     p.aperture(b + margin, c + margin, false);
-    p.flash(pin(1).x, pin(1).y);
-    p.flash(pin(2).x, pin(2).y);
+    p.flash(pin(1));
+    p.flash(pin(2));
   };
 };
 template<> void penpen(cnc::pen & p, l::top_copper, r0603 r) {
@@ -197,9 +191,9 @@ struct sot23 : point { // NPN only
 
   void copper(cnc::pen &p, d::inch m) const {
     p.aperture(pad_w + m, pad_h + m, false);
-    p.flash(pin(c).x, pin(c).y);
-    p.flash(pin(b).x, pin(b).y);
-    p.flash(pin(e).x, pin(e).y);
+    p.flash(pin(c));
+    p.flash(pin(b));
+    p.flash(pin(e));
   }
 };
 template<> void penpen(cnc::pen & p, l::top_copper, sot23 r) {
@@ -251,7 +245,7 @@ struct dip : point {
   }
 
   void copper(cnc::pen & p) const {
-    for (auto i = 0; i < N; i++) p.flash(pin(i + 1).x, pin(i + 1).y);
+    for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
   }
 };
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper, dip<N> r) {
@@ -303,9 +297,7 @@ struct header : point {
   }
 
   void copper(cnc::pen & p) {
-    for (auto i = 0; i < N; i++) {
-      p.flash(pin(i + 1).x, pin(i + 1).y);
-    }
+    for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
   }
 };
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper, header<N> r) {
@@ -343,11 +335,11 @@ struct via : point {
 };
 void penpen(cnc::pen & p, l::top_copper, via r) {
   p.aperture(via::diam);
-  p.flash(r.x, r.y);
+  p.flash(r);
 }
 void penpen(cnc::pen & p, l::top_copper_margin, via r) {
   p.aperture(via::diam + def_copper_margin);
-  p.flash(r.x, r.y);
+  p.flash(r);
 }
 void penpen(cnc::pen & p, l::bottom_copper, via r) {
   penpen(p, l::top_copper {}, r);
@@ -357,7 +349,7 @@ void penpen(cnc::pen & p, l::bottom_copper_margin, via r) {
 }
 void penpen(cnc::pen & p, l::holes, via r) {
   p.aperture(via::hole);
-  p.flash(r.x, r.y);
+  p.flash(r);
 }
 
 // MC14553 - 3-digit BCD counter
@@ -666,13 +658,9 @@ void border(cnc::pen & p) {
 
 void plane(cnc::fanner & p) {
   static constexpr const auto m = 1.0_mm;
-  static constexpr const auto w = (board_w - m) / 2;
-  static constexpr const auto h = (board_h - m) / 2;
-  p.move(-w, -h);
-  p.draw_x(w);
-  p.draw_y(h);
-  p.draw_x(-w);
-  p.draw_y(-h);
+  static constexpr const auto w = board_w - m;
+  static constexpr const auto h = board_h - m;
+  cnc::utils::box(p, 0, 0, w, h);
 }
 
 extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
