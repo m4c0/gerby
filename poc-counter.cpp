@@ -48,18 +48,19 @@ struct point : cnc::point {
   }
 };
 constexpr point operator+(const point & a, const point & b) { return a.plus(b.x, b.y); }
+constexpr point operator+(const point & a, d::inch i) { return { a.x + i, a.y + i }; }
 constexpr point operator*(const point & a, float f) { return { a.x * f, a.y * f }; }
 
-void thermal(cnc::pen & p, point pin, d::inch w, d::inch h) {
-  p.aperture(25.0_mil, h + 25.0_mil, false);
+void thermal(cnc::pen & p, point pin, point size) {
+  p.aperture(25.0_mil, size.y + 25.0_mil, false);
   p.flash(pin);
 
-  p.aperture(w + 25.0_mil, 25.0_mil, false);
+  p.aperture(size.x + 25.0_mil, 25.0_mil, false);
   p.flash(pin);
 }
 template<typename T>
 void thermal(cnc::pen & p, const T & c, int pin) {
-  thermal(p, c.pin(pin), T::pad_w, T::pad_h);
+  thermal(p, c.pin(pin), T::pad);
 }
 
 class turtle {
@@ -139,8 +140,7 @@ struct r0603 : point {
   static constexpr const auto b = 0.65_mm;
   static constexpr const auto c = 0.80_mm;
 
-  static constexpr const auto pad_w = b + def_copper_margin;
-  static constexpr const auto pad_h = c + def_copper_margin;
+  static constexpr const point pad { b + def_copper_margin, c + def_copper_margin };
 
   point pin(int n) const {
     static constexpr const auto px = (a + b) / 2;
@@ -175,8 +175,7 @@ struct sot23 : point { // NPN only
   static constexpr const auto h = 2.02_mm / 2;
   static constexpr const auto w = 1.90_mm / 2;
 
-  static constexpr const auto pad_w = 0.6_mm;
-  static constexpr const auto pad_h = 0.8_mm;
+  static constexpr const point pad { 0.6_mm, 0.8_mm };
 
   enum { nil, b, e, c };
 
@@ -190,7 +189,7 @@ struct sot23 : point { // NPN only
   }
 
   void copper(cnc::pen &p, d::inch m) const {
-    p.aperture(pad_w + m, pad_h + m, false);
+    p.aperture(pad + m, false);
     p.flash(pin(c));
     p.flash(pin(b));
     p.flash(pin(e));
@@ -234,8 +233,7 @@ struct dip : point {
   static constexpr const auto w = 0.3_in / 2;
   static constexpr const auto h = 0.1_in * (N / 4.0 - 0.5);
 
-  static constexpr const auto pad_w = 0.6_mm + hole;
-  static constexpr const auto pad_h = 0.6_mm + hole;
+  static constexpr const point pad { 0.6_mm + hole, 0.6_mm + hole };
 
   dotz::vec2 (*pin_fn)(int, int) = dip_pin_tc_1up;
 
@@ -289,8 +287,7 @@ struct header : point {
 
   static constexpr const auto len = 0.1_in * (N / 2.0 - 0.5);
 
-  static constexpr const auto pad_w = 0.6_mm + hole;
-  static constexpr const auto pad_h = 0.6_mm + hole;
+  static constexpr const point pad { 0.6_mm + hole, 0.6_mm + hole };
 
   point pin(int n) const {
     return point { x - len + 0.1_in * (n - 1), y };
