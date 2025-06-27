@@ -332,14 +332,24 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
 struct via : point {
   static constexpr const auto hole = 0.3_mm;
   static constexpr const auto diam = hole + 0.15_mm;
+
+  point pin(int n) const { return *this; }
+
+  void copper(cnc::pen & p, d::inch m) const {
+    p.aperture(via::diam + m);
+    p.flash(pin(0));
+  }
+
+  void drill(cnc::pen & p) const {
+    p.aperture(hole);
+    p.flash(pin(0));
+  }
 };
 void penpen(cnc::pen & p, l::top_copper, via r) {
-  p.aperture(via::diam);
-  p.flash(r);
+  r.copper(p, 0);
 }
 void penpen(cnc::pen & p, l::top_copper_margin, via r) {
-  p.aperture(via::diam + def_copper_margin);
-  p.flash(r);
+  r.copper(p, def_copper_margin);
 }
 void penpen(cnc::pen & p, l::bottom_copper, via r) {
   penpen(p, l::top_copper {}, r);
@@ -348,8 +358,7 @@ void penpen(cnc::pen & p, l::bottom_copper_margin, via r) {
   penpen(p, l::top_copper_margin {}, r);
 }
 void penpen(cnc::pen & p, l::holes, via r) {
-  p.aperture(via::hole);
-  p.flash(r);
+  r.drill(p);
 }
 
 // MC14553 - 3-digit BCD counter
