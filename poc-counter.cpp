@@ -37,6 +37,12 @@ namespace l {
 template<typename L, typename T> void penpen(cnc::pen & p, L, T t) {
 }
 
+template<typename T>
+concept drillable = requires (T t, cnc::pen p) { t.drill(p); };
+void penpen(cnc::pen & p, l::holes, drillable auto t) {
+  t.drill(p);
+}
+
 // Aligned at the center of the compo
 struct point : cnc::point {
   point plus(d::inch dx, d::inch dy) const {
@@ -270,9 +276,6 @@ template<unsigned N> void penpen(cnc::pen & p, l::bottom_mask, dip<N> r) {
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper_margin, dip<N> r) {
   penpen(p, l::top_copper_margin {}, r);
 }
-template<unsigned N> void penpen(cnc::pen & p, l::holes, dip<N> r) {
-  r.drill(p);
-}
 template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * N / 2);
 
@@ -322,9 +325,6 @@ template<unsigned N> void penpen(cnc::pen & p, l::bottom_mask, header<N> r) {
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper_margin, header<N> r) {
   penpen(p, l::top_copper_margin {}, r);
 }
-template<unsigned N> void penpen(cnc::pen & p, l::holes, header<N> r) {
-  r.drill(p);
-}
 template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
   box(p, r.x, r.y, 0.1_in * N, 0.1_in);
 }
@@ -356,9 +356,6 @@ void penpen(cnc::pen & p, l::bottom_copper, via r) {
 }
 void penpen(cnc::pen & p, l::bottom_copper_margin, via r) {
   penpen(p, l::top_copper_margin {}, r);
-}
-void penpen(cnc::pen & p, l::holes, via r) {
-  r.drill(p);
 }
 
 // MC14553 - 3-digit BCD counter
