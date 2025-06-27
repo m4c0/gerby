@@ -698,22 +698,22 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
 }
 
 extern "C" void cpl(cpl::builder * b) {
-  b->part({ "R1",  r1.x,  r1.y,  true, 0 });
-  b->part({ "R2",  r2.x,  r2.y,  true, 0 });
-  b->part({ "R3",  r3.x,  r3.y,  true, 0 });
-  b->part({ "R4",  r4.x,  r4.y,  true, 0 });
-  b->part({ "R5",  r5.x,  r5.y,  true, 0 });
-  b->part({ "R6",  r6.x,  r6.y,  true, 0 });
-  b->part({ "R7",  r7.x,  r7.y,  true, 0 });
-  b->part({ "R8",  r8.x,  r8.y,  true, 0 });
-  b->part({ "R9",  r9.x,  r9.y,  true, 0 });
-  b->part({ "R10", r10.x, r10.y, true, 0 });
-  b->part({ "R11", r11.x, r11.y, true, 0 });
-  b->part({ "C1",  c1.x,  c1.y,  true, 0 });
-  b->part({ "C2",  c2.x,  c2.y,  true, 0 });
-  b->part({ "Q1",  q1.x,  q1.y,  true, 90 });
-  b->part({ "Q2",  q2.x,  q2.y,  true, 90 });
-  b->part({ "Q3",  q3.x,  q3.y,  true, 90 });
+  b->part({ "R1",  r1,  true,  0 });
+  b->part({ "R2",  r2,  true,  0 });
+  b->part({ "R3",  r3,  true,  0 });
+  b->part({ "R4",  r4,  true,  0 });
+  b->part({ "R5",  r5,  true,  0 });
+  b->part({ "R6",  r6,  true,  0 });
+  b->part({ "R7",  r7,  true,  0 });
+  b->part({ "R8",  r8,  true,  0 });
+  b->part({ "R9",  r9,  true,  0 });
+  b->part({ "R10", r10, true,  0 });
+  b->part({ "R11", r11, true,  0 });
+  b->part({ "C1",  c1,  true,  0 });
+  b->part({ "C2",  c2,  true,  0 });
+  b->part({ "Q1",  q1,  true, 90 });
+  b->part({ "Q2",  q2,  true, 90 });
+  b->part({ "Q3",  q3,  true, 90 });
 
   b->bom({ "100k", "R1-4", "0603_R", "C25803" });
   b->bom({ "56", "R5-11", "0603_R", "C23206" });

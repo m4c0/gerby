@@ -5,8 +5,7 @@ import :fileout;
 namespace gerby::cpl {
   export struct part {
     const char * id;
-    d::inch mid_x;
-    d::inch mid_y;
+    cnc::point mid;
     bool top_layer { true };
     int rotation { 0 }; // degrees
   };
@@ -35,8 +34,8 @@ namespace gerby::cpl {
 
     void part(struct part p) override {
       const char * l = p.top_layer ? "T" : "B";
-      d::mm mx = p.mid_x;
-      d::mm my = p.mid_y;
+      d::mm mx = p.mid.x;
+      d::mm my = p.mid.y;
       fputln(m_cpl,
           p.id, ",",
           mx.raw_value(), "mm,",
