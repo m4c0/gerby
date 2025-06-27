@@ -1,6 +1,7 @@
 #pragma leco dll
 import dotz;
 import gerby;
+import traits;
 
 using namespace gerby::literals;
 using namespace gerby::palette;
@@ -41,6 +42,19 @@ template<typename T>
 concept drillable = requires (T t, cnc::pen p) { t.drill(p); };
 void penpen(cnc::pen & p, l::holes, drillable auto t) {
   t.drill(p);
+}
+
+struct tht {};
+template<typename T>
+concept is_tht = traits::is_assignable_from<tht &, T>;
+void penpen(cnc::pen & p, l::bottom_copper, is_tht auto t) {
+  penpen(p, l::top_copper{}, t);
+}
+void penpen(cnc::pen & p, l::bottom_copper_margin, is_tht auto t) {
+  penpen(p, l::top_copper_margin{}, t);
+}
+void penpen(cnc::pen & p, l::bottom_mask, is_tht auto t) {
+  penpen(p, l::top_mask{}, t);
 }
 
 // Aligned at the center of the compo
@@ -232,7 +246,7 @@ static dotz::vec2 dip_pin_tc_1down(int n, int mx) {
 }
 
 template<unsigned N>
-struct dip : point {
+struct dip : point, tht {
   static constexpr const auto pin_r = 0.5_mm;
   static constexpr const auto hole = pin_r + 0.2_mm;
 
@@ -267,15 +281,6 @@ template<unsigned N> void penpen(cnc::pen & p, l::top_mask, dip<N> r) {
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, dip<N> r) {
   r.copper(p, def_copper_margin);
 }
-template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper, dip<N> r) {
-  penpen(p, l::top_copper {}, r);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::bottom_mask, dip<N> r) {
-  penpen(p, l::top_mask {}, r);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper_margin, dip<N> r) {
-  penpen(p, l::top_copper_margin {}, r);
-}
 template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * N / 2);
 
@@ -285,7 +290,7 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
 }
 
 template<unsigned N>
-struct header : point {
+struct header : point, tht {
   static constexpr const auto pin_r = 0.5_mm;
   static constexpr const auto hole = pin_r + 0.2_mm;
 
@@ -316,20 +321,11 @@ template<unsigned N> void penpen(cnc::pen & p, l::top_mask, header<N> r) {
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, header<N> r) {
   r.copper(p, def_copper_margin);
 }
-template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper, header<N> r) {
-  penpen(p, l::top_copper {}, r);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::bottom_mask, header<N> r) {
-  penpen(p, l::top_mask {}, r);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper_margin, header<N> r) {
-  penpen(p, l::top_copper_margin {}, r);
-}
 template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
   box(p, r.x, r.y, 0.1_in * N, 0.1_in);
 }
 
-struct via : point {
+struct via : point, tht {
   static constexpr const auto hole = 0.3_mm;
   static constexpr const auto diam = hole + 0.15_mm;
 
@@ -351,17 +347,11 @@ void penpen(cnc::pen & p, l::top_copper, via r) {
 void penpen(cnc::pen & p, l::top_copper_margin, via r) {
   r.copper(p, def_copper_margin);
 }
-void penpen(cnc::pen & p, l::bottom_copper, via r) {
-  penpen(p, l::top_copper {}, r);
-}
-void penpen(cnc::pen & p, l::bottom_copper_margin, via r) {
-  penpen(p, l::top_copper_margin {}, r);
-}
 
 // MC14553 - 3-digit BCD counter
 const auto ic1 = dip<16>{{ 12.0_mm, 7.0_mm}};
 // MC14511 - BCD to 7 segments
-const auto ic2 = dip<16>{{-6.0_mm, 7.0_mm}, dip_pin_tc_1down};
+const auto ic2 = dip<16>{{-6.0_mm, 7.0_mm}, {}, dip_pin_tc_1down};
 
 enum hdr_pins {
   h_nil = 0, // not a real pin
@@ -373,10 +363,10 @@ enum hdr_pins {
   h_v_plus,
   h_v_minus,
 };
-const auto hdr = header<7>({
+const auto hdr = header<7> {{
   -0.4_in + board_w / 2.0,
   -0.1_in + board_h / 2.0,
-});
+}};
 
 // 100k
 const auto r1 = r0603(ic1.pin(12) + point { -3.0_mm, 0 });
