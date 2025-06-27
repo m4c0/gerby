@@ -39,6 +39,18 @@ template<typename L, typename T> void penpen(cnc::pen & p, L, T t) {
 }
 
 template<typename T>
+concept coppered = requires (T t, cnc::pen p, d::inch m) { t.copper(p, m); };
+void penpen(cnc::pen & p, l::top_copper, coppered auto t) {
+  t.copper(p, 0);
+}
+void penpen(cnc::pen & p, l::top_mask, coppered auto t) {
+  t.copper(p, def_mask_margin);
+}
+void penpen(cnc::pen & p, l::top_copper_margin, coppered auto t) {
+  t.copper(p, def_copper_margin);
+}
+
+template<typename T>
 concept drillable = requires (T t, cnc::pen p) { t.drill(p); };
 void penpen(cnc::pen & p, l::holes, drillable auto t) {
   t.drill(p);
@@ -175,15 +187,6 @@ struct r0603 : point {
     p.flash(pin(2));
   };
 };
-template<> void penpen(cnc::pen & p, l::top_copper, r0603 r) {
-  r.copper(p, 0);
-};
-template<> void penpen(cnc::pen & p, l::top_copper_margin, r0603 r) {
-  r.copper(p, def_copper_margin);
-}
-template<> void penpen(cnc::pen & p, l::top_mask, r0603 r) {
-  r.copper(p, def_mask_margin);
-}
 template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
   static constexpr const auto l = 1.6_mm;
   static constexpr const auto w = 0.8_mm;
@@ -215,15 +218,6 @@ struct sot23 : point { // NPN only
     p.flash(pin(e));
   }
 };
-template<> void penpen(cnc::pen & p, l::top_copper, sot23 r) {
-  r.copper(p, 0);
-}
-template<> void penpen(cnc::pen & p, l::top_copper_margin, sot23 r) {
-  r.copper(p, def_copper_margin);
-}
-template<> void penpen(cnc::pen & p, l::top_mask, sot23 r) {
-  r.copper(p, def_mask_margin);
-}
 template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
   static constexpr const auto l = 2.9_mm;
   static constexpr const auto w = 1.3_mm;
@@ -272,20 +266,12 @@ struct dip : point, tht {
     for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
   }
 };
-template<unsigned N> void penpen(cnc::pen & p, l::top_copper, dip<N> r) {
-  r.copper(p, 0);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::top_mask, dip<N> r) {
-  r.copper(p, def_mask_margin);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, dip<N> r) {
-  r.copper(p, def_copper_margin);
-}
 template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * N / 2);
 
   auto sign = (r.pin(N).x - r.pin(1).x).sign();
 
+  p.aperture(0.5_mm);
   p.flash(r.pin(1).plus(1.4_mm * sign, 0));
 }
 
@@ -312,15 +298,6 @@ struct header : point, tht {
     for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
   }
 };
-template<unsigned N> void penpen(cnc::pen & p, l::top_copper, header<N> r) {
-  r.copper(p, 0);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::top_mask, header<N> r) {
-  r.copper(p, def_mask_margin);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, header<N> r) {
-  r.copper(p, def_copper_margin);
-}
 template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
   box(p, r.x, r.y, 0.1_in * N, 0.1_in);
 }
@@ -341,12 +318,7 @@ struct via : point, tht {
     p.flash(pin(0));
   }
 };
-void penpen(cnc::pen & p, l::top_copper, via r) {
-  r.copper(p, 0);
-}
-void penpen(cnc::pen & p, l::top_copper_margin, via r) {
-  r.copper(p, def_copper_margin);
-}
+void penpen(cnc::pen & p, l::top_mask, via r) {}
 
 // MC14553 - 3-digit BCD counter
 const auto ic1 = dip<16>{{ 12.0_mm, 7.0_mm}};
