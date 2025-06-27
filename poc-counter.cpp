@@ -242,42 +242,43 @@ struct dip : point {
     return { x + w * dx, y - h + 0.1_in * dy };
   }
 
-  void copper(cnc::pen & p) const {
+  void copper(cnc::pen & p, d::inch m) const {
+    p.aperture(hole + m + 0.6_mm);
+    for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
+  }
+
+  void drill(cnc::pen & p) const {
+    p.aperture(hole);
     for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
   }
 };
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper, dip<N> r) {
-  p.aperture(dip<N>::hole + 0.6_mm);
-  r.copper(p);
+  r.copper(p, 0);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::top_mask, dip<N> r) {
+  r.copper(p, def_mask_margin);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, dip<N> r) {
+  r.copper(p, def_copper_margin);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper, dip<N> r) {
   penpen(p, l::top_copper {}, r);
 }
-template<unsigned N> void penpen(cnc::pen & p, l::top_mask, dip<N> r) {
-  p.aperture(dip<N>::hole + 0.6_mm + def_mask_margin);
-  r.copper(p);
-}
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_mask, dip<N> r) {
   penpen(p, l::top_mask {}, r);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, dip<N> r) {
-  p.aperture(dip<N>::hole + 0.6_mm + def_copper_margin);
-  r.copper(p);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper_margin, dip<N> r) {
   penpen(p, l::top_copper_margin {}, r);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::holes, dip<N> r) {
-  p.aperture(dip<N>::hole);
-  r.copper(p);
+  r.drill(p);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   box(p, r.x, r.y, 0.3_in, 0.1_in * N / 2);
 
   auto sign = (r.pin(N).x - r.pin(1).x).sign();
 
-  p.aperture(0.6_mm);
-  p.flash(r.pin(1).x + 1.4_mm * sign, r.pin(1).y);
+  p.flash(r.pin(1).plus(1.4_mm * sign, 0));
 }
 
 template<unsigned N>
@@ -293,34 +294,36 @@ struct header : point {
     return point { x - len + 0.1_in * (n - 1), y };
   }
 
-  void copper(cnc::pen & p) {
+  void copper(cnc::pen & p, d::inch m) const {
+    p.aperture(hole + m + 0.6_mm);
+    for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
+  }
+
+  void drill(cnc::pen & p) const {
+    p.aperture(hole);
     for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
   }
 };
 template<unsigned N> void penpen(cnc::pen & p, l::top_copper, header<N> r) {
-  p.aperture(header<N>::hole + 0.6_mm);
-  r.copper(p);
+  r.copper(p, 0);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::top_mask, header<N> r) {
+  r.copper(p, def_mask_margin);
+}
+template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, header<N> r) {
+  r.copper(p, def_copper_margin);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper, header<N> r) {
   penpen(p, l::top_copper {}, r);
 }
-template<unsigned N> void penpen(cnc::pen & p, l::top_mask, header<N> r) {
-  p.aperture(header<N>::hole + 0.6_mm + def_mask_margin);
-  r.copper(p);
-}
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_mask, header<N> r) {
   penpen(p, l::top_mask {}, r);
-}
-template<unsigned N> void penpen(cnc::pen & p, l::top_copper_margin, header<N> r) {
-  p.aperture(header<N>::hole + 0.6_mm + def_copper_margin);
-  r.copper(p);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::bottom_copper_margin, header<N> r) {
   penpen(p, l::top_copper_margin {}, r);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::holes, header<N> r) {
-  p.aperture(header<N>::hole);
-  r.copper(p);
+  r.drill(p);
 }
 template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
   box(p, r.x, r.y, 0.1_in * N, 0.1_in);
