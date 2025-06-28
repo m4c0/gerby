@@ -79,7 +79,8 @@ struct point : cnc::point {
     return { y, x };
   }
 };
-constexpr point operator+(const point & a, const point & b) { return a.plus(b.x, b.y); }
+constexpr point operator+(const point & a, const cnc::point & b) { return a.plus(b.x, b.y); }
+constexpr point operator-(const point & a, const cnc::point & b) { return a.plus(-b.x, -b.y); }
 constexpr point operator+(const point & a, d::inch i) { return { a.x + i, a.y + i }; }
 constexpr point operator*(const point & a, float f) { return { a.x * f, a.y * f }; }
 
@@ -98,58 +99,46 @@ void thermal(cnc::pen & p, const T & c, int pin) {
 class turtle {
   cnc::pen *m_pen;
 
-  d::inch m_x{};
-  d::inch m_y{};
+  cnc::point m_pos {};
 
 public:
   explicit constexpr turtle(cnc::pen *p) : m_pen{p} {}
 
   void move(const point & p) {
-    m_x = p.x;
-    m_y = p.y;
-    m_pen->move(m_x, m_y);
+    m_pos = p;
+    m_pen->move(m_pos);
   }
 
   // TODO: rename to line_dl
   void draw(const point & p) {
-    auto dx = p.x - m_x;
-    auto dy = p.y - m_y;
+    auto [dx, dy] = p - m_pos;
     if (dx.abs() > dy.abs()) {
-      m_pen->draw(m_x + dy.abs() * dx.sign(), p.y);
+      m_pen->draw(m_pos.x + dy.abs() * dx.sign(), p.y);
     } else {
-      m_pen->draw(p.x, m_y + dx.abs() * dy.sign());
+      m_pen->draw(p.x, m_pos.y + dx.abs() * dy.sign());
     }
 
-    m_x = p.x;
-    m_y = p.y;
-    m_pen->draw(m_x, m_y);
+    m_pos = p;
+    m_pen->draw(m_pos);
   }
   void draw_ld(const point & p) {
-    auto dx = p.x - m_x;
-    auto dy = p.y - m_y;
-
+    auto [dx, dy] = p - m_pos;
     if (dx.abs() > dy.abs()) {
       m_pen->draw_x(p.x - dy.abs() * dx.sign());
     } else {
       m_pen->draw_y(p.y - dx.abs() * dy.sign());
     }
 
-    m_x = p.x;
-    m_y = p.y;
-    m_pen->draw(m_x, m_y);
-  }
-  void draw(d::inch dx, d::inch dy) {
-    m_x = m_x + dx;
-    m_y = m_y + dy;
-    m_pen->draw(m_x, m_y);
+    m_pos = p;
+    m_pen->draw(m_pos);
   }
   void draw_x(d::inch dx) {
-    m_x = m_x + dx;
-    m_pen->draw_x(m_x);
+    m_pos.x = m_pos.x + dx;
+    m_pen->draw_x(m_pos.x);
   }
   void draw_y(d::inch dy) {
-    m_y = m_y + dy;
-    m_pen->draw_y(m_y);
+    m_pos.y = m_pos.y + dy;
+    m_pen->draw_y(m_pos.y);
   }
 };
 
@@ -394,12 +383,12 @@ void penny(cnc::pen & p, T t) {
       vq1, vq2, vq3);
 }
 
-void link_digits(turtle & t, unsigned pin, d::inch d0x, d::inch d0y, d::inch d1x) {
+void link_digits(turtle & t, unsigned pin, cnc::point d0, d::inch d1x) {
   t.move(msd.pin(pin));
-  t.draw(d0x, d0y);
+  t.draw(msd.pin(pin) + d0);
   t.draw_x(d1x);
   t.draw(nsd.pin(pin));
-  t.draw(d0x, d0y);
+  t.draw(nsd.pin(pin) + d0);
   t.draw_x(d1x);
   t.draw(lsd.pin(pin));
 }
@@ -411,14 +400,14 @@ void link_digit_gnd(turtle & t, const auto & d) {
 void top_nets(cnc::pen & p) {
   turtle t { &p };
 
-  link_digits(t,  1, 2.2_mm,  2.2_mm, 7.0_mm);
-  link_digits(t,  2, 4.0_mm,  4.0_mm, 4.0_mm);
-  link_digits(t, 14, 3.8_mm, -3.8_mm, 4.5_mm);
-  link_digits(t, 13, 3.8_mm, -3.8_mm, 4.5_mm);
+  link_digits(t,  1, { 2.2_mm,  2.2_mm }, 7.0_mm);
+  link_digits(t,  2, { 4.0_mm,  4.0_mm }, 4.0_mm);
+  link_digits(t, 14, { 3.8_mm, -3.8_mm }, 4.5_mm);
+  link_digits(t, 13, { 3.8_mm, -3.8_mm }, 4.5_mm);
 
-  link_digits(t, 8,  1.25_mm, -1.25_mm, 8.0_mm);
-  link_digits(t, 7,  1.25_mm,  1.25_mm, 8.0_mm);
-  link_digits(t, 6,  1.25_mm,  1.25_mm, 8.0_mm);
+  link_digits(t, 8,  { 1.25_mm, -1.25_mm }, 8.0_mm);
+  link_digits(t, 7,  { 1.25_mm,  1.25_mm }, 8.0_mm);
+  link_digits(t, 6,  { 1.25_mm,  1.25_mm }, 8.0_mm);
 
   link_digit_gnd(t, msd);
   link_digit_gnd(t, nsd);
