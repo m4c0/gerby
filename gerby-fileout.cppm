@@ -1,6 +1,9 @@
 module;
 #include <stdio.h>
 
+#define MCT_SYSCALL_IMPLEMENTATION
+#include "../mct/mct-syscall.h"
+
 export module gerby:fileout;
 import :cnc;
 import :distance;
@@ -14,7 +17,7 @@ import silog;
 namespace gerby::out {
 export using lb_t = void(cnc::builder *, cnc::grb_layer);
 
-export using file = hay<FILE *, ::fopen, ::fclose>;
+export using file = hay<FILE *, mct_syscall_fopen, ::fclose>;
 
 class apdict : public cnc::pen, public cnc::fanner, public cnc::builder {
   hai::varray<cnc::aperture> m_dict{1024};
