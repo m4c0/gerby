@@ -620,7 +620,13 @@ void plane(cnc::fanner & p) {
   cnc::utils::box(p, 0, 0, w, h);
 }
 
-extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
+#ifdef LECO_TARGET_WINDOWS
+#define A __declspec(dllexport)
+#else
+#define A
+#endif
+
+extern "C" A void draw(cnc::builder * b, cnc::grb_layer l) {
   switch (l) {
     case cnc::gl_top_copper:
       b->add_region(plane, red);
@@ -654,7 +660,7 @@ extern "C" void draw(cnc::builder * b, cnc::grb_layer l) {
   }
 }
 
-extern "C" void cpl(cpl::builder * b) {
+extern "C" A void cpl(cpl::builder * b) {
   b->part({ "R1",  r1,  true,  0 });
   b->part({ "R2",  r2,  true,  0 });
   b->part({ "R3",  r3,  true,  0 });
