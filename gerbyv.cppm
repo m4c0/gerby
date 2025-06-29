@@ -263,7 +263,9 @@ export class thread : public vapp {
 
     silog::log(silog::info, "Loading renderer library");
     m_lib = dl::open(m_libname);
+    if (!m_lib) silog::die("failed to load renderer library");
     m_lb = m_lib->fn<void(cnc::builder *, cnc::grb_layer)>("draw");
+    if (!m_lb) silog::die("failed to find draw function in renderer library");
     m_redraw = true;
   }
 
