@@ -264,6 +264,8 @@ template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
   p.flash(r.pin(1).plus(1.4_mm * sign, 0));
 }
 
+// TODO: increase hole and its copper area
+// The diameter is too tight to pass a normal THT header pin.
 template<unsigned N>
 struct header : point, tht {
   static constexpr const auto pin_r = 0.5_mm;
