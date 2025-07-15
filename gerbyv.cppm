@@ -290,10 +290,11 @@ public:
 
   void run() override {
     voo::device_and_queue dq{"gerby", casein::native_ptr};
+    auto rp = voo::single_att_render_pass(dq);
 
     while (!interrupted()) {
       builder b{&dq};
-      voo::swapchain_and_stuff sw{dq};
+      voo::swapchain_and_stuff sw{dq, *rp};
 
       extent_loop(dq.queue(), sw, [&] {
         if (m_lb == nullptr || m_lib->modified()) {
@@ -316,13 +317,13 @@ public:
             .aspect = sw.aspect(),
         };
 
-        sw.queue_one_time_submit(dq.queue(), [&](auto pcb) {
+        sw.queue_one_time_submit(dq.queue(), [&] {
           auto scb = sw.cmd_render_pass({
-            .command_buffer = *pcb,
+            .command_buffer = sw.command_buffer(),
             .clear_colours { vee::clear_colour(0.01, 0.02, 0.03, 1.0) },
           });
           for (auto &l : b.layers()) {
-            l->cmd_draw(*scb, &pc);
+            l->cmd_draw(sw.command_buffer(), &pc);
           }
         });
       });

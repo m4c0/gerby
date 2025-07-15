@@ -17,6 +17,7 @@ namespace gerby {
   };
   
   class pipeline {
+    vee::render_pass m_rp;
     vee::pipeline_layout m_pl;
     vee::gr_pipeline m_ppl;
 
@@ -27,10 +28,11 @@ namespace gerby {
     }
     static pipeline create(voo::device_and_queue * dq, vee::gr_pipeline_params p) {
       pipeline res {};
+      res.m_rp = voo::single_att_render_pass(*dq);
       res.m_pl = vee::create_pipeline_layout(vee::vertex_push_constant_range<upc>());
       res.m_ppl = vee::create_graphics_pipeline({
         .pipeline_layout = *res.m_pl,
-        .render_pass = dq->render_pass(),
+        .render_pass = *res.m_rp,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
         .primitive_restart = true,
         .extent = dq->extent_of(),
