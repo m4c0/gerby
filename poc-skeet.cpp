@@ -23,6 +23,47 @@ const auto ic6 = dip<14>({});
 // 4026
 const auto ic7 = dip<16>({});
 
+// 10k
+const auto r1 = r0603({});
+// 1M
+const auto r2 = r0603({});
+// 220k
+const auto r3 = r0603({});
+// 390k
+const auto r4 = r0603({});
+// 820k
+const auto r5 = r0603({});
+// 470k
+const auto r6 = r0603({});
+// 1M
+const auto r7 = r0603({});
+// 470k
+const auto r8 = r0603({});
+// 10k
+const auto r9 = r0603({});
+// 10M
+const auto r10 = r0603({});
+// 470k
+const auto r11 = r0603({});
+
+// 100n
+const auto c1 = r0603({});
+// 1u
+const auto c2 = r0603({});
+// 100n
+const auto c3 = r0603({});
+// 220n
+const auto c4 = r0603({});
+
+// Common Cathode 7-Segment Display
+const auto dis = dip<14>({});
+
+// TODO: LED 1-9 red
+// TODO: LED 10 green
+// TODO: 3 push
+// TODO: switch
+// TODO: battery
+
 #ifdef LECO_TARGET_WINDOWS
 #define A __declspec(dllexport)
 #else
