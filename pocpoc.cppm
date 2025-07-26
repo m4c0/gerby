@@ -183,6 +183,19 @@ namespace pocpoc {
     box(p, r.x, r.y, l, w);
   };
   
+  // https://jlcpcb.com/partdetail/Hubei_KENTOElec-KT0603R/C2286
+  export struct d0603 : r0603 {
+  };
+  template<> void penpen(cnc::pen & p, l::silk, d0603 r) {
+    static constexpr const auto l = 1.6_mm;
+    static constexpr const auto w = 0.8_mm;
+    box(p, r.x, r.y, l, w);
+    p.move(r.x - 0.2_mm, r.y);
+    p.draw_x(r.x + 0.2_mm);
+    p.move_y(r.y - 0.2_mm);
+    p.move_y(r.y + 0.2_mm);
+  };
+  
   // https://jlcpcb.com/partdetail/2503-S8050_J3Y_RANGE_200_350/C2146
   export struct sot23 : point { // NPN only
     static constexpr const auto h = 2.02_mm / 2;
