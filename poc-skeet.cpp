@@ -58,11 +58,12 @@ const auto c4 = r0603({});
 // Common Cathode 7-Segment Display
 const auto dis = dip<14>({});
 
+const auto bat = header<2>({});
+
 // TODO: LED 1-9 red
 // TODO: LED 10 green
 // TODO: 3 push
 // TODO: switch
-// TODO: battery
 
 #ifdef LECO_TARGET_WINDOWS
 #define A __declspec(dllexport)
