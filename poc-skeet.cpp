@@ -60,8 +60,19 @@ const auto dis = dip<14>({});
 
 const auto bat = header<2>({});
 
-// TODO: LED 1-9 red
-// TODO: LED 10 green
+// Red LEDs
+const auto d1 = d0603({});
+const auto d2 = d0603({});
+const auto d3 = d0603({});
+const auto d4 = d0603({});
+const auto d5 = d0603({});
+const auto d6 = d0603({});
+const auto d7 = d0603({});
+const auto d8 = d0603({});
+const auto d9 = d0603({});
+// Green LED
+const auto d10 = d0603({});
+
 // TODO: 3 push
 // TODO: switch
 
