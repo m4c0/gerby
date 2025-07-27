@@ -9,6 +9,9 @@ using namespace gerby::palette;
 using namespace gerby;
 using namespace pocpoc;
 
+static constexpr const auto board_w = 50.0_mm;
+static constexpr const auto board_h = 50.0_mm;
+
 // 4017
 const auto ic1 = dip<16>({});
 // 4518
@@ -76,6 +79,17 @@ const auto d10 = d0603({});
 // TODO: 3 push
 // TODO: switch
 
+struct compos : generic_layers<compos>, cs<
+  ic1, ic2, ic3, ic4, ic5, ic6, ic7,
+  r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
+  c1, c2, c3, c4,
+  d1, d2, d3, d4, d5, d6, d7, d8, d9, d10,
+  dis, bat> {
+  static void border(cnc::pen & p, d::inch margin) {
+    box(p, 0, 0, board_w, board_h, margin);
+  }
+};
+
 #ifdef LECO_TARGET_WINDOWS
 #define A __declspec(dllexport)
 #else
@@ -83,6 +97,7 @@ const auto d10 = d0603({});
 #endif
 
 extern "C" A void draw(cnc::builder * b, cnc::grb_layer l) {
+  compos::draw(b, l);
 }
 
 extern "C" A void cpl(cpl::builder * b) {
