@@ -10,25 +10,25 @@ using namespace gerby::palette;
 using namespace gerby;
 using namespace pocpoc;
 
+// https://lcsc.com/datasheet/lcsc_datasheet_2410121619_TOPPOWER-Nanjing-Extension-Microelectronics-TP4056-42-ESOP8_C16581.pdf
 struct esop8 : point {
   static constexpr const auto N = 8;
 
-  static constexpr const auto w = 0.3_in / 2;
-  static constexpr const auto h = 0.1_in * (N / 4.0 - 0.5);
-
-  static constexpr const auto b = 0.65_mm;
-  static constexpr const auto c = 0.80_mm;
+  static constexpr const auto h = N / 4.0 - 0.5;
 
   dotz::vec2 (*pin_fn)(int, int) = dip_pin_tc_1up;
 
   point pin(int n) const {
     auto [dx, dy] = pin_fn(n, N);
-    return { x + w * dx, y - h + 0.1_in * dy };
+    return { x + (3.1_mm - 0.45_mm) * dx, y + 1.27_mm * (dy - h) };
   }
 
   void copper(cnc::pen & p, d::inch m) const {
-    p.aperture(b + m, c + m, false);
+    p.aperture(0.9_mm + m, 0.5_mm + m, false);
     for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
+
+    p.aperture(2.5_mm + def_copper_margin, 3.4_mm + def_copper_margin, false);
+    p.flash(*this);
   }
 };
 
