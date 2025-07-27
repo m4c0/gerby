@@ -336,6 +336,11 @@ namespace pocpoc {
     static void bottom_thermals(cnc::pen & p) {}
     static void top_thermals(cnc::pen & p) {}
 
+    static void bottom_plane(cnc::fanner & p) {
+      C::top_plane(p);
+    }
+    static void top_plane(cnc::fanner & p) {}
+
     static void top_copper_margin(cnc::pen & p) {
       C::penny(p, l::top_copper_margin {});
 
@@ -387,6 +392,40 @@ namespace pocpoc {
     }
     static void border_drawing(cnc::pen & p) {
       C::border(p, 10.0_mil);
+    }
+
+    static void draw(cnc::builder * b, cnc::grb_layer l) {
+      switch (l) {
+        case cnc::gl_top_copper:
+          b->add_region(C::top_plane, red);
+          b->add_lines(C::top_copper_margin, black);
+          b->add_lines(C::top_copper, red);
+          b->add_lines(C::holes, black);
+          break;
+        case cnc::gl_top_mask:
+          b->add_lines(C::top_mask, green);
+          break;
+        case cnc::gl_top_silk:
+          b->add_lines(C::top_silk, white);
+          break;
+        case cnc::gl_bot_copper:
+          b->add_region(C::bottom_plane, blue);
+          b->add_lines(C::bottom_copper_margin, black);
+          b->add_lines(C::bottom_copper, blue);
+          b->add_lines(C::holes, black);
+          break;
+        case cnc::gl_bot_mask:
+          b->add_lines(C::bottom_mask, dark_green);
+          break;
+        case cnc::gl_border:
+          b->add_lines(C::border_margin, black);
+          b->add_lines(C::border_drawing, purple);
+          break;
+        case cnc::gl_drill_holes:
+          b->add_lines(C::holes, white);
+          break;
+        default: break;
+      }
     }
   };
 }

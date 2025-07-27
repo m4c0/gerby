@@ -85,6 +85,8 @@ struct compos : generic_layers<compos>, cs<
   static void bottom_thermals(cnc::pen & p);
   static void top_thermals(cnc::pen & p);
 
+  static void top_plane(cnc::fanner & p);
+
   static void border(cnc::pen & p, d::inch margin) {
     box(p, 0, 0, board_w, board_h, margin);
   }
@@ -278,7 +280,7 @@ void compos::bottom_thermals(cnc::pen & p) {
   thermal(p, hdr, 6);
 }
 
-void plane(cnc::fanner & p) {
+void compos::top_plane(cnc::fanner & p) {
   static constexpr const auto m = 1.0_mm;
   static constexpr const auto w = board_w - m;
   static constexpr const auto h = board_h - m;
@@ -292,37 +294,7 @@ void plane(cnc::fanner & p) {
 #endif
 
 extern "C" A void draw(cnc::builder * b, cnc::grb_layer l) {
-  switch (l) {
-    case cnc::gl_top_copper:
-      b->add_region(plane, red);
-      b->add_lines(compos::top_copper_margin, black);
-      b->add_lines(compos::top_copper, red);
-      b->add_lines(compos::holes, black);
-      break;
-    case cnc::gl_top_mask:
-      b->add_lines(compos::top_mask, green);
-      break;
-    case cnc::gl_top_silk:
-      b->add_lines(compos::top_silk, white);
-      break;
-    case cnc::gl_bot_copper:
-      b->add_region(plane, blue);
-      b->add_lines(compos::bottom_copper_margin, black);
-      b->add_lines(compos::bottom_copper, blue);
-      b->add_lines(compos::holes, black);
-      break;
-    case cnc::gl_bot_mask:
-      b->add_lines(compos::bottom_mask, dark_green);
-      break;
-    case cnc::gl_border:
-      b->add_lines(compos::border_margin, black);
-      b->add_lines(compos::border_drawing, purple);
-      break;
-    case cnc::gl_drill_holes:
-      b->add_lines(compos::holes, white);
-      break;
-    default: break;
-  }
+  compos::draw(b, l);
 }
 
 extern "C" A void cpl(cpl::builder * b) {
