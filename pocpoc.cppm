@@ -324,8 +324,9 @@ namespace pocpoc {
   };
   void penpen(cnc::pen & p, l::top_mask, via r) {}
 
-  export template<typename T>
-  void pennies(cnc::pen & p, T t, auto... cs) {
-    (penpen(p, t, cs), ...);
-  }
+  export template<const auto &... Cs> struct generic_layers {
+    template<typename T> static void penny(cnc::pen & p, T t) {
+      (penpen(p, t, Cs), ...);
+    }
+  };
 }

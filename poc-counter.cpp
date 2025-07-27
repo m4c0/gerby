@@ -69,18 +69,16 @@ const auto msd = dip<14>{{-12.0_mm, -board_h/2 + 10.0_mm}};
 const auto nsd = dip<14>{{  0.0_mm, -board_h/2 + 10.0_mm}};
 const auto lsd = dip<14>{{ 12.0_mm, -board_h/2 + 10.0_mm}};
 
-template<typename T>
-void penny(cnc::pen & p, T t) {
-  pennies(p, t,
-      r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
-      c1, c2,
-      q1, q2, q3,
-      msd, nsd, lsd,
-      ic1, ic2,
-      hdr,
-      vr8, vr9, vr11,
-      vq1, vq2, vq3);
-}
+struct compos : generic_layers<
+  r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
+  c1, c2,
+  q1, q2, q3,
+  msd, nsd, lsd,
+  ic1, ic2,
+  hdr,
+  vr8, vr9, vr11,
+  vq1, vq2, vq3>
+{};
 
 void link_digits(turtle & t, unsigned pin, cnc::point d0, d::inch d1x) {
   t.move(msd.pin(pin));
@@ -248,7 +246,7 @@ void bottom_nets(cnc::pen & p) {
 }
 
 void top_copper(cnc::pen & p) {
-  penny(p, l::top_copper {});
+  compos::penny(p, l::top_copper {});
 
   p.aperture(10.0_mil);
   top_nets(p);
@@ -267,20 +265,20 @@ void top_copper(cnc::pen & p) {
   thermal(p, hdr, 7);
 }
 void top_copper_margin(cnc::pen & p) {
-  penny(p, l::top_copper_margin {});
+  compos::penny(p, l::top_copper_margin {});
 
   p.aperture(10.0_mil + def_copper_margin);
   top_nets(p);
 }
 void top_silk(cnc::pen & p) {
-  penny(p, l::silk {});
+  compos::penny(p, l::silk {});
 }
 void top_mask(cnc::pen & p) {
-  penny(p, l::top_mask {});
+  compos::penny(p, l::top_mask {});
 }
 
 void bottom_copper(cnc::pen & p) {
-  penny(p, l::bottom_copper {});
+  compos::penny(p, l::bottom_copper {});
 
   p.aperture(10.0_mil);
   bottom_nets(p);
@@ -292,17 +290,17 @@ void bottom_copper(cnc::pen & p) {
   thermal(p, hdr, 6);
 }
 void bottom_copper_margin(cnc::pen & p) {
-  penny(p, l::bottom_copper_margin {});
+  compos::penny(p, l::bottom_copper_margin {});
 
   p.aperture(10.0_mil + def_copper_margin);
   bottom_nets(p);
 }
 void bottom_mask(cnc::pen & p) {
-  penny(p, l::bottom_mask {});
+  compos::penny(p, l::bottom_mask {});
 }
 
 void holes(cnc::pen & p) {
-  penny(p, l::holes {});
+  compos::penny(p, l::holes {});
 }
 
 void border_margin(cnc::pen & p) {
