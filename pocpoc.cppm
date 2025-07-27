@@ -333,6 +333,9 @@ namespace pocpoc {
     static void bottom_nets(cnc::pen & p) {}
     static void top_nets(cnc::pen & p) {}
 
+    static void bottom_thermals(cnc::pen & p) {}
+    static void top_thermals(cnc::pen & p) {}
+
     static void top_copper_margin(cnc::pen & p) {
       C::penny(p, l::top_copper_margin {});
 
@@ -345,14 +348,31 @@ namespace pocpoc {
       p.aperture(10.0_mil + def_copper_margin);
       C::bottom_nets(p);
     }
-    static void bottom_mask(cnc::pen & p) {
-      C::penny(p, l::bottom_mask {});
+
+    static void top_copper(cnc::pen & p) {
+      C::penny(p, l::top_copper {});
+
+      p.aperture(10.0_mil);
+      C::top_nets(p);
+
+      C::top_thermals(p);
+    }
+    static void bottom_copper(cnc::pen & p) {
+      C::penny(p, l::bottom_copper {});
+
+      p.aperture(10.0_mil);
+      C::bottom_nets(p);
+
+      C::bottom_thermals(p);
     }
 
     static void top_silk(cnc::pen & p) {
       C::penny(p, l::silk {});
     }
 
+    static void bottom_mask(cnc::pen & p) {
+      C::penny(p, l::bottom_mask {});
+    }
     static void top_mask(cnc::pen & p) {
       C::penny(p, l::top_mask {});
     }

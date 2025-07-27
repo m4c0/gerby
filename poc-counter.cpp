@@ -82,6 +82,9 @@ struct compos : generic_layers<compos>, cs<
   static void bottom_nets(cnc::pen & p);
   static void top_nets(cnc::pen & p);
 
+  static void bottom_thermals(cnc::pen & p);
+  static void top_thermals(cnc::pen & p);
+
   static void border(cnc::pen & p, d::inch margin) {
     box(p, 0, 0, board_w, board_h, margin);
   }
@@ -252,12 +255,7 @@ void compos::bottom_nets(cnc::pen & p) {
   t.draw_ld(lsd.pin(4));
 }
 
-void top_copper(cnc::pen & p) {
-  compos::penny(p, l::top_copper {});
-
-  p.aperture(10.0_mil);
-  compos::top_nets(p);
-
+void compos::top_thermals(cnc::pen & p) {
   thermal(p, q1, sot23::e);
   thermal(p, q2, sot23::e);
   thermal(p, q3, sot23::e);
@@ -272,12 +270,7 @@ void top_copper(cnc::pen & p) {
   thermal(p, hdr, 7);
 }
 
-void bottom_copper(cnc::pen & p) {
-  compos::penny(p, l::bottom_copper {});
-
-  p.aperture(10.0_mil);
-  compos::bottom_nets(p);
-
+void compos::bottom_thermals(cnc::pen & p) {
   thermal(p, ic1, 16);
   thermal(p, ic2, 16);
   thermal(p, ic2, 4);
@@ -302,8 +295,8 @@ extern "C" A void draw(cnc::builder * b, cnc::grb_layer l) {
   switch (l) {
     case cnc::gl_top_copper:
       b->add_region(plane, red);
-      b->add_lines(compos{}.top_copper_margin, black);
-      b->add_lines(top_copper, red);
+      b->add_lines(compos::top_copper_margin, black);
+      b->add_lines(compos::top_copper, red);
       b->add_lines(compos::holes, black);
       break;
     case cnc::gl_top_mask:
@@ -315,7 +308,7 @@ extern "C" A void draw(cnc::builder * b, cnc::grb_layer l) {
     case cnc::gl_bot_copper:
       b->add_region(plane, blue);
       b->add_lines(compos::bottom_copper_margin, black);
-      b->add_lines(bottom_copper, blue);
+      b->add_lines(compos::bottom_copper, blue);
       b->add_lines(compos::holes, black);
       break;
     case cnc::gl_bot_mask:
