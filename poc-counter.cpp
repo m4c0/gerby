@@ -69,7 +69,7 @@ const auto msd = dip<14>{{-12.0_mm, -board_h/2 + 10.0_mm}};
 const auto nsd = dip<14>{{  0.0_mm, -board_h/2 + 10.0_mm}};
 const auto lsd = dip<14>{{ 12.0_mm, -board_h/2 + 10.0_mm}};
 
-struct compos : generic_layers<
+struct compos : generic_layers<compos>, cs<
   r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
   c1, c2,
   q1, q2, q3,
@@ -78,7 +78,14 @@ struct compos : generic_layers<
   hdr,
   vr8, vr9, vr11,
   vq1, vq2, vq3>
-{};
+{
+  static void bottom_nets(cnc::pen & p);
+  static void top_nets(cnc::pen & p);
+
+  static void border(cnc::pen & p, d::inch margin) {
+    box(p, 0, 0, board_w, board_h, margin);
+  }
+};
 
 void link_digits(turtle & t, unsigned pin, cnc::point d0, d::inch d1x) {
   t.move(msd.pin(pin));
@@ -94,7 +101,7 @@ void link_digit_gnd(turtle & t, const auto & d) {
   t.draw(d.pin(4));
 }
 
-void top_nets(cnc::pen & p) {
+void compos::top_nets(cnc::pen & p) {
   turtle t { &p };
 
   link_digits(t,  1, { 2.2_mm,  2.2_mm }, 7.0_mm);
@@ -216,7 +223,7 @@ void top_nets(cnc::pen & p) {
   t.move(q2.pin(sot23::c)); t.draw(vq2);
   t.move(q3.pin(sot23::c)); t.draw(vq3);
 }
-void bottom_nets(cnc::pen & p) {
+void compos::bottom_nets(cnc::pen & p) {
   turtle t { &p };
   t.move(vr11);
   t.draw(vr11.plus(0.5_mm, -0.5_mm));
@@ -249,7 +256,7 @@ void top_copper(cnc::pen & p) {
   compos::penny(p, l::top_copper {});
 
   p.aperture(10.0_mil);
-  top_nets(p);
+  compos::top_nets(p);
 
   thermal(p, q1, sot23::e);
   thermal(p, q2, sot23::e);
@@ -264,50 +271,18 @@ void top_copper(cnc::pen & p) {
   thermal(p, c2, 1);
   thermal(p, hdr, 7);
 }
-void top_copper_margin(cnc::pen & p) {
-  compos::penny(p, l::top_copper_margin {});
-
-  p.aperture(10.0_mil + def_copper_margin);
-  top_nets(p);
-}
-void top_silk(cnc::pen & p) {
-  compos::penny(p, l::silk {});
-}
-void top_mask(cnc::pen & p) {
-  compos::penny(p, l::top_mask {});
-}
 
 void bottom_copper(cnc::pen & p) {
   compos::penny(p, l::bottom_copper {});
 
   p.aperture(10.0_mil);
-  bottom_nets(p);
+  compos::bottom_nets(p);
 
   thermal(p, ic1, 16);
   thermal(p, ic2, 16);
   thermal(p, ic2, 4);
   thermal(p, ic2, 3);
   thermal(p, hdr, 6);
-}
-void bottom_copper_margin(cnc::pen & p) {
-  compos::penny(p, l::bottom_copper_margin {});
-
-  p.aperture(10.0_mil + def_copper_margin);
-  bottom_nets(p);
-}
-void bottom_mask(cnc::pen & p) {
-  compos::penny(p, l::bottom_mask {});
-}
-
-void holes(cnc::pen & p) {
-  compos::penny(p, l::holes {});
-}
-
-void border_margin(cnc::pen & p) {
-  box(p, 0, 0, board_w, board_h, 25.0_mil);
-}
-void border(cnc::pen & p) {
-  box(p, 0, 0, board_w, board_h, 10.0_mil);
 }
 
 void plane(cnc::fanner & p) {
@@ -327,31 +302,31 @@ extern "C" A void draw(cnc::builder * b, cnc::grb_layer l) {
   switch (l) {
     case cnc::gl_top_copper:
       b->add_region(plane, red);
-      b->add_lines(top_copper_margin, black);
+      b->add_lines(compos{}.top_copper_margin, black);
       b->add_lines(top_copper, red);
-      b->add_lines(holes, black);
+      b->add_lines(compos::holes, black);
       break;
     case cnc::gl_top_mask:
-      b->add_lines(top_mask, green);
+      b->add_lines(compos::top_mask, green);
       break;
     case cnc::gl_top_silk:
-      b->add_lines(top_silk, white);
+      b->add_lines(compos::top_silk, white);
       break;
     case cnc::gl_bot_copper:
       b->add_region(plane, blue);
-      b->add_lines(bottom_copper_margin, black);
+      b->add_lines(compos::bottom_copper_margin, black);
       b->add_lines(bottom_copper, blue);
-      b->add_lines(holes, black);
+      b->add_lines(compos::holes, black);
       break;
     case cnc::gl_bot_mask:
-      b->add_lines(bottom_mask, dark_green);
+      b->add_lines(compos::bottom_mask, dark_green);
       break;
     case cnc::gl_border:
-      b->add_lines(border_margin, black);
-      b->add_lines(border, purple);
+      b->add_lines(compos::border_margin, black);
+      b->add_lines(compos::border_drawing, purple);
       break;
     case cnc::gl_drill_holes:
-      b->add_lines(holes, white);
+      b->add_lines(compos::holes, white);
       break;
     default: break;
   }

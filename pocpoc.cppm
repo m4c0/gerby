@@ -324,9 +324,49 @@ namespace pocpoc {
   };
   void penpen(cnc::pen & p, l::top_mask, via r) {}
 
-  export template<const auto &... Cs> struct generic_layers {
+  export template<const auto &... Cs> struct cs {
     template<typename T> static void penny(cnc::pen & p, T t) {
       (penpen(p, t, Cs), ...);
+    }
+  };
+  export template<typename C> struct generic_layers {
+    static void bottom_nets(cnc::pen & p) {}
+    static void top_nets(cnc::pen & p) {}
+
+    static void top_copper_margin(cnc::pen & p) {
+      C::penny(p, l::top_copper_margin {});
+
+      p.aperture(10.0_mil + def_copper_margin);
+      C::top_nets(p);
+    }
+    static void bottom_copper_margin(cnc::pen & p) {
+      C::penny(p, l::bottom_copper_margin {});
+
+      p.aperture(10.0_mil + def_copper_margin);
+      C::bottom_nets(p);
+    }
+    static void bottom_mask(cnc::pen & p) {
+      C::penny(p, l::bottom_mask {});
+    }
+
+    static void top_silk(cnc::pen & p) {
+      C::penny(p, l::silk {});
+    }
+
+    static void top_mask(cnc::pen & p) {
+      C::penny(p, l::top_mask {});
+    }
+
+    static void holes(cnc::pen & p) {
+      C::penny(p, l::holes {});
+    }
+
+    static void border(cnc::pen & p, d::inch margin) {}
+    static void border_margin(cnc::pen & p) {
+      C::border(p, 25.0_mil);
+    }
+    static void border_drawing(cnc::pen & p) {
+      C::border(p, 10.0_mil);
     }
   };
 }
