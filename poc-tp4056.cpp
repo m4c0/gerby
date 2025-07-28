@@ -149,4 +149,19 @@ extern "C" A void draw(cnc::builder * b, cnc::grb_layer l) {
 }
 
 extern "C" A void cpl(cpl::builder * b) {
+  b->part({ "R1", r_heat, true, 0 });
+  b->part({ "R2", r_prog, true, 0 });
+  b->part({ "R3", r_chrg, true, 0 });
+  b->part({ "R4", r_stby, true, 0 });
+  b->part({ "C1", c_in, true, 0 });
+  b->part({ "C2", c_bat, true, 0 });
+  b->part({ "D1", d_chrg, true, 0 });
+  b->part({ "D2", d_stby, true, 0 });
+
+  b->bom({ "500m", "R1", "1206_R", "C27777" });
+  b->bom({ "1.1k", "R2", "0603_R", "" });
+  b->bom({ "1k", "R3-4", "0603_R", "" });
+  b->bom({ "10uF", "C1-2", "0603_C", "" });
+  b->bom({ "RED", "D1", "0603_R", "" });
+  b->bom({ "BLUE", "D2", "0603_R", "" });
 }
