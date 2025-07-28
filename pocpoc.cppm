@@ -54,6 +54,12 @@ namespace pocpoc {
     t.drill(p);
   }
   
+  template<typename T>
+  concept silked = requires (T t, cnc::pen p) { t.silk(p); };
+  void penpen(cnc::pen & p, l::silk, silked auto t) {
+    t.silk(p);
+  }
+  
   struct tht {};
   template<typename T>
   concept is_tht = traits::is_assignable_from<tht &, T>;
