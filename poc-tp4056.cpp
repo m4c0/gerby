@@ -10,6 +10,9 @@ using namespace gerby::palette;
 using namespace gerby;
 using namespace pocpoc;
 
+static constexpr const auto board_w = 20.0_mm;
+static constexpr const auto board_h = 20.0_mm;
+  
 // https://lcsc.com/datasheet/lcsc_datasheet_2410121619_TOPPOWER-Nanjing-Extension-Microelectronics-TP4056-42-ESOP8_C16581.pdf
 struct esop8 : point {
   static constexpr const auto N = 8;
@@ -32,11 +35,108 @@ struct esop8 : point {
   }
 };
 
-const esop8 ic1 { {} };
+// C601092
+// https://jlcpcb.com/api/file/downloadByFileSystemAccessId/8588937407022436352
+struct r1206 : point {
+  static constexpr const auto l = 3.3_mm + 0.2_mm;
+  static constexpr const auto w = 1.7_mm + 0.2_mm;
+  static constexpr const auto a = 1.2_mm + 0.3_mm;
+
+  static constexpr const point pad { a + def_copper_margin, w + def_copper_margin };
+
+  point pin(int n) const {
+    static constexpr const auto px = (l - a / 2) / 2;
+    if (n == 1) return point { x + px, y };
+    if (n == 2) return point { x - px, y };
+    return point {};
+  }
+
+  void copper(cnc::pen & p, d::inch margin) const {
+    p.aperture(pad.x + margin, pad.y + margin, false);
+    p.flash(pin(1));
+    p.flash(pin(2));
+  };
+
+  void silk(cnc::pen & p) const {
+    box(p, x, y, l, w);
+  }
+};
+
+struct rcem : point {
+  // Basing values on their maximum dimensions
+  static constexpr const auto l = 22.0_mm + 1.5_mm;
+  static constexpr const auto w = 9.5_mm + 1.0_mm;
+
+  // Max diameter + margin
+  static constexpr const auto hole = 0.68_mm + 0.05_mm + 0.05_mm;
+
+
+  point pin(int n) const {
+    static constexpr const auto px = (l + 3.0_mm) / 2;
+    if (n == 1) return point { x + px, y };
+    if (n == 2) return point { x - px, y };
+    return point {};
+  }
+
+  void copper(cnc::pen & p, d::inch margin) const {
+    p.aperture(hole + margin + 1.0_mm);
+    p.flash(pin(1));
+    p.flash(pin(2));
+  }
+
+  void drill(cnc::pen & p) const {
+    p.aperture(hole);
+    p.flash(pin(1));
+    p.flash(pin(2));
+  }
+
+  void silk(cnc::pen & p) const {
+    box(p, x, y, l, w);
+  }
+};
+
+const esop8 ic1 {};
+enum {
+  ic1_temp = 1,
+  ic1_prog,
+  ic1_gnd,
+  ic1_vcc,
+  ic1_bat,
+  ic1_n_stby,
+  ic1_n_chrg,
+  ic1_n_ce,
+};
+
+// 10nF
+const r0603 c_in { ic1.pin(ic1_vcc).plus(1.0_mm, 0) };
+// 10nF
+const r0603 c_bat { ic1.pin(ic1_bat).plus(1.0_mm, 0) };
+
+const d0603 d_chrg {};
+const d0603 d_stby {};
+
+// 0.5 ohms (1W) for heat dissipation
+const r1206 r_heat { ic1.plus(0, -8.0_mm) };
+// 1.1k for 1A
+const r0603 r_prog {};
+// 1k
+const r0603 r_chrg {};
+const r0603 r_stby {};
+
+const header<2> hdr_vcc {};
+const header<2> hdr_bat {};
 
 struct compos : generic_layers<compos>, cs<
-  ic1>
-{};
+  ic1,
+  c_in, c_bat,
+  d_chrg, d_stby,
+  r_prog, r_chrg, r_stby, r_heat,
+  hdr_vcc, hdr_bat>
+{
+  static void border(cnc::pen & p, d::inch margin) {
+    box(p, 0, 0, board_w, board_h, margin);
+  }
+};
 
 #ifdef LECO_TARGET_WINDOWS
 #define A __declspec(dllexport)
