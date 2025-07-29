@@ -10,8 +10,9 @@ using namespace gerby::palette;
 using namespace gerby;
 using namespace pocpoc;
 
-static constexpr const auto board_w = 20.0_mm;
-static constexpr const auto board_h = 20.0_mm;
+// Max to fit a 18650 vruzend 2x3 kit: 70x40. 45x40 also good to be between poles
+static constexpr const auto board_w = 45.0_mm;
+static constexpr const auto board_h = 30.0_mm;
   
 // https://lcsc.com/datasheet/lcsc_datasheet_2410121619_TOPPOWER-Nanjing-Extension-Microelectronics-TP4056-42-ESOP8_C16581.pdf
 struct esop8 : point {
