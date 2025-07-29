@@ -109,23 +109,23 @@ enum {
 };
 
 // 10nF
-const r0603 c_in { ic1.pin(ic1_vcc).plus(1.0_mm, 0) };
+const r0603 c_in { ic1.pin(ic1_vcc).plus(-2.5_mm, 0) };
 // 10nF
-const r0603 c_bat { ic1.pin(ic1_bat).plus(1.0_mm, 0) };
-
-const d0603 d_chrg {};
-const d0603 d_stby {};
+const r0603 c_bat { ic1.pin(ic1_bat).plus(2.5_mm, 0) };
 
 // 0.5 ohms (1W) for heat dissipation
 const r1206 r_heat { ic1.plus(0, -8.0_mm) };
 // 1.1k for 1A
-const r0603 r_prog {};
+const r0603 r_prog { ic1.pin(ic1_prog).plus(-2.5_mm, 0) };
 // 1k
-const r0603 r_chrg {};
-const r0603 r_stby {};
+const r0603 r_chrg { ic1.pin(ic1_n_chrg).plus(2.5_mm, 0) };
+const r0603 r_stby { ic1.pin(ic1_n_stby).plus(2.5_mm, 0) };
 
-const header<2> hdr_vcc {};
-const header<2> hdr_bat {};
+const d0603 d_chrg { r_chrg.plus(3.0_mm, 0) };
+const d0603 d_stby { r_stby.plus(3.0_mm, 0) };
+
+const header<2> hdr_vcc { r_heat.plus(-6.0_mm, 0) };
+const header<2> hdr_bat { ic1.plus(0, 8.0_mm) };
 
 struct compos : generic_layers<compos>, cs<
   ic1,
