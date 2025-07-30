@@ -79,8 +79,8 @@ struct compos : generic_layers<compos>, cs<
   vr8, vr9, vr11,
   vq1, vq2, vq3>
 {
-  static void bottom_nets(cnc::pen & p);
-  static void top_nets(cnc::pen & p);
+  static void bottom_nets(cnc::pen & p, d::inch m);
+  static void top_nets(cnc::pen & p, d::inch m);
 
   static void bottom_thermals(cnc::pen & p);
   static void top_thermals(cnc::pen & p);
@@ -106,7 +106,7 @@ void link_digit_gnd(turtle & t, const auto & d) {
   t.draw(d.pin(4));
 }
 
-void compos::top_nets(cnc::pen & p) {
+void compos::top_nets(cnc::pen & p, d::inch m) {
   turtle t { &p };
 
   link_digits(t,  1, { 2.2_mm,  2.2_mm }, 7.0_mm);
@@ -228,7 +228,7 @@ void compos::top_nets(cnc::pen & p) {
   t.move(q2.pin(sot23::c)); t.draw(vq2);
   t.move(q3.pin(sot23::c)); t.draw(vq3);
 }
-void compos::bottom_nets(cnc::pen & p) {
+void compos::bottom_nets(cnc::pen & p, d::inch m) {
   turtle t { &p };
   t.move(vr11);
   t.draw(vr11.plus(0.5_mm, -0.5_mm));

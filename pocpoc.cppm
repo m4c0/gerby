@@ -336,8 +336,8 @@ namespace pocpoc {
     }
   };
   export template<typename C> struct generic_layers {
-    static void bottom_nets(cnc::pen & p) {}
-    static void top_nets(cnc::pen & p) {}
+    static void bottom_nets(cnc::pen & p, d::inch m) {}
+    static void top_nets(cnc::pen & p, d::inch m) {}
 
     static void bottom_thermals(cnc::pen & p) {}
     static void top_thermals(cnc::pen & p) {}
@@ -351,20 +351,20 @@ namespace pocpoc {
       C::penny(p, l::top_copper_margin {});
 
       p.aperture(10.0_mil + def_copper_margin);
-      C::top_nets(p);
+      C::top_nets(p, def_copper_margin);
     }
     static void bottom_copper_margin(cnc::pen & p) {
       C::penny(p, l::bottom_copper_margin {});
 
       p.aperture(10.0_mil + def_copper_margin);
-      C::bottom_nets(p);
+      C::bottom_nets(p, def_copper_margin);
     }
 
     static void top_copper(cnc::pen & p) {
       C::penny(p, l::top_copper {});
 
       p.aperture(10.0_mil);
-      C::top_nets(p);
+      C::top_nets(p, 0);
 
       C::top_thermals(p);
     }
@@ -372,7 +372,7 @@ namespace pocpoc {
       C::penny(p, l::bottom_copper {});
 
       p.aperture(10.0_mil);
-      C::bottom_nets(p);
+      C::bottom_nets(p, 0);
 
       C::bottom_thermals(p);
     }
