@@ -45,6 +45,19 @@ struct esop8 : point {
   }
 };
 
+// https://jlcpcb.com/partdetail/Hubei_KENTOElec-KT0603R/C2286
+struct d0603 : r0603 {
+  void silk(cnc::pen & p) const {
+    p.aperture(0.25_mm);
+
+    turtle t { &p };
+    t.move(pin(1).plus(-0.6_mm, -0.4_mm));
+    t.draw(pin(1).plus(-0.6_mm, 0.4_mm));
+    t.move(pin(1).plus(-0.6_mm, 0));
+    t.draw(pin(2).plus(0.6_mm, 0));
+  }
+};
+
 // C601092
 // https://jlcpcb.com/api/file/downloadByFileSystemAccessId/8588937407022436352
 struct r1206 : point {

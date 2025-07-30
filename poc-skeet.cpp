@@ -12,6 +12,9 @@ using namespace pocpoc;
 static constexpr const auto board_w = 50.0_mm;
 static constexpr const auto board_h = 50.0_mm;
 
+struct d0603 : r0603 {
+};
+
 // 4017
 const auto ic1 = dip<16>({});
 // 4518
