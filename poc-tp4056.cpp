@@ -36,6 +36,13 @@ struct esop8 : point {
     p.aperture(2.5_mm + m, 3.4_mm + m, false);
     p.flash(*this);
   }
+
+  void silk(cnc::pen & p) const {
+    box(p, x, y, 3.9_mm, 4.9_mm);
+
+    p.aperture(0.3_mm);
+    p.flash(pin(1).plus(1.2_mm, 0));
+  }
 };
 
 // C601092
