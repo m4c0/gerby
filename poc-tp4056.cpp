@@ -127,7 +127,7 @@ enum {
   ic1_bat,
   ic1_n_stby,
   ic1_n_chrg,
-  ic1_n_ce,
+  ic1_ce,
 };
 
 // 10nF
@@ -171,6 +171,22 @@ struct compos : generic_layers<compos>, cs<
 
     t.move(ic1.pin(ic1_prog));
     t.draw(r_prog.pin(1));
+
+    t.move(ic1.pin(ic1_n_stby));
+    t.draw(r_stby.pin(2));
+    t.move(r_stby.pin(1));
+    t.draw(d_stby.pin(2));
+
+    t.move(ic1.pin(ic1_n_chrg));
+    t.draw(r_chrg.pin(2));
+    t.move(r_chrg.pin(1));
+    t.draw(d_chrg.pin(2));
+
+    t.move(ic1.pin(ic1_ce));
+    t.draw_ld(d_chrg.pin(1));
+    t.draw(d_stby.pin(1));
+    t.draw(d_stby.pin(1).plus(0, -3.0_mm));
+    t.draw(r_heat.pin(1));
 
     p.aperture(0.5_mm + m);
     t.move(hdr_vcc.pin(2));
