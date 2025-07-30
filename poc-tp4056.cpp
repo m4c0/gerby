@@ -20,6 +20,8 @@ struct esop8 : point {
 
   static constexpr const auto h = N / 4.0 - 0.5;
 
+  static constexpr const point pad { 0.9_mm, 0.5_mm };
+
   dotz::vec2 (*pin_fn)(int, int) = dip_pin_tc_1up;
 
   point pin(int n) const {
@@ -31,7 +33,7 @@ struct esop8 : point {
     p.aperture(0.9_mm + m, 0.5_mm + m, false);
     for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
 
-    p.aperture(2.5_mm + def_copper_margin, 3.4_mm + def_copper_margin, false);
+    p.aperture(2.5_mm + m, 3.4_mm + m, false);
     p.flash(*this);
   }
 };
@@ -111,7 +113,7 @@ enum {
 // 10nF
 const r0603 c_in { ic1.pin(ic1_vcc).plus(-2.5_mm, 0) };
 // 10nF
-const r0603 c_bat { ic1.pin(ic1_bat).plus(2.5_mm, 0) };
+const r0603 c_bat { ic1.pin(ic1_bat).plus(0.75_mm, -2.0_mm) };
 
 // 0.5 ohms (1W) for heat dissipation
 const r1206 r_heat { ic1.plus(0, -8.0_mm) };
@@ -136,6 +138,36 @@ struct compos : generic_layers<compos>, cs<
 {
   static void border(cnc::pen & p, d::inch margin) {
     box(p, 0, 0, board_w, board_h, margin);
+  }
+
+  static void top_nets(cnc::pen & p, d::inch m) {
+    turtle t { &p };
+
+    t.move(ic1.pin(ic1_vcc));
+    t.draw(c_in.pin(1));
+
+    t.move(ic1.pin(ic1_bat));
+    t.draw(c_bat.pin(2));
+
+    t.move(ic1.pin(ic1_prog));
+    t.draw(r_prog.pin(1));
+
+    p.aperture(0.5_mm + m);
+    t.move(hdr_vcc.pin(2));
+    t.draw(r_heat.pin(2));
+
+    t.move(r_heat.pin(1));
+    t.draw(r_heat.pin(1).plus(0, 2.0_mm));
+    t.draw(ic1.pin(ic1_vcc));
+  }
+
+  static void top_thermals(cnc::pen & p) {
+    thermal(p, hdr_vcc, 1);
+    thermal(p, ic1, ic1_gnd);
+    thermal(p, ic1, ic1_temp);
+    thermal(p, r_prog, 2);
+    thermal(p, c_in, 2);
+    thermal(p, c_bat, 1);
   }
 };
 
