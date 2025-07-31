@@ -45,6 +45,33 @@ struct esop8 : point {
   }
 };
 
+struct sot23_6 : point {
+  static constexpr const auto N = 6;
+
+  static constexpr const auto h = N / 4.0 - 0.5;
+
+  static constexpr const point pad { 0.9_mm, 0.5_mm };
+
+  dotz::vec2 (*pin_fn)(int, int) = dip_pin_tc_1up;
+
+  point pin(int n) const {
+    auto [dx, dy] = pin_fn(n, N);
+    return { x + (0.8_mm + 0.3_mm) * dx, y + 0.95_mm * (dy - h) };
+  }
+
+  void copper(cnc::pen & p, d::inch m) const {
+    p.aperture(0.7_mm + m, 0.4_mm + m, false);
+    for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
+  }
+
+  void silk(cnc::pen & p) const {
+    box(p, x, y, 1.6_mm, 2.9_mm);
+
+    p.aperture(0.3_mm);
+    p.flash(pin(1).plus(1.2_mm, 0));
+  }
+};
+
 // https://jlcpcb.com/partdetail/Hubei_KENTOElec-KT0603R/C2286
 struct d0603 : r0603 {
   void silk(cnc::pen & p) const {
@@ -118,7 +145,8 @@ struct rcem : point {
   }
 };
 
-const esop8 ic1 {};
+// TP4056
+const esop8 ic1 {{ -10.0_mm, 0 }};
 enum {
   ic1_temp = 1,
   ic1_prog,
@@ -130,10 +158,22 @@ enum {
   ic1_ce,
 };
 
+// DW01A
+const sot23_6 ic2 { ic1.plus(15.0_mm, 0) };
+enum {
+  ic2_od = 1,
+  ic2_cs,
+  ic2_oc,
+  ic2_vcc = 5,
+  ic2_gnd,
+};
+
 // 10nF
 const r0603 c_in { ic1.pin(ic1_vcc).plus(-2.5_mm, 0) };
 // 10nF
 const r0603 c_bat { ic1.pin(ic1_bat).plus(0.75_mm, -2.0_mm) };
+// 100uF
+const r0603 c_dw { ic2.pin(ic2_gnd).plus(2.0_mm, 0) };
 
 // 0.5 ohms (1W) for heat dissipation
 const r1206 r_heat { ic1.plus(0, -8.0_mm) };
@@ -142,6 +182,10 @@ const r0603 r_prog { ic1.pin(ic1_prog).plus(-2.5_mm, 0) };
 // 1k
 const r0603 r_chrg { ic1.pin(ic1_n_chrg).plus(2.5_mm, 0) };
 const r0603 r_stby { ic1.pin(ic1_n_stby).plus(2.5_mm, 0) };
+// 470 ohms
+const r0603 r_dw_vcc { ic2.pin(ic2_vcc).plus(2.0_mm, 0) };
+// 2k
+const r0603 r_dw_cs { ic2.pin(ic2_cs).plus(-1.0_mm, 0) };
 
 const d0603 d_chrg { r_chrg.plus(3.0_mm, 0) };
 const d0603 d_stby { r_stby.plus(3.0_mm, 0) };
@@ -149,12 +193,16 @@ const d0603 d_stby { r_stby.plus(3.0_mm, 0) };
 const header<2> hdr_vcc { r_heat.plus(-6.0_mm, 0) };
 const header<2> hdr_bat { ic1.plus(0, 8.0_mm) };
 
+const via v_vcc_1 { d_stby.pin(1).plus(0, -1.0_mm) };
+const via v_vcc_2 { r_heat.pin(1).plus(2.0_mm, 0) };
+
 struct compos : generic_layers<compos>, cs<
-  ic1,
-  c_in, c_bat,
+  ic1, ic2,
+  c_in, c_bat, c_dw,
   d_chrg, d_stby,
-  r_prog, r_chrg, r_stby, r_heat,
-  hdr_vcc, hdr_bat>
+  r_prog, r_chrg, r_stby, r_heat, r_dw_vcc, r_dw_cs,
+  hdr_vcc, hdr_bat,
+  v_vcc_1, v_vcc_2>
 {
   static void border(cnc::pen & p, d::inch margin) {
     box(p, 0, 0, board_w, board_h, margin);
@@ -185,7 +233,9 @@ struct compos : generic_layers<compos>, cs<
     t.move(ic1.pin(ic1_ce));
     t.draw_ld(d_chrg.pin(1));
     t.draw(d_stby.pin(1));
-    t.draw(d_stby.pin(1).plus(0, -3.0_mm));
+    t.draw(v_vcc_1);
+
+    t.move(v_vcc_2);
     t.draw(r_heat.pin(1));
 
     p.aperture(0.5_mm + m);
@@ -197,7 +247,16 @@ struct compos : generic_layers<compos>, cs<
     t.draw(ic1.pin(ic1_vcc));
   }
 
+  static void bottom_nets(cnc::pen & p, d::inch m) {
+    turtle t { &p };
+
+    t.move(v_vcc_1);
+    t.draw(v_vcc_1.plus(0, -1.0_mm));
+    t.draw(v_vcc_2);
+  }
+
   static void top_thermals(cnc::pen & p) {
+    thermal(p, hdr_bat, 1);
     thermal(p, hdr_vcc, 1);
     thermal(p, ic1, ic1_gnd);
     thermal(p, ic1, ic1_temp);
