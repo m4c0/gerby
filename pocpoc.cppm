@@ -92,10 +92,10 @@ namespace pocpoc {
   constexpr point operator*(const point & a, float f) { return { a.x * f, a.y * f }; }
   
   export void thermal(cnc::pen & p, point pin, point size) {
-    p.aperture(25.0_mil, size.y + 25.0_mil, false);
+    p.aperture(25.0_mil, size.y + def_copper_margin, false);
     p.flash(pin);
   
-    p.aperture(size.x + 25.0_mil, 25.0_mil, false);
+    p.aperture(size.x + def_copper_margin, 25.0_mil, false);
     p.flash(pin);
   }
   export template<typename T>
