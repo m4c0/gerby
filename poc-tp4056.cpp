@@ -158,7 +158,7 @@ enum {
   ic1_ce,
 };
 
-// DW01A
+// DW01A - Battery Protection
 const sot23_6 ic2 { ic1.plus(15.0_mm, 0) };
 enum {
   ic2_od = 1,
@@ -173,7 +173,7 @@ const r0603 c_in { ic1.pin(ic1_vcc).plus(-2.5_mm, 0) };
 // 10nF
 const r0603 c_bat { ic1.pin(ic1_bat).plus(0.75_mm, -2.0_mm) };
 // 100uF
-const r0603 c_dw { ic2.pin(ic2_gnd).plus(2.0_mm, 0) };
+const r0603 c_dw { ic2.pin(ic2_vcc).plus(2.5_mm, 0) };
 
 // 0.5 ohms (1W) for heat dissipation
 const r1206 r_heat { ic1.plus(0, -8.0_mm) };
@@ -182,10 +182,10 @@ const r0603 r_prog { ic1.pin(ic1_prog).plus(-2.5_mm, 0) };
 // 1k
 const r0603 r_chrg { ic1.pin(ic1_n_chrg).plus(2.5_mm, 0) };
 const r0603 r_stby { ic1.pin(ic1_n_stby).plus(2.5_mm, 0) };
-// 470 ohms
-const r0603 r_dw_vcc { ic2.pin(ic2_vcc).plus(2.0_mm, 0) };
 // 2k
-const r0603 r_dw_cs { ic2.pin(ic2_cs).plus(-1.0_mm, 0) };
+const r0603 r_dw_cs { ic2.pin(ic2_cs).plus(-2.0_mm, 0) };
+// 470 ohms
+const r0603 r_dw_vcc { c_dw.plus(0, 1.5_mm) };
 
 const d0603 d_chrg { r_chrg.plus(3.0_mm, 0) };
 const d0603 d_stby { r_stby.plus(3.0_mm, 0) };
@@ -238,6 +238,10 @@ struct compos : generic_layers<compos>, cs<
     t.move(v_vcc_2);
     t.draw(r_heat.pin(1));
 
+    t.move(ic2.pin(ic2_vcc));
+    t.draw(c_dw.pin(2));
+    t.draw(r_dw_vcc.pin(2));
+
     p.aperture(0.5_mm + m);
     t.move(hdr_vcc.pin(2));
     t.draw(r_heat.pin(2));
@@ -261,8 +265,10 @@ struct compos : generic_layers<compos>, cs<
     thermal(p, ic1, ic1_gnd);
     thermal(p, ic1, ic1_temp);
     thermal(p, r_prog, 2);
+    thermal(p, r_dw_cs, 2);
     thermal(p, c_in, 2);
     thermal(p, c_bat, 1);
+    thermal(p, c_dw, 1);
   }
 };
 
