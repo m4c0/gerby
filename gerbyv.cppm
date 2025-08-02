@@ -309,8 +309,22 @@ public:
         if (m_redraw) {
           m_redraw = false;
           b.reset();
-          m_lb(&b, m_layer);
-          m_lb(&b, cnc::gl_border);
+          switch (m_layer) {
+            case cnc::gl_top_copper:
+              m_lb(&b, cnc::gl_top_copper);
+              m_lb(&b, cnc::gl_top_silk);
+              m_lb(&b, cnc::gl_border);
+              break;
+            case cnc::gl_bot_copper:
+              m_lb(&b, cnc::gl_bot_copper);
+              m_lb(&b, cnc::gl_bot_silk);
+              m_lb(&b, cnc::gl_border);
+              break;
+            default:
+              m_lb(&b, m_layer);
+              m_lb(&b, cnc::gl_border);
+              break;
+          }
         }
 
         auto mm = b.minmax();
