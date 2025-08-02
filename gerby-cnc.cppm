@@ -91,6 +91,7 @@ export struct builder {
 
   virtual void add_lines(void (*fn)(pen &p), dotz::vec4 colour) = 0;
   virtual void add_region(void (*fn)(fanner &p), dotz::vec4 colour) = 0;
+  virtual void clear_lines(void (*fn)(pen &p)) = 0;
 };
 
 export enum grb_layer {

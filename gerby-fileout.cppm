@@ -19,6 +19,7 @@ export using lb_t = void(cnc::builder *, cnc::grb_layer);
 
 export using file = hay<FILE *, mct_syscall_fopen, ::fclose>;
 
+/// Creates a dictionary of used apertures
 class apdict : public cnc::pen, public cnc::fanner, public cnc::builder {
   hai::varray<cnc::aperture> m_dict{1024};
   unsigned m_cur{};
@@ -51,6 +52,9 @@ public:
     fn(*this);
   }
   void add_region(void (*fn)(cnc::fanner &p), dotz::vec4 colour) override {
+    fn(*this);
+  }
+  void clear_lines(void (*fn)(pen &p)) override {
     fn(*this);
   }
 
@@ -183,6 +187,12 @@ public:
 
     fputln(m_f, "G37*");
   }
+  void clear_lines(void (*fn)(cnc::pen &p)) override {
+    fputfn(m_f, "%%LPC*%%");
+
+    file_pen p{m_f, m_ad};
+    fn(p);
+  }
 };
 
 class drill_pen : public cnc::pen, public cnc::fanner {
@@ -228,6 +238,10 @@ public:
   }
   void add_region(void (*fn)(cnc::fanner &p), dotz::vec4 colour) override {
     silog::log(silog::error, "Drilling regions is not supported");
+  }
+  void clear_lines(void (*fn)(cnc::pen &p)) override {
+    drill_pen p{m_f, m_ad};
+    fn(p);
   }
 };
 

@@ -242,6 +242,9 @@ public:
   void add_region(void (*fn)(cnc::fanner &), dotz::vec4 colour) override {
     m_layers.push_back(region::create(&m_objs, m_layers.size(), fn, colour, &m_mm));
   }
+  void clear_lines(void (*fn)(cnc::pen &)) override {
+    m_layers.push_back(lines::create(&m_objs, m_layers.size(), fn, palette::black, &m_mm));
+  }
 
   [[nodiscard]] constexpr auto &layers() noexcept { return m_layers; }
   [[nodiscard]] constexpr auto &minmax() noexcept { return m_mm; }

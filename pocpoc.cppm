@@ -391,9 +391,9 @@ namespace pocpoc {
       switch (l) {
         case cnc::gl_top_copper:
           b->add_region(C::top_plane, red);
-          b->add_lines(C::top_copper_margin, black);
+          b->clear_lines(C::top_copper_margin);
           b->add_lines(C::top_copper, red);
-          b->add_lines(C::holes, black);
+          b->clear_lines(C::holes);
           break;
         case cnc::gl_top_mask:
           b->add_lines(C::top_mask, green);
@@ -403,15 +403,15 @@ namespace pocpoc {
           break;
         case cnc::gl_bot_copper:
           b->add_region(C::bottom_plane, blue);
-          b->add_lines(C::bottom_copper_margin, black);
+          b->clear_lines(C::bottom_copper_margin);
           b->add_lines(C::bottom_copper, blue);
-          b->add_lines(C::holes, black);
+          b->clear_lines(C::holes);
           break;
         case cnc::gl_bot_mask:
           b->add_lines(C::bottom_mask, dark_green);
           break;
         case cnc::gl_border:
-          b->add_lines(C::border_margin, black);
+          b->clear_lines(C::border_margin);
           b->add_lines(C::border_drawing, purple);
           break;
         case cnc::gl_drill_holes:
