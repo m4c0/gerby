@@ -1,8 +1,7 @@
 module gerbyv;
+import :pipeline;
 
-using namespace gerby;
-
-pipeline gerby::line_pipeline(voo::device_and_queue * dq) {
+gerby::pipeline gerby::line_pipeline(voo::device_and_queue * dq) {
   return pipeline::create(dq, {
     .bindings {
       vee::vertex_input_bind(sizeof(vtx)),
@@ -18,7 +17,7 @@ pipeline gerby::line_pipeline(voo::device_and_queue * dq) {
     },
   });
 }
-pipeline gerby::region_pipeline(voo::device_and_queue * dq) {
+gerby::pipeline gerby::region_pipeline(voo::device_and_queue * dq) {
   return pipeline::create(dq, {
     .bindings {
       vee::vertex_input_bind(sizeof(rvtx)),
