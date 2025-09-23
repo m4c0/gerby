@@ -32,11 +32,27 @@ const auto hdr = header<7> {{
   -0.1_in + board_h / 2.0,
 }};
 
+// BJT NPN
+const auto q1 = sot23({ 4.0_mm, 17.0_mm });
+const auto q2 = sot23({ 4.0_mm, 13.0_mm });
+const auto q3 = sot23({ 4.0_mm,  9.0_mm });
+// BJT NPN ("not gates")
+const auto q4 = sot23(q1.plus(-4.0_mm, 0));
+const auto q5 = sot23(q2.plus(-4.0_mm, 0));
+const auto q6 = sot23(q3.plus(-4.0_mm, 0));
+
+const auto vq1 = via { q1.pin(sot23::c).plus(-1.3_mm, 0) };
+const auto vq2 = via { q2.pin(sot23::c).plus(-1.3_mm, 0) };
+const auto vq3 = via { q3.pin(sot23::c).plus(-1.3_mm, 0) };
+
 // 100k
 const auto r1 = r0603(ic1.pin(12).plus(-3.0_mm, 0));
 const auto r2 = r0603(ic1.pin(11).plus(-3.0_mm, 0));
 const auto r3 = r0603(ic1.pin(10).plus(-3.0_mm, 0));
 const auto r4 = r0603(ic1.pin(13).plus(-3.0_mm, 0));
+const auto r12 = r0603(q4.plus(-3.3_mm, 0));
+const auto r13 = r0603(q5.plus(-3.3_mm, 0));
+const auto r14 = r0603(q6.plus(-3.3_mm, 0));
 // 68
 const auto r5  = r0603(ic2.pin(13).plus(-3.0_mm, 0));
 const auto r6  = r0603(ic2.pin(12).plus(-3.0_mm, 0));
@@ -55,24 +71,15 @@ const auto c1 = r0603(ic1.pin(2).plus(3.0_mm, 0));
 // 10nF
 const auto c2 = r0603(hdr.pin(h_v_minus).plus(-0.5_mm, -2.9_mm));
 
-// BJT NPN
-const auto q1 = sot23({ 4.0_mm, 17.0_mm });
-const auto q2 = sot23({ 4.0_mm, 13.0_mm });
-const auto q3 = sot23({ 4.0_mm,  9.0_mm });
-
-const auto vq1 = via { q1.pin(sot23::c).plus(-1.3_mm, 0) };
-const auto vq2 = via { q2.pin(sot23::c).plus(-1.3_mm, 0) };
-const auto vq3 = via { q3.pin(sot23::c).plus(-1.3_mm, 0) };
-
 // 7-digit displays
 const auto msd = dip<14>{{-12.0_mm, -board_h/2 + 10.0_mm}};
 const auto nsd = dip<14>{{  0.0_mm, -board_h/2 + 10.0_mm}};
 const auto lsd = dip<14>{{ 12.0_mm, -board_h/2 + 10.0_mm}};
 
 struct compos : generic_layers<compos>, cs<
-  r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
+  r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14,
   c1, c2,
-  q1, q2, q3,
+  q1, q2, q3, q4, q5, q6,
   msd, nsd, lsd,
   ic1, ic2,
   hdr,
@@ -314,15 +321,21 @@ extern "C" A void cpl(cpl::builder * b) {
   b->part({ "R9",  r9,  true,  0 });
   b->part({ "R10", r10, true,  0 });
   b->part({ "R11", r11, true,  0 });
+  b->part({ "R12", r12, true,  0 });
+  b->part({ "R13", r13, true,  0 });
+  b->part({ "R14", r14, true,  0 });
   b->part({ "C1",  c1,  true,  0 });
   b->part({ "C2",  c2,  true,  0 });
   b->part({ "Q1",  q1,  true, 90 });
   b->part({ "Q2",  q2,  true, 90 });
   b->part({ "Q3",  q3,  true, 90 });
+  b->part({ "Q4",  q4,  true, 90 });
+  b->part({ "Q5",  q5,  true, 90 });
+  b->part({ "Q6",  q6,  true, 90 });
 
   b->bom({ "100k", "R1-4", "0603_R", "C25803" });
   b->bom({ "56", "R5-11", "0603_R", "C23206" });
   b->bom({ "1nF", "C1", "0603_C", "C1588" });
   b->bom({ "10nF", "C2", "0603_C", "C57112" });
-  b->bom({ "NPN", "Q1-3", "SOT-23", "C2146" });
+  b->bom({ "NPN", "Q1-6", "SOT-23", "C2146" });
 }
