@@ -15,7 +15,7 @@ static constexpr const auto board_h = 50.0_mm;
 // MC14553 - 3-digit BCD counter
 const auto ic1 = dip<16>{{ 12.0_mm, 7.0_mm}};
 // MC14511 - BCD to 7 segments
-const auto ic2 = dip<16>{{-6.0_mm, 7.0_mm}, {}, dip_pin_tc_1down};
+const auto ic2 = dip<16>{{-9.0_mm, 7.0_mm}, {}, dip_pin_tc_1down};
 
 enum hdr_pins {
   h_nil = 0, // not a real pin
@@ -122,13 +122,13 @@ void compos::top_nets(cnc::pen & p, d::inch m) {
   link_digit_gnd(t, nsd);
   link_digit_gnd(t, lsd);
 
-  t.move(ic1.pin(15));
+  t.move(ic1.pin(15)); // MSB
   t.draw(q1.pin(sot23::b));
 
-  t.move(ic1.pin(1));
+  t.move(ic1.pin(1)); // NSB
   t.draw(q2.pin(sot23::b));
 
-  t.move(ic1.pin(2));
+  t.move(ic1.pin(2)); // LSB
   t.draw(q3.pin(sot23::b));
 
   bus hb0 { ic1.pin(15).plus(1.5_mm, 0) };
@@ -180,27 +180,30 @@ void compos::top_nets(cnc::pen & p, d::inch m) {
   t.move(ic1.pin(5));
   t.draw_ld(ic2.pin(6));
 
+  bus bic2t { ic2.pin(16).plus(-7.0_mm, 1.0_mm) };
+
   t.move(ic2.pin(13));
   t.draw(r5.pin(1));
   t.move(r5.pin(2));
-  t.draw_x(-2.0_mm);
-  t.draw(msd.pin(2).plus(-1.5_mm, -0.3_mm));
+  t.draw_x(-1.0_mm);
+  t.draw(bic2t.pin(-1));
+  t.draw_ld(msd.pin(2).plus(-1.5_mm, -0.3_mm));
   t.draw(msd.pin(2).plus(0, -1.3_mm));
   t.draw_ld(msd.pin(14));
 
   t.move(ic2.pin(12));
   t.draw(r6.pin(1));
   t.move(r6.pin(2));
-  t.draw_x(-2.0_mm);
-  t.draw(msd.pin(3).plus(-2.5_mm, -0.3_mm));
+  t.draw(bic2t.pin(-2));
+  t.draw_ld(msd.pin(3).plus(-2.5_mm, -0.3_mm));
   t.draw(msd.pin(3).plus(0, -1.3_mm));
   t.draw_ld(msd.pin(13));
 
   t.move(ic2.pin(11));
   t.draw(r7.pin(1));
   t.move(r7.pin(2));
-  t.draw_x(-2.0_mm);
-  t.draw(msd.pin(7).plus(-3.5_mm, -0.3_mm));
+  t.draw(bic2t.pin(-3));
+  t.draw_ld(msd.pin(7).plus(-3.5_mm, -0.3_mm));
   t.draw(msd.pin(7).plus(0, -1.3_mm));
   t.draw_ld(msd.pin(8));
 
@@ -217,6 +220,7 @@ void compos::top_nets(cnc::pen & p, d::inch m) {
   t.move(ic2.pin(15));
   t.draw(r10.pin(1));
   t.move(r10.pin(2));
+  t.draw_ld(bic2t.pin(0));
   t.draw_ld(msd.pin(1));
 
   t.move(ic2.pin(14));
@@ -235,7 +239,7 @@ void compos::bottom_nets(cnc::pen & p, d::inch m) {
   t.draw_ld(msd.pin(2));
 
   t.move(vr8);
-  t.draw(vr8.plus(1.5_mm, -1.5_mm));
+  t.draw(vr8.plus(3.5_mm, -3.5_mm));
   t.draw_ld(msd.pin(7));
 
   t.move(vr9);
@@ -245,7 +249,7 @@ void compos::bottom_nets(cnc::pen & p, d::inch m) {
   t.move(vq1);
   t.draw(ic2.pin(1).plus(2.0_mm, 0));
   t.draw(ic2.pin(1).plus(-2.0_mm, -2.0_mm));
-  t.draw(msd.pin(13).plus(1.5_mm, 0));
+  t.draw(msd.pin(13).plus(-1.5_mm, 0));
   t.draw_ld(msd.pin(12));
 
   t.move(vq2);
