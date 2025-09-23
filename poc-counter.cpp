@@ -41,9 +41,9 @@ const auto q4 = sot23(q1.plus(-4.0_mm, 0));
 const auto q5 = sot23(q2.plus(-4.0_mm, 0));
 const auto q6 = sot23(q3.plus(-4.0_mm, 0));
 
-const auto vq1 = via { q1.pin(sot23::c).plus(-1.3_mm, 0) };
-const auto vq2 = via { q2.pin(sot23::c).plus(-1.3_mm, 0) };
-const auto vq3 = via { q3.pin(sot23::c).plus(-1.3_mm, 0) };
+const auto vq4 = via { q4.pin(sot23::c).plus(-1.3_mm, 0) };
+const auto vq5 = via { q5.pin(sot23::c).plus(-1.3_mm, 0) };
+const auto vq6 = via { q6.pin(sot23::c).plus(-1.3_mm, 0) };
 
 // 100k
 const auto r1 = r0603(ic1.pin(12).plus(-3.0_mm, 0));
@@ -66,6 +66,10 @@ const auto vr8  = via { r8.pin(2).plus(-1.3_mm, 0) };
 const auto vr9  = via { r9.pin(2).plus(-1.3_mm, 0) };
 const auto vr11 = via { r11.pin(2).plus(-1.3_mm, 0) };
 
+const auto vr12 = via { r12.pin(2).plus(0, 1.0_mm) };
+const auto vr13 = via { r13.pin(2).plus(0, 1.0_mm) };
+const auto vr14 = via { r14.pin(2).plus(0, 1.0_mm) };
+
 // 1nF
 const auto c1 = r0603(ic1.pin(2).plus(3.0_mm, 0));
 // 10nF
@@ -83,8 +87,8 @@ struct compos : generic_layers<compos>, cs<
   msd, nsd, lsd,
   ic1, ic2,
   hdr,
-  vr8, vr9, vr11,
-  vq1, vq2, vq3>
+  vr8, vr9, vr11, vr12, vr13, vr14,
+  vq4, vq5, vq6>
 {
   static void bottom_nets(cnc::pen & p, d::inch m);
   static void top_nets(cnc::pen & p, d::inch m);
@@ -236,9 +240,13 @@ void compos::top_nets(cnc::pen & p, d::inch m) {
   t.move(r11.pin(2));
   t.draw(vr11);
 
-  t.move(q1.pin(sot23::c)); t.draw(vq1);
-  t.move(q2.pin(sot23::c)); t.draw(vq2);
-  t.move(q3.pin(sot23::c)); t.draw(vq3);
+  t.move(q4.pin(sot23::c)); t.draw(vq4);
+  t.move(q5.pin(sot23::c)); t.draw(vq5);
+  t.move(q6.pin(sot23::c)); t.draw(vq6);
+
+  t.move(r12.pin(2)); t.draw(vr12);
+  t.move(r13.pin(2)); t.draw(vr13);
+  t.move(r14.pin(2)); t.draw(vr14);
 }
 void compos::bottom_nets(cnc::pen & p, d::inch m) {
   turtle t { &p };
@@ -254,17 +262,16 @@ void compos::bottom_nets(cnc::pen & p, d::inch m) {
   t.draw(vr9.plus(-4.0_mm, -4.0_mm));
   t.draw_ld(msd.pin(6));
 
-  t.move(vq1);
-  t.draw(ic2.pin(1).plus(2.0_mm, 0));
-  t.draw(ic2.pin(1).plus(-2.0_mm, -2.0_mm));
-  t.draw(msd.pin(13).plus(-1.5_mm, 0));
+  t.move(vq4);
+  t.draw(vq4.plus(-1.5_mm, -1.5_mm));
+  t.draw_ld(msd.pin(14).plus(-1.5_mm, 1.0_mm));
   t.draw_ld(msd.pin(12));
 
-  t.move(vq2);
-  t.draw(ic2.pin(1).plus(3.0_mm, 0));
+  t.move(vq5);
+  t.draw(vq5.plus(-1.0_mm, -1.0_mm));
   t.draw_ld(nsd.pin(4));
 
-  t.move(vq3);
+  t.move(vq6);
   t.draw(ic1.pin(8).plus(-2.0_mm, 0));
   t.draw_ld(lsd.pin(4));
 }
@@ -273,6 +280,9 @@ void compos::top_thermals(cnc::pen & p) {
   thermal(p, q1, sot23::e);
   thermal(p, q2, sot23::e);
   thermal(p, q3, sot23::e);
+  thermal(p, q4, sot23::e);
+  thermal(p, q5, sot23::e);
+  thermal(p, q6, sot23::e);
   thermal(p, ic1, 8);
   thermal(p, ic2, 8);
   thermal(p, ic2, 5);
