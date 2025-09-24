@@ -256,6 +256,7 @@ void compos::bottom_nets(cnc::pen & p, d::inch m) {
 
   t.move(vr8);
   t.draw(vr8.plus(3.5_mm, -3.5_mm));
+  t.draw_ld(vr8.plus(6.0_mm, -20.0_mm));
   t.draw_ld(msd.pin(7));
 
   t.move(vr9);
