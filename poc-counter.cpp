@@ -37,9 +37,9 @@ const auto q1 = sot23({ 4.0_mm, 17.0_mm });
 const auto q2 = sot23({ 4.0_mm, 13.0_mm });
 const auto q3 = sot23({ 4.0_mm,  9.0_mm });
 // BJT NPN ("not gates")
-const auto q4 = sot23(q1.plus(-4.0_mm, 0));
-const auto q5 = sot23(q2.plus(-4.0_mm, 0));
-const auto q6 = sot23(q3.plus(-4.0_mm, 0));
+const auto q4 = sot23(q1.plus(-6.5_mm, 0));
+const auto q5 = sot23(q2.plus(-6.5_mm, 0));
+const auto q6 = sot23(q3.plus(-6.5_mm, 0));
 
 const auto vq4 = via { q4.pin(sot23::c).plus(-1.3_mm, 0) };
 const auto vq5 = via { q5.pin(sot23::c).plus(-1.3_mm, 0) };
@@ -50,9 +50,9 @@ const auto r1 = r0603(ic1.pin(12).plus(-3.0_mm, 0));
 const auto r2 = r0603(ic1.pin(11).plus(-3.0_mm, 0));
 const auto r3 = r0603(ic1.pin(10).plus(-3.0_mm, 0));
 const auto r4 = r0603(ic1.pin(13).plus(-3.0_mm, 0));
-const auto r12 = r0603(q4.plus(-3.3_mm, 0));
-const auto r13 = r0603(q5.plus(-3.3_mm, 0));
-const auto r14 = r0603(q6.plus(-3.3_mm, 0));
+const auto r12 = r0603(q1.plus(-3.3_mm, 1.0_mm));
+const auto r13 = r0603(q2.plus(-3.3_mm, 1.0_mm));
+const auto r14 = r0603(q3.plus(-3.3_mm, 1.0_mm));
 // 68
 const auto r5  = r0603(ic2.pin(13).plus(-3.0_mm, 0));
 const auto r6  = r0603(ic2.pin(12).plus(-3.0_mm, 0));
@@ -66,9 +66,9 @@ const auto vr8  = via { r8.pin(2).plus(-1.3_mm, 0) };
 const auto vr9  = via { r9.pin(2).plus(-1.3_mm, 0) };
 const auto vr11 = via { r11.pin(2).plus(-1.3_mm, 0) };
 
-const auto vr12 = via { r12.pin(2).plus(0, 1.0_mm) };
-const auto vr13 = via { r13.pin(2).plus(0, 1.0_mm) };
-const auto vr14 = via { r14.pin(2).plus(0, 1.0_mm) };
+const auto vr12 = via { r12.pin(1).plus(0, 1.0_mm) };
+const auto vr13 = via { r13.pin(1).plus(0, 1.0_mm) };
+const auto vr14 = via { r14.pin(1).plus(0, 1.0_mm) };
 
 // 1nF
 const auto c1 = r0603(ic1.pin(2).plus(3.0_mm, 0));
@@ -244,9 +244,9 @@ void compos::top_nets(cnc::pen & p, d::inch m) {
   t.move(q5.pin(sot23::c)); t.draw(vq5);
   t.move(q6.pin(sot23::c)); t.draw(vq6);
 
-  t.move(r12.pin(2)); t.draw(vr12);
-  t.move(r13.pin(2)); t.draw(vr13);
-  t.move(r14.pin(2)); t.draw(vr14);
+  t.move(r12.pin(1)); t.draw(vr12);
+  t.move(r13.pin(1)); t.draw(vr13);
+  t.move(r14.pin(1)); t.draw(vr14);
 }
 void compos::bottom_nets(cnc::pen & p, d::inch m) {
   turtle t { &p };
