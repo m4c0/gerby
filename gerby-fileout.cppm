@@ -12,7 +12,6 @@ import hai;
 import hay;
 import dotz;
 import print;
-import silog;
 
 namespace gerby::out {
 export using lb_t = void(cnc::builder *, cnc::grb_layer);
@@ -104,14 +103,13 @@ public:
     unsigned d = 1;
     for (const auto &a : m_dict) {
       if (a.roundness() <= 0) {
-        silog::log(silog::error, "only circles are supported in drilling");
+        errln("only circles are supported in drilling");
         continue;
       }
       auto din = a.diameter();
       d::mm dmm{d::inch{din}};
       if (dmm.raw_value() < 0.15 || dmm.raw_value() > 6.3) {
-        silog::log(silog::error, "incompatible drill size: %Lfmm/%fin",
-                   dmm.raw_value(), din);
+        errfn("incompatible drill size: %Lfmm/%fin", dmm.raw_value(), din);
         continue;
       }
 
@@ -205,8 +203,7 @@ class drill_pen : public cnc::pen, public cnc::fanner {
   }
 
   void unsup() {
-    silog::log(silog::error,
-               "only absolute 'stamp' is supported when drilling");
+    errln("only absolute 'stamp' is supported when drilling");
   }
 
 public:
@@ -237,7 +234,7 @@ public:
     fn(p);
   }
   void add_region(void (*fn)(cnc::fanner &p), dotz::vec4 colour) override {
-    silog::log(silog::error, "Drilling regions is not supported");
+    errln("Drilling regions is not supported");
   }
   void clear_lines(void (*fn)(cnc::pen &p)) override {
     drill_pen p{m_f, m_ad};
@@ -246,7 +243,7 @@ public:
 };
 
 void write(const char *fn, lb_t lb, cnc::grb_layer l) {
-  silog::log(silog::info, "Generating [%s]", fn);
+  errfn("Generating [%s]", fn);
 
   apdict ad{};
   lb(&ad, l);
@@ -263,7 +260,7 @@ void write(const char *fn, lb_t lb, cnc::grb_layer l) {
   fputln(f, "M02*");
 }
 void write_drill(const char *fn, lb_t lb) {
-  silog::log(silog::info, "Generating drill [%s]", fn);
+  errfn("Generating drill [%s]", fn);
 
   apdict ad{};
   lb(&ad, cnc::gl_drill_holes);

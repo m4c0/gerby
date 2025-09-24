@@ -53,7 +53,7 @@ namespace gerby::cpl {
   };
   
   export void write(b_t fn) {
-    silog::log(silog::info, "Generating BOM and CPL");
+    errln("Generating BOM and CPL");
 
     file_builder fb {};
     fn(&fb);
