@@ -247,6 +247,21 @@ void compos::top_nets(cnc::pen & p, d::inch m) {
   t.move(r12.pin(1)); t.draw(vr12);
   t.move(r13.pin(1)); t.draw(vr13);
   t.move(r14.pin(1)); t.draw(vr14);
+
+  t.move(q1.pin(sot23::c));
+  t.draw_x(-3.0_mm);
+  t.draw(r12.pin(2));
+  t.draw(q4.pin(sot23::b));
+
+  t.move(q2.pin(sot23::c));
+  t.draw_x(-3.0_mm);
+  t.draw(r13.pin(2));
+  t.draw(q5.pin(sot23::b));
+
+  t.move(q3.pin(sot23::c));
+  t.draw_x(-3.0_mm);
+  t.draw(r14.pin(2));
+  t.draw(q6.pin(sot23::b));
 }
 void compos::bottom_nets(cnc::pen & p, d::inch m) {
   turtle t { &p };
@@ -349,6 +364,7 @@ extern "C" A void cpl(cpl::builder * b) {
 
   b->bom({ "100k", "R1-4", "0603_R", "C25803" });
   b->bom({ "56", "R5-11", "0603_R", "C23206" });
+  b->bom({ "100k", "R12-14", "0603_R", "C25803" });
   b->bom({ "1nF", "C1", "0603_C", "C1588" });
   b->bom({ "10nF", "C2", "0603_C", "C57112" });
   b->bom({ "NPN", "Q1-6", "SOT-23", "C2146" });
