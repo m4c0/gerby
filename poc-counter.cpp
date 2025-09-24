@@ -98,6 +98,8 @@ struct compos : generic_layers<compos>, cs<
 
   static void top_plane(cnc::fanner & p);
 
+  static void bottom_silk(cnc::pen & p);
+
   static void border(cnc::pen & p, d::inch margin) {
     box(p, 0, 0, board_w, board_h, margin);
   }
@@ -326,6 +328,20 @@ void compos::top_plane(cnc::fanner & p) {
   static constexpr const auto w = board_w - m;
   static constexpr const auto h = board_h - m;
   cnc::utils::box(p, 0, 0, w, h);
+}
+
+void compos::bottom_silk(cnc::pen & p) {
+  p.aperture(0.2_mm);
+
+  turtle t { &p };
+
+  t.move(hdr.pin(h_v_plus).plus(0, -2.0_mm));
+  t.draw_y(-1.0_mm);
+  t.move(hdr.pin(h_v_plus).plus(-0.5_mm, -2.5_mm));
+  t.draw_x(1.0_mm);
+
+  t.move(hdr.pin(h_v_minus).plus(0, -2.0_mm));
+  t.draw_y(-1.0_mm);
 }
 
 #ifdef LECO_TARGET_WINDOWS

@@ -27,11 +27,12 @@ namespace pocpoc {
     struct top_copper {};
     struct top_copper_margin {};
     struct top_mask {};
+    struct top_silk {};
     struct bottom_copper {};
     struct bottom_copper_margin {};
     struct bottom_mask {};
+    struct bottom_silk {};
     struct holes {};
-    struct silk {};
   }
   template<typename L, typename T> void penpen(cnc::pen & p, L, T t) {
   }
@@ -56,7 +57,7 @@ namespace pocpoc {
   
   template<typename T>
   concept silked = requires (T t, cnc::pen p) { t.silk(p); };
-  void penpen(cnc::pen & p, l::silk, silked auto t) {
+  void penpen(cnc::pen & p, l::top_silk, silked auto t) {
     t.silk(p);
   }
   
@@ -183,7 +184,7 @@ namespace pocpoc {
       p.flash(pin(2));
     };
   };
-  template<> void penpen(cnc::pen & p, l::silk, r0603 r) {
+  template<> void penpen(cnc::pen & p, l::top_silk, r0603 r) {
     static constexpr const auto l = 1.6_mm;
     static constexpr const auto w = 0.8_mm;
     box(p, r.x, r.y, l, w);
@@ -214,7 +215,7 @@ namespace pocpoc {
       p.flash(pin(e));
     }
   };
-  template<> void penpen(cnc::pen & p, l::silk, sot23 r) {
+  template<> void penpen(cnc::pen & p, l::top_silk, sot23 r) {
     static constexpr const auto l = 2.9_mm;
     static constexpr const auto w = 1.3_mm;
     box(p, r.x, r.y, l, w);
@@ -262,7 +263,7 @@ namespace pocpoc {
       for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
     }
   };
-  template<unsigned N> void penpen(cnc::pen & p, l::silk, dip<N> r) {
+  template<unsigned N> void penpen(cnc::pen & p, l::top_silk, dip<N> r) {
     box(p, r.x, r.y, 0.3_in, 0.1_in * N / 2);
   
     auto sign = (r.pin(N).x - r.pin(1).x).sign();
@@ -295,7 +296,7 @@ namespace pocpoc {
       for (auto i = 0; i < N; i++) p.flash(pin(i + 1));
     }
   };
-  template<unsigned N> void penpen(cnc::pen & p, l::silk, header<N> r) {
+  template<unsigned N> void penpen(cnc::pen & p, l::top_silk, header<N> r) {
     box(p, r.x, r.y, 0.1_in * N, 0.1_in);
   }
   
@@ -366,7 +367,10 @@ namespace pocpoc {
     }
 
     static void top_silk(cnc::pen & p) {
-      C::penny(p, l::silk {});
+      C::penny(p, l::top_silk {});
+    }
+    static void bottom_silk(cnc::pen & p) {
+      C::penny(p, l::bottom_silk {});
     }
 
     static void bottom_mask(cnc::pen & p) {
@@ -410,6 +414,9 @@ namespace pocpoc {
           break;
         case cnc::gl_bot_mask:
           b->add_lines(C::bottom_mask, dark_green);
+          break;
+        case cnc::gl_bot_silk:
+          b->add_lines(C::bottom_silk, white);
           break;
         case cnc::gl_border:
           b->clear_lines(C::border_margin);
