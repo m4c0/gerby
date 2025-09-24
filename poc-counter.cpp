@@ -24,8 +24,8 @@ enum hdr_pins {
   h_clock,
   h_disable,
   h_strobe,
-  h_v_plus,
   h_v_minus,
+  h_v_plus,
 };
 const auto hdr = header<7> {{
   -0.4_in + board_w / 2.0,
@@ -73,7 +73,7 @@ const auto vr14 = via { r14.pin(1).plus(0, 1.0_mm) };
 // 1nF
 const auto c1 = r0603(ic1.pin(2).plus(3.0_mm, 0));
 // 10nF
-const auto c2 = r0603(hdr.pin(h_v_minus).plus(-0.5_mm, -2.9_mm));
+const auto c2 = r0603(hdr.pin(h_v_plus).plus(-0.5_mm, -2.9_mm));
 
 // 7-digit displays
 const auto msd = dip<14>{{-12.0_mm, -board_h/2 + 10.0_mm}};
@@ -169,7 +169,7 @@ void compos::top_nets(cnc::pen & p, d::inch m) {
   t.draw_ld(ic1.pin(10)); t.draw(r3.pin(1)); 
 
   t.move(hdr.pin(h_v_plus));
-  t.draw(c2.pin(2));
+  t.draw(c2.pin(1));
 
   t.move(ic1.pin(3));
   t.draw(c1.pin(2));
@@ -306,8 +306,8 @@ void compos::top_thermals(cnc::pen & p) {
   thermal(p, r2, 2);
   thermal(p, r3, 2);
   thermal(p, r4, 2);
-  thermal(p, c2, 1);
-  thermal(p, hdr, 7);
+  thermal(p, c2, 2);
+  thermal(p, hdr, h_v_minus);
 }
 
 void compos::bottom_thermals(cnc::pen & p) {
@@ -315,7 +315,7 @@ void compos::bottom_thermals(cnc::pen & p) {
   thermal(p, ic2, 16);
   thermal(p, ic2, 4);
   thermal(p, ic2, 3);
-  thermal(p, hdr, 6);
+  thermal(p, hdr, h_v_plus);
   thermal(p, vr12, 1);
   thermal(p, vr13, 1);
   thermal(p, vr14, 1);
