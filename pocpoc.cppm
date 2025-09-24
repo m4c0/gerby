@@ -302,6 +302,7 @@ namespace pocpoc {
   export struct via : point, tht {
     static constexpr const auto hole = 0.3_mm;
     static constexpr const auto diam = hole + 0.15_mm;
+    static constexpr const point pad { 0.6_mm + hole, 0.6_mm + hole };
   
     point pin(int n) const { return *this; }
   

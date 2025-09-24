@@ -300,6 +300,9 @@ void compos::bottom_thermals(cnc::pen & p) {
   thermal(p, ic2, 4);
   thermal(p, ic2, 3);
   thermal(p, hdr, 6);
+  thermal(p, vr12, 1);
+  thermal(p, vr13, 1);
+  thermal(p, vr14, 1);
 }
 
 void compos::top_plane(cnc::fanner & p) {
